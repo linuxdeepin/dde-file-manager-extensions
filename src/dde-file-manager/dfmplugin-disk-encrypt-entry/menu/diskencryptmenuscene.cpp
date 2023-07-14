@@ -94,33 +94,33 @@ void doUploadKeyFile(const QString &filePath, const QString &server)
 
 void doEncryptDisk(ParamsInputs inputs)
 {
-    QStringList params;
-    params << inputs.devDesc << inputs.passwd << inputs.exportPath;
+    //    QStringList params;
+    //    params << inputs.devDesc << inputs.passwd << inputs.exportPath;
 
-    //    EncryptProcessDialog *processDlg = new EncryptProcessDialog(inputs.devDesc);
-    QProcess *p = new QProcess;
-    QObject::connect(p, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-                     qApp, [=](int /*code*/) {
-                         p->deleteLater();
-                         //                         processDlg->encryptDone();
-                         //                         processDlg->deleteLater();
+    //    //    EncryptProcessDialog *processDlg = new EncryptProcessDialog(inputs.devDesc);
+    //    QProcess *p = new QProcess;
+    //    QObject::connect(p, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+    //                     qApp, [=](int /*code*/) {
+    //                         p->deleteLater();
+    //                         //                         processDlg->encryptDone();
+    //                         //                         processDlg->deleteLater();
 
-                         if (QFile(inputs.exportPath).exists())
-                             doUploadKeyFile(inputs.exportPath, inputs.serverAddr);
-                         else
-                             showEncryptErrorDialog();
-                     });
-    QObject::connect(p, &QProcess::readyReadStandardError, qApp, [=]() {
-        qInfo() << "#######  new error: " << p->readAllStandardError();
-    });
-    QObject::connect(p, &QProcess::readyReadStandardOutput, qApp, [=]() {
-        qInfo() << "#######  new info: " << p->readAllStandardOutput();
-    });
-    params.prepend("blockcrypt.sh");
-    p->start("pkexec", params);
-    qInfo() << "#######  executing... blockcrypt" << params;
-    //    processDlg->startEncrypt();
-    //    processDlg->show();
+    //                         if (QFile(inputs.exportPath).exists())
+    //                             doUploadKeyFile(inputs.exportPath, inputs.serverAddr);
+    //                         else
+    //                             showEncryptErrorDialog();
+    //                     });
+    //    QObject::connect(p, &QProcess::readyReadStandardError, qApp, [=]() {
+    //        qInfo() << "#######  new error: " << p->readAllStandardError();
+    //    });
+    //    QObject::connect(p, &QProcess::readyReadStandardOutput, qApp, [=]() {
+    //        qInfo() << "#######  new info: " << p->readAllStandardOutput();
+    //    });
+    //    params.prepend("blockcrypt.sh");
+    //    p->start("pkexec", params);
+    //    qInfo() << "#######  executing... blockcrypt" << params;
+    //    //    processDlg->startEncrypt();
+    //    //    processDlg->show();
 }
 
 DiskEncryptMenuScene::DiskEncryptMenuScene(QObject *parent)
