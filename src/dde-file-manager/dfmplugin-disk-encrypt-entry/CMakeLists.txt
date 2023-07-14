@@ -26,6 +26,7 @@ file(GLOB_RECURSE SRC
 
 add_library(${PROJECT_NAME} SHARED
   ${SRC}
+  utils/encryptutils.h utils/encryptutils.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

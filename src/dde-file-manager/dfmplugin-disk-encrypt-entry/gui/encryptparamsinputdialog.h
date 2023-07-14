@@ -5,23 +5,37 @@
 #ifndef ENCRYPTPARAMSINPUTDIALOG_H
 #define ENCRYPTPARAMSINPUTDIALOG_H
 
+#include <dtkwidget_global.h>
 #include <DDialog>
-#include <DPasswordEdit>
-#include <DLineEdit>
-#include <DFileChooserEdit>
 
-DWIDGET_USE_NAMESPACE
+DWIDGET_BEGIN_NAMESPACE
+class DPasswordEdit;
+class DFileChooserEdit;
+class DComboBox;
+class DLineEdit;
+DWIDGET_END_NAMESPACE
+
+class QLabel;
+class QStackedLayout;
+class QLayout;
 
 namespace dfmplugin_diskenc {
-struct ParamsInputs
-{
-    QString passwd;
-    QString serverAddr;
-    QString exportPath;
-    QString devDesc;
+
+enum SecKeyType {
+    kPasswordOnly,
+    kTPMAndPIN,
+    kTPMOnly,
 };
 
-class EncryptParamsInputDialog : public DDialog
+struct ParamsInputs
+{
+    QString devDesc;
+    SecKeyType type;
+    QString key;
+    QString exportPath;
+};
+
+class EncryptParamsInputDialog : public DTK_WIDGET_NAMESPACE::DDialog
 {
     Q_OBJECT
 public:
@@ -31,15 +45,30 @@ public:
 protected:
     void initUi();
     void initConn();
+    QWidget *createPasswordPage();
+    QWidget *createExportPage();
+    QWidget *createConfirmLayout();
+    bool validatePassword();
+    bool validateExportPath();
+    void setPasswordInputVisible(bool visible);
 
 protected Q_SLOTS:
     void onButtonClicked(int idx);
+    void onPageChanged(int page);
+    void onEncTypeChanged(int type);
 
 private:
-    DPasswordEdit *passwd1 { nullptr };
-    DPasswordEdit *passwd2 { nullptr };
-    DLineEdit *serverAddr { nullptr };
-    DFileChooserEdit *exportPath { nullptr };
+    DTK_WIDGET_NAMESPACE::DComboBox *encType { nullptr };
+    DTK_WIDGET_NAMESPACE::DPasswordEdit *encKeyEdit1 { nullptr };
+    DTK_WIDGET_NAMESPACE::DPasswordEdit *encKeyEdit2 { nullptr };
+
+    QLabel *keyHint1 { nullptr };
+    QLabel *keyHint2 { nullptr };
+    QLabel *pinOnlyHint { nullptr };
+
+    DTK_WIDGET_NAMESPACE::DFileChooserEdit *keyExportInput { nullptr };
+
+    QStackedLayout *pagesLay { nullptr };
 
     QString device;
 };
