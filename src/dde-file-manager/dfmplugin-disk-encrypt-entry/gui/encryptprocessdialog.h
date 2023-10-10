@@ -18,19 +18,16 @@ class EncryptProcessDialog : public DDialog
 {
     Q_OBJECT
 public:
-    explicit EncryptProcessDialog(const QString &dev, QWidget *parent = nullptr);
-
-    void startEncrypt();
-    void encryptDone();
+    explicit EncryptProcessDialog(const QString &title, QWidget *parent = nullptr);
+    void updateProgress(double progress);
 
 protected:
     void initUI();
 
 private:
-    QTimer *timer { nullptr };
     DWaterProgress *progress { nullptr };
 
-    QString devDesc;
+    QString title;
 };
 }
 

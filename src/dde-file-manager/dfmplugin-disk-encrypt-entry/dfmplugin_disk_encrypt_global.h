@@ -8,9 +8,13 @@
 #include <QtCore/qglobal.h>
 
 #if defined(DFMPLUGIN_DISK_ENCRYPT_LIBRARY)
-#  define DFMPLUGIN_DISK_ENCRYPT_EXPORT Q_DECL_EXPORT
+#    define DFMPLUGIN_DISK_ENCRYPT_EXPORT Q_DECL_EXPORT
 #else
-#  define DFMPLUGIN_DISK_ENCRYPT_EXPORT Q_DECL_IMPORT
+#    define DFMPLUGIN_DISK_ENCRYPT_EXPORT Q_DECL_IMPORT
 #endif
 
-#endif // DFMPLUGIN_DISK_ENCRYPT_GLOBAL_H
+inline constexpr char kDaemonBusName[] { "com.deepin.filemanager.daemon" };
+inline constexpr char kDaemonBusPath[] { "/com/deepin/filemanager/daemon/DiskEncrypt" };
+inline constexpr char kDaemonBusIface[] { "com.deepin.filemanager.daemon.DiskEncrypt" };
+
+#endif   // DFMPLUGIN_DISK_ENCRYPT_GLOBAL_H

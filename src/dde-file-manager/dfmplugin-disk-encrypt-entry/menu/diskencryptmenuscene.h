@@ -5,10 +5,12 @@
 #ifndef DISKENCRYPTMENUSCENE_H
 #define DISKENCRYPTMENUSCENE_H
 
+#include "gui/encryptparamsinputdialog.h"
+
 #include <dfm-base/interfaces/abstractmenuscene.h>
 #include <dfm-base/interfaces/abstractscenecreator.h>
 
-#include "gui/encryptparamsinputdialog.h"
+#include <dfm-mount/dmount.h>
 
 #include <QUrl>
 
@@ -42,10 +44,23 @@ public:
     virtual bool triggered(QAction *action) override;
     virtual void updateState(QMenu *parent) override;
 
+protected:
+    static void encryptDevice(const QString &dev);
+    static void deencryptDevice(const QString &dev);
+    static void changePassphrase(const QString &dev);
+
+    static void doEncryptDevice(const ParamsInputs &inputs);
+    static void doDecryptDevice(const QString &dev, const QString &passphrase);
+
+    void unmountBefore(const std::function<void(const QString &)> &after);
+    enum OpType { kUnmount,
+                  kLock };
+    static void onUnmountError(OpType t, const QString &dev, const dfmmount::OperationErrorInfo &err);
+
 private:
     QUrl selectedItem;
     QString devDesc;
-    QAction *actEncrypt { nullptr };
+    bool itemEncrypted { false };
 };
 
 }

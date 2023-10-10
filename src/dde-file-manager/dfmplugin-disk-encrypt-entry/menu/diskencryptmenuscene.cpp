@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "dfmplugin_disk_encrypt_global.h"
 #include "diskencryptmenuscene.h"
 #include "gui/encryptparamsinputdialog.h"
-#include "gui/encryptprocessdialog.h"
+#include "gui/decryptparamsinputdialog.h"
 
 #include <dfm-base/dfm_menu_defines.h>
 #include <dfm-base/base/schemefactory.h>
@@ -15,113 +16,18 @@
 #include <QProcess>
 #include <QFile>
 #include <QStringList>
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <QApplication>
+
+#include <ddialog.h>
 
 DFMBASE_USE_NAMESPACE
 using namespace dfmplugin_diskenc;
 
-int showUploadErrorDialog()
-{
-    DDialog dlg;
-    dlg.setTitle("错误");
-    dlg.setMessage("上传秘钥文件失败，重新传输？");
-    dlg.addButton("取消");
-    dlg.addButton("重新传输", true, DDialog::ButtonRecommend);
-    return dlg.exec();
-}
-
-void showUploadFinishedDialog()
-{
-    DDialog dlg;
-    dlg.setTitle("磁盘加密预设完成");
-    dlg.setMessage("秘钥上传成功，请重启以完成磁盘加密。");
-    dlg.addButton("确认");
-    dlg.exec();
-}
-
-void showEncryptErrorDialog()
-{
-    DDialog dlg;
-    dlg.setTitle("错误");
-    dlg.setMessage("加密磁盘失败，请查看日志以获取详细信息。");
-    dlg.addButton("确认");
-    dlg.exec();
-}
-
-void doUploadKeyFile(const QString &filePath, const QString &server)
-{
-    QStringList params;
-    params << filePath
-           << server;
-
-    qInfo() << "#######  uploading... key_upload.sh" << params;
-
-    QString *errMsg = new QString;
-    QProcess *p = new QProcess;
-    QObject::connect(p, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-                     qApp, [=](int /*code*/) {
-                         p->deleteLater();
-
-                         *errMsg += QString(p->readAll());
-                         *errMsg += QString(p->readAllStandardError());
-                         *errMsg += QString(p->readAllStandardOutput());
-                         qInfo() << "#######  upload info: " << *errMsg;
-
-                         QString msg = *errMsg;
-                         delete errMsg;
-
-                         if (msg.contains("200")) {
-                             qInfo() << "#######  upload finished";
-                             showUploadFinishedDialog();
-                         } else {
-                             bool reUpload = (showUploadErrorDialog() == QDialog::Accepted);
-                             if (reUpload) {
-                                 qInfo() << "#######  upload failed, reupload.";
-                                 doUploadKeyFile(filePath, server);
-                             }
-                         }
-                     });
-    QObject::connect(p, &QProcess::readyReadStandardError, qApp, [=]() {
-        *errMsg += QString(p->readAllStandardError());
-        qInfo() << "#######  upload new error: " << *errMsg;
-    });
-    QObject::connect(p, &QProcess::readyReadStandardOutput, qApp, [=]() {
-        *errMsg += QString(p->readAllStandardOutput());
-        qInfo() << "#######  upload new info: " << *errMsg;
-    });
-
-    p->start("key_upload.sh", params);
-}
-
-void doEncryptDisk(ParamsInputs inputs)
-{
-    //    QStringList params;
-    //    params << inputs.devDesc << inputs.passwd << inputs.exportPath;
-
-    //    //    EncryptProcessDialog *processDlg = new EncryptProcessDialog(inputs.devDesc);
-    //    QProcess *p = new QProcess;
-    //    QObject::connect(p, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-    //                     qApp, [=](int /*code*/) {
-    //                         p->deleteLater();
-    //                         //                         processDlg->encryptDone();
-    //                         //                         processDlg->deleteLater();
-
-    //                         if (QFile(inputs.exportPath).exists())
-    //                             doUploadKeyFile(inputs.exportPath, inputs.serverAddr);
-    //                         else
-    //                             showEncryptErrorDialog();
-    //                     });
-    //    QObject::connect(p, &QProcess::readyReadStandardError, qApp, [=]() {
-    //        qInfo() << "#######  new error: " << p->readAllStandardError();
-    //    });
-    //    QObject::connect(p, &QProcess::readyReadStandardOutput, qApp, [=]() {
-    //        qInfo() << "#######  new info: " << p->readAllStandardOutput();
-    //    });
-    //    params.prepend("blockcrypt.sh");
-    //    p->start("pkexec", params);
-    //    qInfo() << "#######  executing... blockcrypt" << params;
-    //    //    processDlg->startEncrypt();
-    //    //    processDlg->show();
-}
+static constexpr char kActIDEncrypt[] { "de_encrypt" };
+static constexpr char kActIDDecrypt[] { "de_decrypt" };
+static constexpr char kActIDChangePwd[] { "de_changePwd" };
 
 DiskEncryptMenuScene::DiskEncryptMenuScene(QObject *parent)
     : AbstractMenuScene(parent)
@@ -156,29 +62,56 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     devDesc = extProps.value("Device", "").toString();
     if (devDesc.isEmpty())
         return false;
+
+    const QString &idType = extProps.value("IdType").toString();
+    const QString &idVersion = extProps.value("IdVersion").toString();
+    const QStringList &supportedFS { "ext4", "ext3", "ext2" };
+    if (idType == "crypto_LUKS") {
+        if (idVersion == "1")
+            return false;
+        itemEncrypted = true;
+    } else if (!supportedFS.contains(idType)) {
+        return false;
+    }
+
+    //    const QString &config = extProps.value("Configuration").toString();
+    //    qDebug() << "<<<<<<<<<<<<<<<   " << config;
+    //    if (config.contains("fstab"))
+    //        return false;
+
     return true;
 }
 
 bool DiskEncryptMenuScene::create(QMenu *parent)
 {
     Q_ASSERT(parent);
-    actEncrypt = parent->addAction("加密磁盘");
+
+    if (itemEncrypted) {
+        QAction *act = parent->addAction(tr("Deencrypt"));
+        act->setProperty(ActionPropertyKey::kActionID, kActIDDecrypt);
+
+        act = parent->addAction(tr("Change passphrase"));
+        act->setProperty(ActionPropertyKey::kActionID, kActIDChangePwd);
+    } else {
+        QAction *act = parent->addAction(tr("Encrypt"));
+        act->setProperty(ActionPropertyKey::kActionID, kActIDEncrypt);
+    }
+
     return true;
 }
 
 bool DiskEncryptMenuScene::triggered(QAction *action)
 {
-    if (action == actEncrypt) {
-        EncryptParamsInputDialog *dlg = new EncryptParamsInputDialog(devDesc);
-        connect(dlg, &EncryptParamsInputDialog::finished, qApp, [=](int result) {
-            if (result == QDialog::Accepted)
-                doEncryptDisk(dlg->getInputs());
-            dlg->deleteLater();
-        });
-        dlg->show();
-        return true;
-    }
-    return false;
+    QString actID = action->property(ActionPropertyKey::kActionID).toString();
+    if (actID == kActIDEncrypt)
+        unmountBefore(encryptDevice);
+    else if (actID == kActIDDecrypt)
+        unmountBefore(deencryptDevice);
+    else if (actID == kActIDChangePwd)
+        unmountBefore(changePassphrase);
+    else
+        return false;
+    return true;
 }
 
 void DiskEncryptMenuScene::updateState(QMenu *parent)
@@ -186,9 +119,141 @@ void DiskEncryptMenuScene::updateState(QMenu *parent)
     Q_ASSERT(parent);
     QList<QAction *> acts = parent->actions();
     for (auto act : acts) {
-        if (act == actEncrypt) {
-            actEncrypt->setVisible(true);
-            break;
-        }
+        QString actID = act->property(ActionPropertyKey::kActionID).toString();
+        if (actID == kActIDEncrypt
+            || actID == kActIDDecrypt
+            || actID == kActIDChangePwd)
+            act->setVisible(true);
     }
+}
+
+void DiskEncryptMenuScene::encryptDevice(const QString &dev)
+{
+    EncryptParamsInputDialog *dlg = new EncryptParamsInputDialog(dev);
+    connect(dlg, &EncryptParamsInputDialog::finished, qApp, [=](int result) {
+        dlg->deleteLater();
+        if (result == QDialog::Accepted)
+            doEncryptDevice(dlg->getInputs());
+    });
+    dlg->show();
+}
+
+void DiskEncryptMenuScene::deencryptDevice(const QString &dev)
+{
+    DecryptParamsInputDialog *dlg = new DecryptParamsInputDialog(dev);
+    connect(dlg, &DecryptParamsInputDialog::finished, qApp, [=](int result) {
+        dlg->deleteLater();
+        qDebug() << "#########  " << result;
+        if (result == 0) {
+            auto inputs = dlg->getInputs();
+            doDecryptDevice(inputs.first, inputs.second);
+        }
+    });
+    dlg->show();
+}
+
+void DiskEncryptMenuScene::changePassphrase(const QString &dev)
+{
+}
+
+void DiskEncryptMenuScene::doEncryptDevice(const ParamsInputs &inputs)
+{
+    // if tpm selected, use tpm to generate the key
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    if (iface.isValid()) {
+        QVariantMap params {
+            { "device", inputs.devDesc },
+            { "cipher", QString("sm4") },
+            { "passphrase", inputs.key }
+        };
+        QDBusReply<QString> reply = iface.call("PrepareEncryptDisk", params);
+        qDebug() << "preencrypt device jobid:" << reply.value();
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+    }
+}
+
+void DiskEncryptMenuScene::doDecryptDevice(const QString &dev, const QString &passphrase)
+{
+    // if tpm selected, use tpm to generate the key
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    if (iface.isValid()) {
+        QVariantMap params {
+            { "device", dev },
+            { "passphrase", passphrase }
+        };
+        QDBusReply<QString> reply = iface.call("DecryptDisk", params);
+        qDebug() << "preencrypt device jobid:" << reply.value();
+    }
+}
+
+void DiskEncryptMenuScene::unmountBefore(const std::function<void(const QString &)> &after)
+{
+    using namespace dfmmount;
+    auto mng = DDeviceManager::instance()
+                       ->getRegisteredMonitor(DeviceType::kBlockDevice)
+                       .objectCast<DBlockMonitor>();
+    Q_ASSERT(mng);
+
+    QStringList objPaths = mng->resolveDeviceNode(devDesc, {});
+    if (objPaths.isEmpty()) {
+        qWarning() << "cannot resolve objpath of" << devDesc;
+        return;
+    }
+    auto blk = mng->createDeviceById(objPaths.constFirst())
+                       .objectCast<DBlockDevice>();
+    if (!blk)
+        return;
+
+    QString device(devDesc);
+    if (blk->isEncrypted()) {
+        const QString &clearPath = blk->getProperty(Property::kEncryptedCleartextDevice).toString();
+        if (clearPath.length() > 1) {
+            auto lock = [=] {
+                blk->lockAsync({}, [=](bool ok, OperationErrorInfo err) {
+                    if (ok)
+                        after(device);
+                    else
+                        onUnmountError(kLock, device, err);
+                });
+            };
+            auto onUnmounted = [=](bool ok, const OperationErrorInfo &err) {
+                if (ok)
+                    lock();
+                else
+                    onUnmountError(kUnmount, device, err);
+            };
+
+            // do unmount cleardev
+            auto clearDev = mng->createDeviceById(clearPath);
+            clearDev->unmountAsync({}, onUnmounted);
+        } else {
+            after(device);
+        }
+    } else {
+        blk->unmountAsync({}, [=](bool ok, OperationErrorInfo err) {
+            if (ok)
+                after(device);
+            else
+                onUnmountError(kUnmount, device, err);
+        });
+    }
+}
+
+void DiskEncryptMenuScene::onUnmountError(OpType t, const QString &dev, const dfmmount::OperationErrorInfo &err)
+{
+    qDebug() << "unmount device failed:"
+             << dev
+             << err.message;
+    QString operation = (t == kUnmount) ? tr("unmount") : tr("lock");
+    Dtk::Widget::DDialog d;
+    d.setTitle(tr("Encrypt failed"));
+    d.setMessage(tr("Cannot %1 device %2").arg(operation, dev));
+    d.addButton(tr("Close"));
+    d.exec();
 }
