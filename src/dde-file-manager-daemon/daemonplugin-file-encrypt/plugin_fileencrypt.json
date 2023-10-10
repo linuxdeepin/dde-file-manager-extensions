@@ -1,5 +1,5 @@
 {
-    "Name" : "dfmplugin-disk-encrypt",
+    "Name" : "daemonplugin-file-encrypt",
     "Version" : "1.0.0",
     "CompatVersion" : "1.0.0",
     "Vendor" : "The Uniontech Software Technology Co., Ltd.",
@@ -7,9 +7,7 @@
     "License" : [
     ],
     "Category" : "",
-    "Description" : "The encrypt plugin for dde-file-manager",
+    "Description" : "The encrypt backend plugin for dde-file-manager",
     "UrlLink" : "https://www.uniontech.com",
-    "Depends" : [
-    "dfmplugin-computer"
-    ]
+    "Depends" : []
 }

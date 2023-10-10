@@ -11,33 +11,17 @@
 
 using namespace dfmplugin_diskenc;
 
-EncryptProcessDialog::EncryptProcessDialog(const QString &dev, QWidget *parent)
-    : DDialog(parent), devDesc(dev)
+EncryptProcessDialog::EncryptProcessDialog(const QString &title, QWidget *parent)
+    : DDialog(parent), title(title)
 {
     initUI();
 }
 
-void EncryptProcessDialog::encryptDone()
+void EncryptProcessDialog::updateProgress(double progress)
 {
-    int currVal = progress->value();
-    int delta = 100 - currVal;
-    int step = delta / 5 + 1;
-    for (int i = 0; i < 5; i++) {
-        currVal += step;
-        if (currVal > 100)
-            currVal = 100;
-        progress->setValue(currVal);
-        update();
-        qApp->processEvents();
-        QThread::msleep(500);
-    }
-    accept();
-}
-
-void EncryptProcessDialog::startEncrypt()
-{
-    timer->start();
-    progress->start();
+    this->progress->setValue(progress * 100);
+    if (int(progress) == 1)
+        QTimer::singleShot(500, this, [this] { this->close(); });
 }
 
 void EncryptProcessDialog::initUI()
@@ -52,20 +36,8 @@ void EncryptProcessDialog::initUI()
     progress->setFixedSize(64, 64);
     progress->setValue(1);
     lay->addWidget(progress);
+    progress->start();
 
-    setTitle("正在加密" + devDesc);
+    setTitle(title);
     setCloseButtonVisible(false);
-
-    timer = new QTimer(this);
-    timer->setInterval(500);
-    int seed = QDateTime::currentMSecsSinceEpoch();
-    QSharedPointer<QRandomGenerator> random(new QRandomGenerator(seed));
-    connect(timer, &QTimer::timeout, this, [=] {
-        int randVal = random->generate() % 3;
-        if (progress->value() < 95)
-            progress->setValue(progress->value() + randVal);
-        else
-            timer->stop();
-        update();
-    });
 }

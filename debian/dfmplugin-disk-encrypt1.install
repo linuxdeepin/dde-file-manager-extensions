@@ -1,2 +1,5 @@
 usr/lib/*/dde-file-manager/plugins/filemanager-edge/libdfmplugin_disk_encrypt.so*
 usr/lib/*/dde-file-manager/plugins/filemanager-edge/libdfmplugin_encrypt_manager.so
+usr/lib/*/dde-file-manager/plugins/daemon-edge/libdaemonplugin-file-encrypt.so*
+
+usr/share/dsg/configs/org.deepin.dde.file-manager/org.deepin.dde.file-manager.diskencrypt.json

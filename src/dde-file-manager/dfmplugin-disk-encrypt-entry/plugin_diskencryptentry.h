@@ -11,6 +11,7 @@
 
 namespace dfmplugin_diskenc {
 
+class EncryptProcessDialog;
 class DFMPLUGIN_DISK_ENCRYPT_EXPORT DiskEncryptEntry : public dpf::Plugin
 {
     Q_OBJECT
@@ -22,8 +23,22 @@ public:
     virtual void initialize() override;
     virtual bool start() override;
 
+protected:
+    void connectDaemonSignals();
+
+protected Q_SLOTS:
+    void onPreencryptResult(const QString &, const QString &, int);
+    void onEncryptResult(const QString &, int);
+    void onEncryptProgress(const QString &, double);
+    void onDecryptResult(const QString &, const QString &, int);
+    void onDecryptProgress(const QString &, double);
+
 private:
     void onComputerMenuSceneAdded(const QString &scene);
+
+private:
+    QMap<QString, EncryptProcessDialog *> encryptDialogs;
+    QMap<QString, EncryptProcessDialog *> decryptDialogs;
 };
 }
 
