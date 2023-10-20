@@ -1,15 +1,20 @@
 #include "mainwindow.h"
 
+#include <DSpinner>
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
 #include <QFile>
 #include <QDir>
+#include <QtConcurrent/QtConcurrent>
 
 #include <dfm-framework/event/event.h>
 
 Q_DECLARE_METATYPE(QString *)
 Q_DECLARE_METATYPE(bool *)
+
+DWIDGET_USE_NAMESPACE
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
@@ -88,7 +93,30 @@ void MainWindow::initConnect()
         const QString keyPin = ""/*"12345678"*/;
         const QString password = "Qwer@1234";
         const QString dirPath = "/home/uos/gongheng/tmpTemp";
-        bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPM", hashAlgo, keyAlgo, keyPin, password, dirPath).toBool();
+
+        QFutureWatcher<bool> watcher;
+        QEventLoop loop;
+        QFuture<bool> future = QtConcurrent::run([hashAlgo, keyAlgo, keyPin, password, dirPath]{
+            return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPM", hashAlgo, keyAlgo, keyPin, password, dirPath).toBool();
+        });
+        connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop]{
+            if (watcher.result()) {
+                loop.exit(0);
+            } else {
+                loop.exit(-1);
+            }
+        });
+        watcher.setFuture(future);
+
+        DSpinner spinner(this);
+        spinner.setFixedSize(50, 50);
+        spinner.move((width() - spinner.width())/2, (height() - spinner.height())/2);
+        spinner.start();
+        spinner.show();
+
+        int re = loop.exec();
+        bool result = re == 0 ? true : false;
+
         if (result) {
             textBrowser->append("Encrypt success!");
             QFile file(dirPath + QDir::separator() + "tpm_encrypt.txt");

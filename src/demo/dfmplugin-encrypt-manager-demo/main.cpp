@@ -13,8 +13,9 @@ inline constexpr char kPluginIID[] { "org.deepin.plugin.filemanager" };
 
 static bool pluginsLoad()
 {
+#ifdef QT_DEBUG
     QStringList pluginsDirs;
-    pluginsDirs.push_back("~/pluginsDir");
+    pluginsDirs.push_back(PLUGIN_DIR);
     QStringList blackNames {};
     DPF_NAMESPACE::LifeCycle::initialize({ kPluginIID }, pluginsDirs, blackNames);
 
@@ -25,6 +26,9 @@ static bool pluginsLoad()
         return false;
 
     return true;
+#else
+    return false;
+#endif
 }
 
 int main(int argc, char *argv[])
