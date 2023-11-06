@@ -207,10 +207,15 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
         .label = nullptr,
         .subsystem = nullptr
     };
+    QString cipher = params.cipher.mid(0, params.cipher.indexOf("-"));
+    QString mode = params.cipher.mid(params.cipher.indexOf("-") + 1);
+    if (mode.isEmpty())
+        mode = "xts-plain64";
+
     ret = crypt_format(cdev,
                        CRYPT_LUKS2,
-                       params.cipher.toStdString().c_str(),
-                       "xts-plain64",
+                       cipher.toStdString().c_str(),
+                       mode.toStdString().c_str(),
                        nullptr,
                        nullptr,
                        256 / 8,
@@ -262,8 +267,8 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
                                              strlen(cPassphrase.c_str()),
                                              CRYPT_ANY_SLOT,
                                              0,
-                                             params.cipher.toStdString().c_str(),
-                                             "xts-plain64",
+                                             cipher.toStdString().c_str(),
+                                             mode.toStdString().c_str(),
                                              &reencParams);
     if (ret < 0) {
         qWarning() << "failed to init reencrypt!"

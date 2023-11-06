@@ -40,9 +40,9 @@ DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
     connect(worker, &ReencryptWorker::deviceReencryptResult,
             this, &DiskEncryptDBus::EncryptDiskResult);
     connect(worker, &QThread::finished, this, [=] {
-        int ret = worker->exitStatus();
+        EncryptJobError ret = worker->exitError();
         qDebug() << "reencrypt finished"
-                 << ret;
+                 << static_cast<int>(ret);
         worker->deleteLater();
     });
     worker->start();
@@ -59,14 +59,14 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
                                                   params,
                                                   this);
     connect(worker, &QThread::finished, this, [=] {
-        int ret = worker->exitStatus();
+        EncryptJobError ret = worker->exitError();
         QString device = params.value(encrypt_param_keys::kKeyDevice).toString();
         Q_EMIT this->EncryptDiskPrepareResult(device,
                                               jobID,
-                                              ret);
+                                              static_cast<int>(ret));
         qDebug() << "pre encrypt finished"
                  << device
-                 << ret;
+                 << static_cast<int>(ret);
         worker->deleteLater();
     });
 
@@ -78,8 +78,6 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
 QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
 {
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
-    qDebug() << "yeah! you invoked me" << __FUNCTION__;
-    qDebug() << "with params: " << params;
 
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
@@ -88,8 +86,13 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
         return "";
     }
 
-    DecryptWorker *worker = new DecryptWorker(jobID, dev, pass, this);
+    DecryptWorker *worker = new DecryptWorker(jobID, params, this);
     connect(worker, &QThread::finished, this, [=] {
+        EncryptJobError ret = worker->exitError();
+        qDebug() << "decrypt device finished:"
+                 << dev
+                 << static_cast<int>(ret);
+        Q_EMIT DecryptDiskResult(dev, jobID, static_cast<int>(ret));
         worker->deleteLater();
     });
     worker->start();

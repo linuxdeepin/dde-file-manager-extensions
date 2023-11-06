@@ -9,6 +9,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <QDBusConnection>
+#include <QTranslator>
 
 static constexpr char kComputerPluginName[] { "dfmplugin_computer" };
 static constexpr char kMenuPluginName[] { "dfmplugin_menu" };
@@ -22,9 +23,11 @@ bool hasComputerMenuRegisted()
 
 void DiskEncryptEntry::initialize()
 {
-    qDebug() << "##########################################";
-    qDebug() << "DiskEncryptEntry initialized";
-    qDebug() << "##########################################";
+    auto i18n = new QTranslator(this);
+    qDebug() << ">>>>>> load translations"
+             << i18n->load(QLocale(), "disk-encrypt", "_", "/usr/share/dde-file-manager/translations");
+    qDebug() << ">>>>>> install translations" << i18n->isEmpty()
+             << QCoreApplication::installTranslator(i18n);
 }
 
 bool DiskEncryptEntry::start()
@@ -83,13 +86,23 @@ void DiskEncryptEntry::connectDaemonSignals()
                                          SLOT(onDecryptProgress(const QString &, double)));
 }
 
-void DiskEncryptEntry::onPreencryptResult(const QString &dev, const QString &job, int code)
+void DiskEncryptEntry::onPreencryptResult(const QString &dev, const QString &, int code)
 {
     QApplication::restoreOverrideCursor();
+
+    QString title = tr("Preencrypt done");
+    QString msg = tr("Device %1 has been preencrypt, please reboot to finish encryption.").arg(dev);
+    if (code != 0) {
+        title = tr("Preencrypt failed");
+        msg = tr("Device %1 preencrypt failed, please see log for more information.(%2)")
+                      .arg(dev)
+                      .arg(code);
+    }
+
     DDialog *dlg = new DDialog;
     dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setTitle(tr("Preencrypt done"));
-    dlg->setMessage(tr("Device %1 has been pre-encrypted, please reboot to finish encrypt!").arg(dev));
+    dlg->setTitle(title);
+    dlg->setMessage(msg);
     dlg->addButton(tr("Confirm"));
     dlg->show();
 }
@@ -100,10 +113,20 @@ void DiskEncryptEntry::onEncryptResult(const QString &dev, int code)
         delete encryptDialogs.value(dev);
         encryptDialogs.remove(dev);
     }
+
+    QString title = tr("Encrypt done");
+    QString msg = tr("Device %1 has been encrypted").arg(dev);
+    if (code != 0) {
+        title = tr("Encrypt failed");
+        msg = tr("Device %1 encrypt failed, please see log for more information.(%2)")
+                      .arg(dev)
+                      .arg(code);
+    }
+
     DDialog *dlg = new DDialog;
     dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setTitle(tr("Encrypt done"));
-    dlg->setMessage(tr("Device %1 has been encrypted").arg(dev));
+    dlg->setTitle(title);
+    dlg->setMessage(msg);
     dlg->addButton(tr("Confirm"));
     dlg->show();
 }
@@ -124,10 +147,19 @@ void DiskEncryptEntry::onDecryptResult(const QString &dev, const QString &job, i
         decryptDialogs.remove(dev);
     }
 
+    QString title = tr("Decrypt done");
+    QString msg = tr("Device %1 has been decrypted").arg(dev);
+    if (code != 0) {
+        title = tr("Decrypt failed");
+        msg = tr("Device %1 Decrypt failed, please see log for more information.(%2)")
+                      .arg(dev)
+                      .arg(code);
+    }
+
     DDialog *dlg = new DDialog;
     dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setTitle(tr("Decrypt done"));
-    dlg->setMessage(tr("Device %1 has been decrypted").arg(dev));
+    dlg->setTitle(title);
+    dlg->setMessage(msg);
     dlg->addButton(tr("Confirm"));
     dlg->show();
 }

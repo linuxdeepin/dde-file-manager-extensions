@@ -45,22 +45,26 @@ public:
     virtual void updateState(QMenu *parent) override;
 
 protected:
-    static void encryptDevice(const QString &dev);
-    static void deencryptDevice(const QString &dev);
-    static void changePassphrase(const QString &dev);
+    static void encryptDevice(const QString &dev, const QString &uuid, bool paramsOnly = false);
+    static void deencryptDevice(const QString &dev, const QString &uuid, bool paramsOnly = false);
+    static void changePassphrase(const QString &dev, const QString &uuid, bool paramsOnly = false);
 
     static void doEncryptDevice(const ParamsInputs &inputs);
-    static void doDecryptDevice(const QString &dev, const QString &passphrase);
+    static void doDecryptDevice(const QString &dev, const QString &passphrase, bool paramsOnly);
 
-    void unmountBefore(const std::function<void(const QString &)> &after);
+    void unmountBefore(const std::function<void(const QString &, const QString &, bool)> &after);
     enum OpType { kUnmount,
                   kLock };
     static void onUnmountError(OpType t, const QString &dev, const dfmmount::OperationErrorInfo &err);
 
 private:
+    QMap<QString, QAction *> actions;
+
     QUrl selectedItem;
     QString devDesc;
     bool itemEncrypted { false };
+    bool operatingFstabDevice { false };
+    QString uuid;
 };
 
 }
