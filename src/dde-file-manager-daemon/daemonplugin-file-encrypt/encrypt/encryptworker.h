@@ -11,7 +11,45 @@
 
 FILE_ENCRYPT_BEGIN_NS
 
-class PrencryptWorker : public QThread
+enum class EncryptJobError {
+    kNoError = 0,
+    kHasPendingEncryptJob = -1,
+    kCannotCreateEncryptJob = -2,
+    kInvalidEncryptParams = -3,
+    kCannotInitEncryptHeaderFile = -4,
+    kCannotInitEncryptHeaderDevice = -5,
+    kReencryptFailed = -6,
+    kDecryptFailed = -7,
+    kFstabOpenFailed = -8,
+};
+
+class Worker : public QThread
+{
+    Q_OBJECT
+public:
+    explicit Worker(const QString &jobID, QObject *parent = nullptr)
+        : QThread(parent), jobID(jobID) { }
+
+    inline EncryptJobError exitError()
+    {
+        QMutexLocker locker(&mtx);
+        return exitCode;
+    }
+
+protected:
+    inline void setExitCode(EncryptJobError code)
+    {
+        QMutexLocker locker(&mtx);
+        exitCode = code;
+    }
+
+protected:
+    EncryptJobError exitCode { EncryptJobError::kNoError };
+    QString jobID;
+    QMutex mtx;
+};
+
+class PrencryptWorker : public Worker
 {
     Q_OBJECT
 public:
@@ -19,33 +57,20 @@ public:
                              const QVariantMap &params,
                              QObject *parent);
 
-    inline int exitStatus()
-    {
-        QMutexLocker locker(&mtx);
-        return exitCode;
-    }
-
 protected:
     void run() override;
+    EncryptJobError writeEncryptParams();
+    EncryptJobError setFstabTimeout();
 
 private:
-    QString jobID;
     QVariantMap params;
-    QMutex mtx;
-    int exitCode { 0 };
 };
 
-class ReencryptWorker : public QThread
+class ReencryptWorker : public Worker
 {
     Q_OBJECT
 public:
     explicit ReencryptWorker(QObject *parent = nullptr);
-
-    inline int exitStatus()
-    {
-        QMutexLocker locker(&mtx);
-        return exitCode;
-    }
 
 Q_SIGNALS:
     void updateReencryptProgress(const QString &device,
@@ -57,26 +82,22 @@ protected:
     void run() override;
 
 private:
-    QMutex mtx;
-    int exitCode { 0 };
 };
 
-class DecryptWorker : public QThread
+class DecryptWorker : public Worker
 {
     Q_OBJECT
 public:
     explicit DecryptWorker(const QString &jobID,
-                           const QString &device,
-                           const QString &passphrase,
+                           const QVariantMap &params,
                            QObject *parent = nullptr);
 
 protected:
     void run() override;
+    EncryptJobError writeDecryptParams();
 
 private:
-    QString jobID;
-    QString device;
-    QString passphrase;
+    QVariantMap params;
 };
 
 FILE_ENCRYPT_END_NS

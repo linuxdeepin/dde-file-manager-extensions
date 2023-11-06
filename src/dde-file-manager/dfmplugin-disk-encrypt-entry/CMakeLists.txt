@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets Concurrent)
 
-find_package(Dtk COMPONENTS Widget REQUIRED)
+find_package(Dtk COMPONENTS Widget Core REQUIRED)
 find_package(dfm-framework REQUIRED)
 find_package(dfm-base REQUIRED)
 find_package(dfm-mount REQUIRED)
@@ -33,6 +33,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Widgets
     Qt5::Concurrent
     ${DtkWidget_LIBRARIES}
+    ${DtkCore_LIBRARIES}
     ${dfm-framework_LIBRARIES}
     ${dfm-base_LIBRARIES}
     ${dfm-mount_LIBRARIES}
@@ -42,6 +43,7 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC
     ${PROJECT_SOURCE_DIR}
     ${DtkWidget_INCLUDE_DIRS}
+    ${DtkCore_INCLUDE_DIRS}
     ${dfm-framework_INCLUDE_DIRS}
     ${dfm-base_INCLUDE_DIRS}
     ${dfm-io_INCLUDE_DIRS}
@@ -58,3 +60,28 @@ dconfig_meta_files(APPID "org.deepin.dde.file-manager"
     BASE "${CMAKE_SOURCE_DIR}/assets/configs"
     FILES "${CMAKE_SOURCE_DIR}/assets/configs/org.deepin.dde.file-manager.diskencrypt.json"
 )
+
+execute_process(
+    COMMAND lupdate
+        ./
+        -ts
+        -no-obsolete
+        ${CMAKE_SOURCE_DIR}/translations/disk-encrypt.ts
+    COMMAND lupdate
+        ./
+        -ts
+        -no-obsolete
+        ${CMAKE_SOURCE_DIR}/translations/disk-encrypt_zh_CN.ts
+
+    COMMAND lrelease
+        ${CMAKE_SOURCE_DIR}/translations/disk-encrypt_zh_CN.ts
+    COMMAND lrelease
+        ${CMAKE_SOURCE_DIR}/translations/disk-encrypt.ts
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/translations
+    DESTINATION share/dde-file-manager
+    FILES_MATCHING PATTERN "*.qm")
+

@@ -11,6 +11,7 @@ namespace dfmplugin_diskenc {
 
 class DecryptParamsInputDialog : public Dtk::Widget::DDialog
 {
+    Q_OBJECT
 public:
     explicit DecryptParamsInputDialog(const QString &device, QWidget *parent = nullptr);
     QPair<QString, QString> getInputs();

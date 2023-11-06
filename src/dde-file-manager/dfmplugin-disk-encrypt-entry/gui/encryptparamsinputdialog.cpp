@@ -36,6 +36,7 @@ EncryptParamsInputDialog::EncryptParamsInputDialog(const QString &dev, QWidget *
 ParamsInputs EncryptParamsInputDialog::getInputs()
 {
     return { device,
+             "",
              static_cast<SecKeyType>(encType->currentIndex()),
              encKeyEdit1->text(),
              keyExportInput->text() };
@@ -230,7 +231,7 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
     int currPage = pagesLay->currentIndex();
     if (currPage == kPasswordInputPage) {
         if (validatePassword())
-            pagesLay->setCurrentIndex(encrypt_utils::exportKeyEnabled() ? kExportKeyPage : kConfirmPage);
+            pagesLay->setCurrentIndex(config_utils::exportKeyEnabled() ? kExportKeyPage : kConfirmPage);
     } else if (currPage == kExportKeyPage) {
         if (idx == 0) {
             pagesLay->setCurrentIndex(kPasswordInputPage);

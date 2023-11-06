@@ -30,9 +30,11 @@ enum SecKeyType {
 struct ParamsInputs
 {
     QString devDesc;
+    QString uuid;
     SecKeyType type;
     QString key;
     QString exportPath;
+    bool initOnly;
 };
 
 class EncryptParamsInputDialog : public DTK_WIDGET_NAMESPACE::DDialog
