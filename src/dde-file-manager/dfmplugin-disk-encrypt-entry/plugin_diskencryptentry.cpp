@@ -11,23 +11,21 @@
 #include <QDBusConnection>
 #include <QTranslator>
 
-static constexpr char kComputerPluginName[] { "dfmplugin_computer" };
 static constexpr char kMenuPluginName[] { "dfmplugin_menu" };
+static constexpr char kComputerMenuSceneName[] { "ComputerMenu" };
 
 using namespace dfmplugin_diskenc;
 
 bool hasComputerMenuRegisted()
 {
-    return dpfSlotChannel->push(kMenuPluginName, "slot_MenuScene_Contains", "ComputerMenu").toBool();
+    return dpfSlotChannel->push(kMenuPluginName, "slot_MenuScene_Contains", QString(kComputerMenuSceneName)).toBool();
 }
 
 void DiskEncryptEntry::initialize()
 {
     auto i18n = new QTranslator(this);
-    qDebug() << ">>>>>> load translations"
-             << i18n->load(QLocale(), "disk-encrypt", "_", "/usr/share/dde-file-manager/translations");
-    qDebug() << ">>>>>> install translations" << i18n->isEmpty()
-             << QCoreApplication::installTranslator(i18n);
+    i18n->load(QLocale(), "disk-encrypt", "_", "/usr/share/dde-file-manager/translations");
+    QCoreApplication::installTranslator(i18n);
 }
 
 bool DiskEncryptEntry::start()
@@ -37,7 +35,7 @@ bool DiskEncryptEntry::start()
 
     if (hasComputerMenuRegisted()) {
         dpfSlotChannel->push("dfmplugin_menu", "slot_MenuScene_Bind",
-                             DiskEncryptMenuCreator::name(), kComputerPluginName);
+                             DiskEncryptMenuCreator::name(), QString(kComputerMenuSceneName));
     } else {
         dpfSignalDispatcher->subscribe(kMenuPluginName, "signal_MenuScene_SceneAdded",
                                        this, &DiskEncryptEntry::onComputerMenuSceneAdded);
@@ -90,13 +88,24 @@ void DiskEncryptEntry::onPreencryptResult(const QString &dev, const QString &, i
 {
     QApplication::restoreOverrideCursor();
 
-    QString title = tr("Preencrypt done");
-    QString msg = tr("Device %1 has been preencrypt, please reboot to finish encryption.").arg(dev);
-    if (code != 0) {
+    QString title;
+    QString msg;
+    switch (code) {
+    case (EncryptJobError::kNoError):
+        title = tr("Preencrypt done");
+        msg = tr("Device %1 has been preencrypt, please reboot to finish encryption.")
+                      .arg(dev);
+        break;
+    case EncryptJobError::kUserCancelled:
+        title = tr("Encrypt disk");
+        msg = tr("User cancelled operation");
+        break;
+    default:
         title = tr("Preencrypt failed");
         msg = tr("Device %1 preencrypt failed, please see log for more information.(%2)")
                       .arg(dev)
                       .arg(code);
+        break;
     }
 
     DDialog *dlg = new DDialog;
@@ -147,13 +156,23 @@ void DiskEncryptEntry::onDecryptResult(const QString &dev, const QString &job, i
         decryptDialogs.remove(dev);
     }
 
-    QString title = tr("Decrypt done");
-    QString msg = tr("Device %1 has been decrypted").arg(dev);
-    if (code != 0) {
+    QString title;
+    QString msg;
+    switch (code) {
+    case (EncryptJobError::kNoError):
+        title = tr("Decrypt done");
+        msg = tr("Device %1 has been decrypted").arg(dev);
+        break;
+    case EncryptJobError::kUserCancelled:
+        title = tr("Decrypt disk");
+        msg = tr("User cancelled operation");
+        break;
+    default:
         title = tr("Decrypt failed");
         msg = tr("Device %1 Decrypt failed, please see log for more information.(%2)")
                       .arg(dev)
                       .arg(code);
+        break;
     }
 
     DDialog *dlg = new DDialog;
@@ -176,7 +195,7 @@ void DiskEncryptEntry::onDecryptProgress(const QString &dev, double progress)
 void DiskEncryptEntry::onComputerMenuSceneAdded(const QString &scene)
 {
     if (scene == "ComputerMenu") {
-        dpfSlotChannel->push(kMenuPluginName, "slot_MenuScene_Bind", DiskEncryptMenuCreator::name(), "ComputerMenu");
+        dpfSlotChannel->push(kMenuPluginName, "slot_MenuScene_Bind", DiskEncryptMenuCreator::name(), kComputerMenuSceneName);
         dpfSignalDispatcher->unsubscribe("dfmplugin_menu", "signal_MenuScene_SceneAdded", this, &DiskEncryptEntry::onComputerMenuSceneAdded);
     }
 }

@@ -17,79 +17,95 @@
 <context>
     <name>dfmplugin_diskenc::DiskEncryptEntry</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="93"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="95"/>
         <source>Preencrypt done</source>
         <translation>预加密完成</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="94"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="96"/>
         <source>Device %1 has been preencrypt, please reboot to finish encryption.</source>
         <translation>设备%1已进行预加密，请重启完成加密操作。</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="96"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="100"/>
+        <source>Encrypt disk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="101"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="168"/>
+        <source>User cancelled operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="104"/>
         <source>Preencrypt failed</source>
         <translation>预加密失败</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="97"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="105"/>
         <source>Device %1 preencrypt failed, please see log for more information.(%2)</source>
         <translation>设备%1预加密失败，请查看日志以获取更多信息。（%2）</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="106"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="130"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="163"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="115"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="139"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="182"/>
         <source>Confirm</source>
         <translation>确认</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="117"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="126"/>
         <source>Encrypt done</source>
         <translation>加密完成</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="118"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="127"/>
         <source>Device %1 has been encrypted</source>
         <translation>设备%1已完成加密</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="120"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="129"/>
         <source>Encrypt failed</source>
         <translation>加密失败</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="121"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="130"/>
         <source>Device %1 encrypt failed, please see log for more information.(%2)</source>
         <translation>设备%1加密失败，请查看日志以获取更多信息。（%2）</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="137"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="146"/>
         <source>Encrypting...%1</source>
         <translation>设备%1加密中...</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="150"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="163"/>
         <source>Decrypt done</source>
         <translation>取消加密完成</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="151"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="164"/>
         <source>Device %1 has been decrypted</source>
         <translation>设备%1已取消加密</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="153"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="167"/>
+        <source>Decrypt disk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="171"/>
         <source>Decrypt failed</source>
         <translation>取消加密失败</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="154"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="172"/>
         <source>Device %1 Decrypt failed, please see log for more information.(%2)</source>
         <translation>设备%1取消加密失败，请查看日志以获取更多信息。（%2）</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="170"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="189"/>
         <source>Decrypting...%1</source>
         <translation>设备%1取消加密中...</translation>
     </message>
