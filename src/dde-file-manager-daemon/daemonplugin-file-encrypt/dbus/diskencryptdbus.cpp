@@ -7,6 +7,7 @@
 #include "encrypt/encryptworker.h"
 #include "notification/notifications.h"
 
+#include <dfm-framework/dpf.h>
 #include <dfm-mount/ddevicemanager.h>
 
 #include <QDBusConnection>
@@ -19,6 +20,9 @@
 FILE_ENCRYPT_USE_NS
 
 #define JOB_ID QString("job_%1")
+static constexpr char kActionEncrypt[] { "com.deepin.filemanager.daemon.DiskEncrypt.Encrypt" };
+static constexpr char kActionDecrypt[] { "com.deepin.filemanager.daemon.DiskEncrypt.Decrypt" };
+static constexpr char kActionChgPwd[] { "com.deepin.filemanager.daemon.DiskEncrypt.ChangePassphrase" };
 
 static constexpr char kObjPath[] { "/com/deepin/filemanager/daemon/DiskEncrypt" };
 
@@ -54,6 +58,13 @@ DiskEncryptDBus::~DiskEncryptDBus()
 
 QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
 {
+    if (!checkAuth(kActionEncrypt)) {
+        Q_EMIT EncryptDiskPrepareResult(params.value(encrypt_param_keys::kKeyDevice).toString(),
+                                        "",
+                                        static_cast<int>(EncryptJobError::kUserCancelled));
+        return "";
+    }
+
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
     PrencryptWorker *worker = new PrencryptWorker(jobID,
                                                   params,
@@ -77,9 +88,14 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
 
 QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
 {
+    QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
+    if (!checkAuth(kActionDecrypt)) {
+        Q_EMIT DecryptDiskResult(dev, "", static_cast<int>(EncryptJobError::kUserCancelled));
+        return "";
+    }
+
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
 
-    QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
     if (dev.isEmpty() || pass.isEmpty()) {
         qDebug() << "cannot decrypt, params are not valid";
@@ -101,8 +117,23 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
 
 QString DiskEncryptDBus::ModifyEncryptPassphress(const QVariantMap &params)
 {
+    QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
+    if (!checkAuth(kActionChgPwd)) {
+        Q_EMIT ModifyEncryptPassphressResult(dev,
+                                             "",
+                                             static_cast<int>(EncryptJobError::kUserCancelled));
+        return "";
+    }
+
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
     qDebug() << "yeah! you invoked me" << __FUNCTION__;
     qDebug() << "with params: " << params;
     return jobID;
+}
+
+bool DiskEncryptDBus::checkAuth(const QString &actID)
+{
+    return dpfSlotChannel->push("daemonplugin_core", "slot_Polkit_CheckAuth",
+                                actID, message().service())
+            .toBool();
 }

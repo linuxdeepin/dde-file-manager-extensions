@@ -61,3 +61,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ../../
 
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${DFM_PLUGIN_DAEMON_EDGE_DIR})
 message(">>>> install ${PROJECT_NAME} into ${DFM_PLUGIN_DAEMON_EDGE_DIR}")
+
+set(PolicyDir "${CMAKE_INSTALL_PREFIX}/share/polkit-1/actions")
+install(FILES ${CMAKE_SOURCE_DIR}/assets/polkit/com.deepin.filemanager.daemon.diskencrypt.policy
+    DESTINATION ${PolicyDir})
+

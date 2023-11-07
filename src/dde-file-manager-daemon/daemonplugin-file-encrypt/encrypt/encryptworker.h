@@ -21,6 +21,7 @@ enum class EncryptJobError {
     kReencryptFailed = -6,
     kDecryptFailed = -7,
     kFstabOpenFailed = -8,
+    kUserCancelled = -9,
 };
 
 class Worker : public QThread

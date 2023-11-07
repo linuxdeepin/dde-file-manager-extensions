@@ -32,6 +32,9 @@ Q_SIGNALS:
     void ModifyEncryptPassphressResult(const QString &device, const QString &jobID, int errCode);
     void EncryptProgress(const QString &device, double progress);
     void DecryptProgress(const QString &device, double progress);
+
+private:
+    bool checkAuth(const QString &actID);
 };
 
 FILE_ENCRYPT_END_NS
