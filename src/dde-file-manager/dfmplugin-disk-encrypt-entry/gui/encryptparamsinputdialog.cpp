@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include "dfmplugin_disk_encrypt_global.h"
 #include "encryptparamsinputdialog.h"
 #include "utils/encryptutils.h"
 
@@ -11,11 +12,16 @@
 #include <QFormLayout>
 #include <QStackedLayout>
 #include <QDebug>
+#include <QFutureWatcher>
+#include <QEventLoop>
+#include <QtConcurrent/QtConcurrent>
+#include <QAbstractButton>
 
 #include <DDialog>
 #include <DPasswordEdit>
 #include <DComboBox>
 #include <DFileChooserEdit>
+#include <DSpinner>
 
 using namespace dfmplugin_diskenc;
 DWIDGET_USE_NAMESPACE
@@ -35,10 +41,18 @@ EncryptParamsInputDialog::EncryptParamsInputDialog(const QString &dev, QWidget *
 
 ParamsInputs EncryptParamsInputDialog::getInputs()
 {
+    QString password;
+    if (kTPMAndPIN == encType->currentIndex() || kTPMOnly == encType->currentIndex()) {
+        password = tpmPassword;
+        tpmPassword.clear();
+    } else if (kPasswordOnly == encType->currentIndex()) {
+        password = encKeyEdit1->text();
+    }
+
     return { device,
              "",
              static_cast<SecKeyType>(encType->currentIndex()),
-             encKeyEdit1->text(),
+             password,
              keyExportInput->text() };
 }
 
@@ -107,8 +121,12 @@ QWidget *EncryptParamsInputDialog::createPasswordPage()
                         tr("Use PIN code to unlock on this computer (recommended)"),
                         tr("Automatic unlocking on this computer") });
 
-    encType->setCurrentIndex(kTPMAndPIN);
-    onEncTypeChanged(kTPMAndPIN);
+    encType->setCurrentIndex(kPasswordOnly);
+    onEncTypeChanged(kPasswordOnly);
+    if (!encrypt_utils::hasTPM()) {
+        encType->setItemData(kTPMAndPIN, QVariant(0), Qt::UserRole - 1);
+        encType->setItemData(kTPMOnly, QVariant(0), Qt::UserRole - 1);
+    }
 
     return wid;
 }
@@ -240,6 +258,10 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
         }
     } else if (currPage == kConfirmPage) {
         qDebug() << "confirm encrypt device: " << device;
+        if (encType->currentIndex() == kTPMAndPIN || encType->currentIndex() == kTPMOnly) {
+            if (!encryptByTpm(device))
+                return;
+        }
         accept();
     } else {
         qWarning() << "button triggered in wrong page!" << currPage << idx;
@@ -292,4 +314,57 @@ void EncryptParamsInputDialog::onEncTypeChanged(int type)
     } else {
         qWarning() << "wrong encrypt type!" << type;
     }
+}
+
+bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
+{
+    QString password { "" };
+    if (!encrypt_utils::getRandomByTPM(kPasswordSize, &password) || password.isEmpty()) {
+        qCritical() << "TPM get random number failed!";
+        return false;
+    }
+
+    const QString dirPath = kTPMKeyPath + deviceName;
+    QDir dir(dirPath);
+    if (!dir.exists())
+        dir.mkpath(dirPath);
+
+    if (getButton(0))
+        getButton(0)->setEnabled(false);
+    const QString hashAlgo = kTPMHashAlgo;
+    const QString keyAlgo = kTPMKeyAlgo;
+    const QString pinCode = (encType->currentIndex() == kTPMOnly ? "" : encKeyEdit1->text());
+    QFutureWatcher<bool> watcher;
+    QEventLoop loop;
+    QFuture<bool> future = QtConcurrent::run([hashAlgo, keyAlgo, pinCode, password, dirPath]{
+        return encrypt_utils::encryptByTPM(hashAlgo, keyAlgo, pinCode, password, dirPath);
+    });
+    connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop]{
+        if (watcher.result())
+            loop.exit(0);
+        else
+            loop.exit(-1);
+    });
+    watcher.setFuture(future);
+
+    DSpinner spinner(this);
+    spinner.setFixedSize(50, 50);
+    spinner.move((width() - spinner.width())/2, (height() - spinner.height())/2);
+    spinner.start();
+    spinner.show();
+
+    int re = loop.exec();
+    bool result = (re == 0 ? true : false);
+    if (!result) {
+        qCritical() << "TPM encrypt failed!";
+        if (getButton(0))
+            getButton(0)->setEnabled(true);
+        return false;
+    }
+    if (getButton(0))
+        getButton(0)->setEnabled(true);
+
+    tpmPassword = password;
+
+    return true;
 }

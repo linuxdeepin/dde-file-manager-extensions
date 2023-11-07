@@ -60,6 +60,8 @@ protected Q_SLOTS:
     void onEncTypeChanged(int type);
 
 private:
+    bool encryptByTpm(const QString &deviceName);
+
     DTK_WIDGET_NAMESPACE::DComboBox *encType { nullptr };
     DTK_WIDGET_NAMESPACE::DPasswordEdit *encKeyEdit1 { nullptr };
     DTK_WIDGET_NAMESPACE::DPasswordEdit *encKeyEdit2 { nullptr };
@@ -73,6 +75,7 @@ private:
     QStackedLayout *pagesLay { nullptr };
 
     QString device;
+    QString tpmPassword;
 };
 
 }

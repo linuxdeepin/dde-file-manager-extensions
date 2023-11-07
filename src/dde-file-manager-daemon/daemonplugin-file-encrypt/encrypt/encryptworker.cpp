@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QFile>
 #include <QDir>
+#include <QRegularExpression>
 
 FILE_ENCRYPT_USE_NS
 
@@ -114,7 +115,7 @@ EncryptJobError PrencryptWorker::setFstabTimeout()
     QList<QStringList> fstabItems;
     bool foundItem = false;
     for (const QString &line : fstabLines) {
-        QStringList items = line.split(QRegularExpression(R"(\t| )"), Qt::SkipEmptyParts);
+        QStringList items = line.split(QRegularExpression(R"(\t| )"), QString::SkipEmptyParts);
         if (items.count() == 6
             && (items[0] == devDesc || items[0] == devUUID)
             && !foundItem) {
@@ -161,7 +162,7 @@ void ReencryptWorker::run()
     QStringList uncompleted;
 
     for (const auto &resumeItem : resumeList) {
-        QStringList devInfo = resumeItem.split(" ", Qt::SkipEmptyParts);
+        QStringList devInfo = resumeItem.split(" ", QString::SkipEmptyParts);
         if (devInfo.count() != 2)
             return;
         int ret = disk_encrypt_funcs::bcResumeReencrypt(devInfo[0],

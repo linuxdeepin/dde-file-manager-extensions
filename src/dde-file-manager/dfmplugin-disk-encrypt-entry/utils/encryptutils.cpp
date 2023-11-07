@@ -3,17 +3,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "encryptutils.h"
-
 #include <dconfig.h>
 #include <fstab.h>
+#include <dfm-framework/event/event.h>
+
+Q_DECLARE_METATYPE(bool *)
+Q_DECLARE_METATYPE(QString *)
 
 using namespace dfmplugin_diskenc;
-
-bool encrypt_utils::hasTPM()
-{
-    // TODO(xust): impl me
-    return true;
-}
 
 bool config_utils::exportKeyEnabled()
 {
@@ -48,4 +45,30 @@ bool fstab_utils::isFstabItem(const QString &mpt)
     }
     endfsent();
     return fstabed;
+}
+
+bool encrypt_utils::hasTPM()
+{
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailable").toBool();
+}
+
+bool encrypt_utils::getRandomByTPM(int size, QString *output)
+{
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPM", size, output).toBool();
+}
+
+bool encrypt_utils::isSupportAlgoByTPM(const QString &algoName, bool *support)
+{
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgo", algoName, support).toBool();
+}
+
+bool encrypt_utils::encryptByTPM(const QString &hashAlgo, const QString &keyAlgo, const QString &keyPin, const QString &password, const QString &dirPath)
+{
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPM", hashAlgo, keyAlgo, keyPin, password, dirPath).toBool();
+}
+
+bool encrypt_utils::decryptByTPM(const QString &keyPin, const QString &dirPath, QString *psw)
+{
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_DecryptByTPM", keyPin, dirPath, psw).toBool();
+
 }

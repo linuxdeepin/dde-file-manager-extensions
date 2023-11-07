@@ -10,6 +10,13 @@
 namespace dfmplugin_diskenc {
 namespace encrypt_utils {
 bool hasTPM();
+bool getRandomByTPM(int size, QString *output);
+bool isSupportAlgoByTPM(const QString &algoName, bool *support);
+bool encryptByTPM(const QString &hashAlgo, const QString &keyAlgo,
+                  const QString &keyPin, const QString &password,
+                  const QString &dirPath);
+bool decryptByTPM(const QString &keyPin, const QString &dirPath, QString *psw);
+bool exportKeyEnabled();
 }   // namespace encrypt_utils
 
 namespace config_utils {
