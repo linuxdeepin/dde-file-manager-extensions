@@ -27,8 +27,9 @@ inline constexpr char kKeyDevice[] { "device" };
 inline constexpr char kKeyUUID[] { "uuid" };
 inline constexpr char kKeyEncMode[] { "mode" };
 inline constexpr char kKeyPassphrase[] { "passphrase" };
+inline constexpr char kKeyOldPassphrase[] { "oldPassphrase" };
 inline constexpr char kKeyCipher[] { "cipher" };
-inline constexpr char kKeyRecoveryExportPath[] { "recoveryPath" };
+inline constexpr char kKeyRecoveryExportPath[] { "exportRecKeyTo" };
 inline constexpr char kKeyInitParamsOnly[] { "initParamsOnly" };
 }   // namespace encrypt_param_keys
 

@@ -23,13 +23,13 @@ public:
 public Q_SLOTS:
     QString PrepareEncryptDisk(const QVariantMap &params);
     QString DecryptDisk(const QVariantMap &params);
-    QString ModifyEncryptPassphress(const QVariantMap &params);
+    QString ChangeEncryptPassphress(const QVariantMap &params);
 
 Q_SIGNALS:
-    void EncryptDiskPrepareResult(const QString &device, const QString &jobID, int errCode);
+    void PrepareEncryptDiskResult(const QString &device, const QString &jobID, int errCode);
     void EncryptDiskResult(const QString &device, int errCode);
     void DecryptDiskResult(const QString &device, const QString &jobID, int errCode);
-    void ModifyEncryptPassphressResult(const QString &device, const QString &jobID, int errCode);
+    void ChangePassphressResult(const QString &device, const QString &jobID, int errCode);
     void EncryptProgress(const QString &device, double progress);
     void DecryptProgress(const QString &device, double progress);
 

@@ -84,8 +84,10 @@ void EncryptParamsInputDialog::initUi()
 
 void EncryptParamsInputDialog::initConn()
 {
-    connect(pagesLay, &QStackedLayout::currentChanged, this, &EncryptParamsInputDialog::onPageChanged);
-    connect(this, &EncryptParamsInputDialog::buttonClicked, this, &EncryptParamsInputDialog::onButtonClicked);
+    connect(pagesLay, &QStackedLayout::currentChanged,
+            this, &EncryptParamsInputDialog::onPageChanged);
+    connect(this, &EncryptParamsInputDialog::buttonClicked,
+            this, &EncryptParamsInputDialog::onButtonClicked);
     connect(encType, static_cast<void (DComboBox::*)(int)>(&DComboBox::currentIndexChanged),
             this, &EncryptParamsInputDialog::onEncTypeChanged);
 }
@@ -148,7 +150,7 @@ QWidget *EncryptParamsInputDialog::createExportPage()
     hint->setAlignment(Qt::AlignCenter);
 
     keyExportInput = new DFileChooserEdit(this);
-    //    keyExportInput->setFileMode(QFileDialog::DirectoryOnly);
+    keyExportInput->setFileMode(QFileDialog::DirectoryOnly);
     lay->addWidget(keyExportInput);
 
     keyExportInput->setPlaceholderText(tr("Please select a non-encrypted partition as the key file export path."));

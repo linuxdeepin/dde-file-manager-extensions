@@ -22,6 +22,7 @@ enum class EncryptJobError {
     kDecryptFailed = -7,
     kFstabOpenFailed = -8,
     kUserCancelled = -9,
+    kChgPassphraseFailed = -10,
 };
 
 class Worker : public QThread
@@ -96,6 +97,21 @@ public:
 protected:
     void run() override;
     EncryptJobError writeDecryptParams();
+
+private:
+    QVariantMap params;
+};
+
+class ChgPassWorker : public Worker
+{
+    Q_OBJECT
+public:
+    explicit ChgPassWorker(const QString &jobID,
+                           const QVariantMap &params,
+                           QObject *parent = nullptr);
+
+protected:
+    void run() override;
 
 private:
     QVariantMap params;

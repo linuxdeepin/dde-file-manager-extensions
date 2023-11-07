@@ -211,3 +211,21 @@ EncryptJobError DecryptWorker::writeDecryptParams()
 {
     return EncryptJobError::kNoError;
 }
+
+ChgPassWorker::ChgPassWorker(const QString &jobID, const QVariantMap &params, QObject *parent)
+    : Worker(jobID, parent),
+      params(params)
+{
+}
+
+void ChgPassWorker::run()
+{
+    QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
+    QString oldPass = params.value(encrypt_param_keys::kKeyOldPassphrase).toString();
+    QString newPass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+
+    int ret = disk_encrypt_funcs::bcChangePassphrase(dev,
+                                                     oldPass,
+                                                     newPass);
+    setExitCode(ret < 0 ? EncryptJobError::kChgPassphraseFailed : EncryptJobError::kNoError);
+}

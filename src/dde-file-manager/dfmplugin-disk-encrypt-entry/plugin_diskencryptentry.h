@@ -32,6 +32,7 @@ protected Q_SLOTS:
     void onEncryptProgress(const QString &, double);
     void onDecryptResult(const QString &, const QString &, int);
     void onDecryptProgress(const QString &, double);
+    void onChgPassphraseResult(const QString &, const QString &, int);
 
 private:
     void onComputerMenuSceneAdded(const QString &scene);
