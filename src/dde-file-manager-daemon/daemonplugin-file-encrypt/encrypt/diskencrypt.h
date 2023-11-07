@@ -36,7 +36,7 @@ EncryptError bcInitHeaderFile(const EncryptParams &params, QString &headerPath);
 QString bcDoSetupHeader(const EncryptParams &params);
 int bcInitHeaderDevice(const QString &device, const QString &passphrase, const QString &headerPath);
 int bcResumeReencrypt(const QString &device, const QString &passphrase);
-int bcChangeEncryptPwd(const QString &device, const QString &passphrase);
+int bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase);
 int bcDecryptDevice(const QString &device, const QString &passphrase);
 int bcBackupCryptHeader(const QString &device, QString &headerPath);
 
@@ -51,6 +51,7 @@ bool bcValidateParams(const EncryptParams &params);
 void bcCachePendingEncryptInfo(const QString &device, const QString &passphrase);
 void bcClearCachedPendingList();
 QStringList bcResumeDeviceList();
+QString bcExportRecoveryFile(const EncryptParams &params);
 }   // namespace disk_encrypt_utils
 
 namespace block_device_utils {

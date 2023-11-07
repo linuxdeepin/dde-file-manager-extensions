@@ -8,10 +8,13 @@
 #include <QDebug>
 #include <QFile>
 #include <QTextStream>
+#include <QDir>
+#include <QFile>
 
 #include <dfm-base/utils/finallyutil.h>
 #include <dfm-mount/dmount.h>
 
+#include <usec-recoverykey.h>
 #include <libcryptsetup.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -24,7 +27,6 @@ static constexpr char kResumeList[] { "/etc/resume_encrypt_list.txt" };
 // used to record current reencrypting device.
 QString gCurrReencryptingDevice;
 QString gCurrDecryptintDevice;
-int gNotifyHandler = 0;
 
 EncryptParams disk_encrypt_utils::bcConvertEncParams(const QVariantMap &params)
 {
@@ -240,6 +242,21 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
                    << params.device
                    << ret;
         return "";
+    }
+
+    QString recKey = disk_encrypt_utils::bcExportRecoveryFile(params);
+    if (!recKey.isEmpty()) {
+        ret = crypt_keyslot_add_by_volume_key(cdev,
+                                              CRYPT_ANY_SLOT,
+                                              nullptr,
+                                              0,
+                                              recKey.toStdString().c_str(),
+                                              recKey.length());
+        if (ret < 0) {
+            qWarning() << "add recovery key failed:"
+                       << params.device
+                       << ret;
+        }
     }
 
     // Initialize reencryption metadata using passphrase.
@@ -666,4 +683,82 @@ int disk_encrypt_funcs::bcDecryptProgress(uint64_t size, uint64_t offset, void *
     SignalEmitter::instance()->updateDecryptProgress(gCurrDecryptintDevice,
                                                      double(offset) / size);
     return 0;
+}
+
+int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase)
+{
+    struct crypt_device *cdev { nullptr };
+
+    int ret = crypt_init_data_device(&cdev,
+                                     device.toStdString().c_str(),
+                                     /*device.toStdString().c_str()*/ nullptr);
+    if (ret < 0) {
+        qWarning() << "cannot init crypt device!"
+                   << device
+                   << ret;
+    }
+
+    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
+    if (ret < 0) {
+        qWarning() << "cannot load crypt device!"
+                   << device
+                   << ret;
+        return ret;
+    }
+
+    ret = crypt_keyslot_change_by_passphrase(cdev,
+                                             CRYPT_ANY_SLOT,
+                                             CRYPT_ANY_SLOT,
+                                             oldPassphrase.toStdString().c_str(),
+                                             oldPassphrase.length(),
+                                             newPassphrase.toStdString().c_str(),
+                                             newPassphrase.length());
+    if (ret < 0) {
+        qWarning() << "cannot add passphrase by old passphrase!"
+                   << device
+                   << ret;
+        return ret;
+    }
+
+    return 0;
+}
+
+QString disk_encrypt_utils::bcExportRecoveryFile(const EncryptParams &params)
+{
+    if (!params.recoveryPath.isEmpty()) {
+        while (1) {
+            static const size_t kRecoveryKeySize = 20;
+            char recKey[kRecoveryKeySize + 1];
+            int ret = usec_get_recovery_key(recKey,
+                                            kRecoveryKeySize,
+                                            1);
+            if (ret != USEC_CRYPT_CODE_SUCCESS) {
+                qWarning() << "cannot generate recovery key!"
+                           << ret;
+                break;
+            }
+
+            if (!QDir(params.recoveryPath).exists()) {
+                qWarning() << "the recovery key path does not exists!"
+                           << params.recoveryPath;
+                break;
+            }
+
+            QString recFileName = QString("%1/%2_recovery_key.txt")
+                                          .arg(params.recoveryPath)
+                                          .arg(params.device.mid(5));
+            QFile recFile(recFileName);
+            if (!recFile.open(QIODevice::ReadWrite)) {
+                qWarning() << "cannot create recovery file!";
+                break;
+            }
+
+            recFile.write(recKey);
+            recFile.flush();
+            recFile.close();
+
+            return QString(recKey);
+        }
+    }
+    return "";
 }

@@ -4,7 +4,9 @@ Maintainer: Deepin Packages Builder <packages@linuxdeepin.com>
 Build-Depends:
  cmake,
  debhelper (>= 11),
- dde-file-manager
+ dde-file-manager,
+ cryptsetup (>= 2.3.7),
+ usec-recoverykey
 Standards-Version: 4.1.3
 Section: libs
 Homepage: http://www.deepin.org

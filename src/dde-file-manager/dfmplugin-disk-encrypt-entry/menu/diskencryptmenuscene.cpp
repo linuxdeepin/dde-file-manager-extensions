@@ -6,6 +6,7 @@
 #include "diskencryptmenuscene.h"
 #include "gui/encryptparamsinputdialog.h"
 #include "gui/decryptparamsinputdialog.h"
+#include "gui/chgpassphrasedialog.h"
 #include "utils/encryptutils.h"
 
 #include <dfm-base/dfm_menu_defines.h>
@@ -32,6 +33,15 @@ using namespace dfmplugin_diskenc;
 static constexpr char kActIDEncrypt[] { "de_0_encrypt" };
 static constexpr char kActIDDecrypt[] { "de_1_decrypt" };
 static constexpr char kActIDChangePwd[] { "de_2_changePwd" };
+
+inline constexpr char kKeyDevice[] { "device" };
+inline constexpr char kKeyUUID[] { "uuid" };
+inline constexpr char kKeyEncMode[] { "mode" };
+inline constexpr char kKeyPassphrase[] { "passphrase" };
+inline constexpr char kKeyOldPassphrase[] { "oldPassphrase" };
+inline constexpr char kKeyCipher[] { "cipher" };
+inline constexpr char kKeyRecoveryExportPath[] { "exportRecKeyTo" };
+inline constexpr char kKeyInitParamsOnly[] { "initParamsOnly" };
 
 DiskEncryptMenuScene::DiskEncryptMenuScene(QObject *parent)
     : AbstractMenuScene(parent)
@@ -113,7 +123,7 @@ bool DiskEncryptMenuScene::triggered(QAction *action)
     else if (actID == kActIDDecrypt)
         operatingFstabDevice ? deencryptDevice(devDesc, uuid, true) : unmountBefore(deencryptDevice);
     else if (actID == kActIDChangePwd)
-        operatingFstabDevice ? changePassphrase(devDesc, uuid, true) : unmountBefore(changePassphrase);
+        changePassphrase(devDesc, uuid, true);
     else
         return false;
     return true;
@@ -173,6 +183,15 @@ void DiskEncryptMenuScene::deencryptDevice(const QString &dev, const QString & /
 
 void DiskEncryptMenuScene::changePassphrase(const QString &dev, const QString & /*uuid*/, bool paramsOnly)
 {
+    ChgPassphraseDialog *dlg = new ChgPassphraseDialog(dev);
+    connect(dlg, &ChgPassphraseDialog::finished, qApp, [=](int result) {
+        dlg->deleteLater();
+        if (result == 1) {
+            auto inputs = dlg->getPassphrase();
+            doChangePassphrase(dev, inputs.second, inputs.first);
+        }
+    });
+    dlg->show();
 }
 
 void DiskEncryptMenuScene::doEncryptDevice(const ParamsInputs &inputs)
@@ -184,12 +203,13 @@ void DiskEncryptMenuScene::doEncryptDevice(const ParamsInputs &inputs)
                          QDBusConnection::systemBus());
     if (iface.isValid()) {
         QVariantMap params {
-            { "device", inputs.devDesc },
-            { "uuid", inputs.uuid },
-            { "cipher", config_utils::cipherType() },
-            { "passphrase", inputs.key },
-            { "initParamsOnly", inputs.initOnly },
-            { "mode", inputs.type },
+            { kKeyDevice, inputs.devDesc },
+            { kKeyUUID, inputs.uuid },
+            { kKeyCipher, config_utils::cipherType() },
+            { kKeyPassphrase, inputs.key },
+            { kKeyInitParamsOnly, inputs.initOnly },
+            { kKeyRecoveryExportPath, inputs.exportPath },
+            { kKeyEncMode, inputs.type },
         };
         QDBusReply<QString> reply = iface.call("PrepareEncryptDisk", params);
         qDebug() << "preencrypt device jobid:" << reply.value();
@@ -206,12 +226,30 @@ void DiskEncryptMenuScene::doDecryptDevice(const QString &dev, const QString &pa
                          QDBusConnection::systemBus());
     if (iface.isValid()) {
         QVariantMap params {
-            { "device", dev },
-            { "passphrase", passphrase },
-            { "initParamsOnly", paramsOnly }
+            { kKeyDevice, dev },
+            { kKeyPassphrase, passphrase },
+            { kKeyInitParamsOnly, paramsOnly }
         };
         QDBusReply<QString> reply = iface.call("DecryptDisk", params);
         qDebug() << "preencrypt device jobid:" << reply.value();
+    }
+}
+
+void DiskEncryptMenuScene::doChangePassphrase(const QString &dev, const QString oldPass, const QString &newPass)
+{
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    if (iface.isValid()) {
+        QVariantMap params {
+            { kKeyDevice, dev },
+            { kKeyPassphrase, newPass },
+            { kKeyOldPassphrase, oldPass }
+        };
+        QDBusReply<QString> reply = iface.call("ChangeEncryptPassphress", params);
+        qDebug() << "modify device passphrase jobid:" << reply.value();
+        QApplication::setOverrideCursor(Qt::WaitCursor);
     }
 }
 

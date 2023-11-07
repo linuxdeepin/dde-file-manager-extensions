@@ -51,7 +51,7 @@ void DiskEncryptEntry::connectDaemonSignals()
     QDBusConnection::systemBus().connect(kDaemonBusName,
                                          kDaemonBusPath,
                                          kDaemonBusIface,
-                                         "EncryptDiskPrepareResult",
+                                         "PrepareEncryptDiskResult",
                                          this,
                                          SLOT(onPreencryptResult(const QString &, const QString &, int)));
 
@@ -82,6 +82,13 @@ void DiskEncryptEntry::connectDaemonSignals()
                                          "DecryptProgress",
                                          this,
                                          SLOT(onDecryptProgress(const QString &, double)));
+
+    QDBusConnection::systemBus().connect(kDaemonBusName,
+                                         kDaemonBusPath,
+                                         kDaemonBusIface,
+                                         "ChangePassphressResult",
+                                         this,
+                                         SLOT(onChgPassphraseResult(const QString &, const QString &, int)));
 }
 
 void DiskEncryptEntry::onPreencryptResult(const QString &dev, const QString &, int code)
@@ -189,6 +196,35 @@ void DiskEncryptEntry::onDecryptProgress(const QString &dev, double progress)
         decryptDialogs.insert(dev, new EncryptProcessDialog(tr("Decrypting...%1").arg(dev)));
     auto dlg = decryptDialogs.value(dev);
     dlg->updateProgress(progress);
+    dlg->show();
+}
+
+void DiskEncryptEntry::onChgPassphraseResult(const QString &dev, const QString &, int code)
+{
+    QString title;
+    QString msg;
+    switch (code) {
+    case (EncryptJobError::kNoError):
+        title = tr("Change passphrase done");
+        msg = tr("%1's passphrase has been changed").arg(dev);
+        break;
+    case EncryptJobError::kUserCancelled:
+        title = tr("Change passphrase");
+        msg = tr("User cancelled operation");
+        break;
+    default:
+        title = tr("Change passphrase failed");
+        msg = tr("Device %1 change passphrase failed, please see log for more information.(%2)")
+                      .arg(dev)
+                      .arg(code);
+        break;
+    }
+
+    DDialog *dlg = new DDialog;
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->setTitle(title);
+    dlg->setMessage(msg);
+    dlg->addButton(tr("Confirm"));
     dlg->show();
 }
 

@@ -51,6 +51,7 @@ protected:
 
     static void doEncryptDevice(const ParamsInputs &inputs);
     static void doDecryptDevice(const QString &dev, const QString &passphrase, bool paramsOnly);
+    static void doChangePassphrase(const QString &dev, const QString oldPass, const QString &newPass);
 
     void unmountBefore(const std::function<void(const QString &, const QString &, bool)> &after);
     enum OpType { kUnmount,

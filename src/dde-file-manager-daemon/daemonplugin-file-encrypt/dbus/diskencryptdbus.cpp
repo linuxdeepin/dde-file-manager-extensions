@@ -59,7 +59,7 @@ DiskEncryptDBus::~DiskEncryptDBus()
 QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
 {
     if (!checkAuth(kActionEncrypt)) {
-        Q_EMIT EncryptDiskPrepareResult(params.value(encrypt_param_keys::kKeyDevice).toString(),
+        Q_EMIT PrepareEncryptDiskResult(params.value(encrypt_param_keys::kKeyDevice).toString(),
                                         "",
                                         static_cast<int>(EncryptJobError::kUserCancelled));
         return "";
@@ -72,7 +72,7 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
     connect(worker, &QThread::finished, this, [=] {
         EncryptJobError ret = worker->exitError();
         QString device = params.value(encrypt_param_keys::kKeyDevice).toString();
-        Q_EMIT this->EncryptDiskPrepareResult(device,
+        Q_EMIT this->PrepareEncryptDiskResult(device,
                                               jobID,
                                               static_cast<int>(ret));
         qDebug() << "pre encrypt finished"
@@ -115,19 +115,28 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
     return jobID;
 }
 
-QString DiskEncryptDBus::ModifyEncryptPassphress(const QVariantMap &params)
+QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
 {
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     if (!checkAuth(kActionChgPwd)) {
-        Q_EMIT ModifyEncryptPassphressResult(dev,
+        Q_EMIT ChangePassphressResult(dev,
                                              "",
                                              static_cast<int>(EncryptJobError::kUserCancelled));
         return "";
     }
 
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
-    qDebug() << "yeah! you invoked me" << __FUNCTION__;
-    qDebug() << "with params: " << params;
+    ChgPassWorker *worker = new ChgPassWorker(jobID, params, this);
+    connect(worker, &QThread::finished, this, [=] {
+        EncryptJobError ret = worker->exitError();
+        QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
+        qDebug() << "change password finished:"
+                 << dev
+                 << static_cast<int>(ret);
+        Q_EMIT ChangePassphressResult(dev, jobID, static_cast<int>(ret));
+        worker->deleteLater();
+    });
+    worker->start();
     return jobID;
 }
 
