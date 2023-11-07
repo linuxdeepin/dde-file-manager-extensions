@@ -6,6 +6,8 @@
 #define DFMPLUGIN_DISK_ENCRYPT_GLOBAL_H
 
 #include <QtCore/qglobal.h>
+#include <QDir>
+#include <QString>
 
 #if defined(DFMPLUGIN_DISK_ENCRYPT_LIBRARY)
 #    define DFMPLUGIN_DISK_ENCRYPT_EXPORT Q_DECL_EXPORT
@@ -29,5 +31,10 @@ enum EncryptJobError {
     kFstabOpenFailed = -8,
     kUserCancelled = -9,
 };
+
+inline constexpr int kPasswordSize { 32 };
+inline const QString kTPMKeyPath(QDir::homePath() + "/.TPMKey");
+inline constexpr char kTPMHashAlgo[] { "sha256" };
+inline constexpr char kTPMKeyAlgo[] { "aes" };
 
 #endif   // DFMPLUGIN_DISK_ENCRYPT_GLOBAL_H

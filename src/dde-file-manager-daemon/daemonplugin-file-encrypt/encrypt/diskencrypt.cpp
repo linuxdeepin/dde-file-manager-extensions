@@ -102,7 +102,7 @@ QStringList disk_encrypt_utils::bcResumeDeviceList()
     QByteArray data = f.readAll();
     f.close();
 
-    QStringList resumeList = QString(data).split("\n", Qt::SkipEmptyParts);
+    QStringList resumeList = QString(data).split("\n", QString::SkipEmptyParts);
     return resumeList;
 }
 
