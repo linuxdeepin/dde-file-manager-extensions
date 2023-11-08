@@ -170,15 +170,55 @@ void DiskEncryptMenuScene::encryptDevice(const QString &dev, const QString &uuid
 
 void DiskEncryptMenuScene::deencryptDevice(const QString &dev, const QString & /*uuid*/, bool paramsOnly)
 {
-    DecryptParamsInputDialog *dlg = new DecryptParamsInputDialog(dev);
-    connect(dlg, &DecryptParamsInputDialog::finished, qApp, [=](int result) {
-        dlg->deleteLater();
-        if (result == 0) {
-            auto inputs = dlg->getInputs();
+    QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
+    int type = sets.value(DEV_KEY.arg(dev.mid(5)), -1).toInt();
+
+    auto showTPMError = [] {
+        Dtk::Widget::DDialog dlg;
+        dlg.setTitle(tr("TPM error"));
+        dlg.setMessage(tr("Cannot acquire passphrase from TPM"));
+        dlg.addButton(tr("Confirm"));
+        dlg.exec();
+    };
+
+    DecryptParamsInputDialog dlg(dev);
+    switch (type) {
+    case SecKeyType::kTPMAndPIN: {
+        if (dlg.exec() != 0)
+            return;
+
+        auto inputs = dlg.getInputs();
+        auto pin = inputs.second;
+        QString pwd;
+        bool ok = tpm_utils::decryptByTPM(pin, kTPMKeyPath + dev, &pwd);
+        if (!ok) {
+            showTPMError();
+            return;
+        }
+        qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   TPM pwd for device:"
+                << dev
+                << pwd;
+        doDecryptDevice(dev, pwd, paramsOnly);
+    } break;
+    case SecKeyType::kTPMOnly: {
+        QString pwd;
+        bool ok = tpm_utils::decryptByTPM("", kTPMKeyPath + dev, &pwd);
+        if (!ok) {
+            showTPMError();
+            return;
+        }
+        qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   TPM pwd for device:"
+                << dev
+                << pwd;
+        doDecryptDevice(dev, pwd, paramsOnly);
+    } break;
+    default:
+        if (dlg.exec() == 0) {
+            auto inputs = dlg.getInputs();
             doDecryptDevice(inputs.first, inputs.second, paramsOnly);
         }
-    });
-    dlg->show();
+        break;
+    }
 }
 
 void DiskEncryptMenuScene::changePassphrase(const QString &dev, const QString & /*uuid*/, bool paramsOnly)

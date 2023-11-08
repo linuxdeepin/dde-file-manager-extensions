@@ -123,11 +123,15 @@ QWidget *EncryptParamsInputDialog::createPasswordPage()
                         tr("Use PIN code to unlock on this computer (recommended)"),
                         tr("Automatic unlocking on this computer") });
 
-    encType->setCurrentIndex(kPasswordOnly);
-    onEncTypeChanged(kPasswordOnly);
-    if (!encrypt_utils::hasTPM()) {
+    if (!tpm_utils::hasTPM()) {
         encType->setItemData(kTPMAndPIN, QVariant(0), Qt::UserRole - 1);
         encType->setItemData(kTPMOnly, QVariant(0), Qt::UserRole - 1);
+
+        encType->setCurrentIndex(kPasswordOnly);
+        onEncTypeChanged(kPasswordOnly);
+    } else {
+        encType->setCurrentIndex(kTPMAndPIN);
+        onEncTypeChanged(kTPMAndPIN);
     }
 
     return wid;
@@ -321,7 +325,7 @@ void EncryptParamsInputDialog::onEncTypeChanged(int type)
 bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
 {
     QString password { "" };
-    if (!encrypt_utils::getRandomByTPM(kPasswordSize, &password) || password.isEmpty()) {
+    if (!tpm_utils::getRandomByTPM(kPasswordSize, &password) || password.isEmpty()) {
         qCritical() << "TPM get random number failed!";
         return false;
     }
@@ -338,10 +342,10 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
     const QString pinCode = (encType->currentIndex() == kTPMOnly ? "" : encKeyEdit1->text());
     QFutureWatcher<bool> watcher;
     QEventLoop loop;
-    QFuture<bool> future = QtConcurrent::run([hashAlgo, keyAlgo, pinCode, password, dirPath]{
-        return encrypt_utils::encryptByTPM(hashAlgo, keyAlgo, pinCode, password, dirPath);
+    QFuture<bool> future = QtConcurrent::run([hashAlgo, keyAlgo, pinCode, password, dirPath] {
+        return tpm_utils::encryptByTPM(hashAlgo, keyAlgo, pinCode, password, dirPath);
     });
-    connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop]{
+    connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop] {
         if (watcher.result())
             loop.exit(0);
         else
@@ -351,7 +355,7 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
 
     DSpinner spinner(this);
     spinner.setFixedSize(50, 50);
-    spinner.move((width() - spinner.width())/2, (height() - spinner.height())/2);
+    spinner.move((width() - spinner.width()) / 2, (height() - spinner.height()) / 2);
     spinner.start();
     spinner.show();
 
@@ -367,6 +371,10 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
         getButton(0)->setEnabled(true);
 
     tpmPassword = password;
+
+    qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   create TPM pwd for device:"
+            << device
+            << password;
 
     return true;
 }

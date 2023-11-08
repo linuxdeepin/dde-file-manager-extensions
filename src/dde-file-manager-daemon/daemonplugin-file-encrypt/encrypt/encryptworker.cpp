@@ -9,8 +9,12 @@
 #include <QFile>
 #include <QDir>
 #include <QRegularExpression>
+#include <QSettings>
 
 FILE_ENCRYPT_USE_NS
+
+#define DEV_ENCTYPE_CFG "/etc/deepin/dde-file-manager/dev_enc_type.ini"
+#define DEV_KEY QString("device/%1")
 
 PrencryptWorker::PrencryptWorker(const QString &jobID,
                                  const QVariantMap &params,
@@ -22,10 +26,19 @@ PrencryptWorker::PrencryptWorker(const QString &jobID,
 
 void PrencryptWorker::run()
 {
+    auto recoredSets = [](const QString &k, int v) {
+        QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
+        sets.setValue(DEV_KEY.arg(k.mid(5)),
+                      v);
+    };
+
     if (params.value(encrypt_param_keys::kKeyInitParamsOnly, false).toBool()) {
         auto code = writeEncryptParams();
         setExitCode(code);
         setFstabTimeout();
+        if (code == EncryptJobError::kNoError)
+            recoredSets(params.value(encrypt_param_keys::kKeyDevice).toString(),
+                        params.value(encrypt_param_keys::kKeyEncMode).toInt());
         return;
     }
 
@@ -55,6 +68,9 @@ void PrencryptWorker::run()
                  << params;
         return;
     }
+
+    recoredSets(params.value(encrypt_param_keys::kKeyDevice).toString(),
+                params.value(encrypt_param_keys::kKeyEncMode).toInt());
 }
 
 EncryptJobError PrencryptWorker::writeEncryptParams()
@@ -190,6 +206,11 @@ DecryptWorker::DecryptWorker(const QString &jobID, const QVariantMap &params,
 
 void DecryptWorker::run()
 {
+    auto removeSets = [](const QString &k) {
+        QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
+        sets.remove(DEV_KEY.arg(k.mid(5)));
+    };
+
     bool initOnly = params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool();
     if (initOnly) {
         setExitCode(writeDecryptParams());
@@ -204,7 +225,9 @@ void DecryptWorker::run()
         qDebug() << "decrypt devcei failed"
                  << device
                  << ret;
+        return;
     }
+    removeSets(device);
 }
 
 EncryptJobError DecryptWorker::writeDecryptParams()

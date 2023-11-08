@@ -5,15 +5,21 @@
 #include "plugin_diskencryptentry.h"
 #include "menu/diskencryptmenuscene.h"
 #include "gui/encryptprocessdialog.h"
+#include "gui/acquirepindialog.h"
+#include "utils/encryptutils.h"
 
 #include <QApplication>
 #include <QDebug>
 #include <QDBusConnection>
 #include <QTranslator>
+#include <QSettings>
+
+#include <ddialog.h>
 
 static constexpr char kMenuPluginName[] { "dfmplugin_menu" };
 static constexpr char kComputerMenuSceneName[] { "ComputerMenu" };
 
+Q_DECLARE_METATYPE(QString *)
 using namespace dfmplugin_diskenc;
 
 bool hasComputerMenuRegisted()
@@ -43,52 +49,28 @@ bool DiskEncryptEntry::start()
 
     connectDaemonSignals();
 
+    dpfHookSequence->follow("dfmplugin_computer", "hook_Device_AcquireDevPwd",
+                            this, &DiskEncryptEntry::onAcquireDevicePwd);
+
     return true;
 }
 
 void DiskEncryptEntry::connectDaemonSignals()
 {
-    QDBusConnection::systemBus().connect(kDaemonBusName,
-                                         kDaemonBusPath,
-                                         kDaemonBusIface,
-                                         "PrepareEncryptDiskResult",
-                                         this,
-                                         SLOT(onPreencryptResult(const QString &, const QString &, int)));
-
-    QDBusConnection::systemBus().connect(kDaemonBusName,
-                                         kDaemonBusPath,
-                                         kDaemonBusIface,
-                                         "EncryptDiskResult",
-                                         this,
-                                         SLOT(onEncryptResult(const QString &, int)));
-
-    QDBusConnection::systemBus().connect(kDaemonBusName,
-                                         kDaemonBusPath,
-                                         kDaemonBusIface,
-                                         "EncryptProgress",
-                                         this,
-                                         SLOT(onEncryptProgress(const QString &, double)));
-
-    QDBusConnection::systemBus().connect(kDaemonBusName,
-                                         kDaemonBusPath,
-                                         kDaemonBusIface,
-                                         "DecryptDiskResult",
-                                         this,
-                                         SLOT(onDecryptResult(const QString &, const QString &, int)));
-
-    QDBusConnection::systemBus().connect(kDaemonBusName,
-                                         kDaemonBusPath,
-                                         kDaemonBusIface,
-                                         "DecryptProgress",
-                                         this,
-                                         SLOT(onDecryptProgress(const QString &, double)));
-
-    QDBusConnection::systemBus().connect(kDaemonBusName,
-                                         kDaemonBusPath,
-                                         kDaemonBusIface,
-                                         "ChangePassphressResult",
-                                         this,
-                                         SLOT(onChgPassphraseResult(const QString &, const QString &, int)));
+    auto conn = [this](const char *sig, const char *slot) {
+        QDBusConnection::systemBus().connect(kDaemonBusName,
+                                             kDaemonBusPath,
+                                             kDaemonBusIface,
+                                             sig,
+                                             this,
+                                             slot);
+    };
+    conn("PrepareEncryptDiskResult", SLOT(onPreencryptResult(const QString &, const QString &, int)));
+    conn("EncryptDiskResult", SLOT(onEncryptResult(const QString &, int)));
+    conn("EncryptProgress", SLOT(onEncryptProgress(const QString &, double)));
+    conn("DecryptDiskResult", SLOT(onDecryptResult(const QString &, const QString &, int)));
+    conn("DecryptProgress", SLOT(onDecryptProgress(const QString &, double)));
+    conn("ChangePassphressResult", SLOT(onChgPassphraseResult(const QString &, const QString &, int)));
 }
 
 void DiskEncryptEntry::onPreencryptResult(const QString &dev, const QString &, int code)
@@ -226,6 +208,51 @@ void DiskEncryptEntry::onChgPassphraseResult(const QString &dev, const QString &
     dlg->setMessage(msg);
     dlg->addButton(tr("Confirm"));
     dlg->show();
+}
+
+bool DiskEncryptEntry::onAcquireDevicePwd(const QString &dev, QString *pwd)
+{
+    if (!pwd)
+        return false;
+
+    auto showTPMError = [] {
+        DDialog dlg;
+        dlg.setTitle(tr("TPM Error"));
+        dlg.setMessage(tr("Cannot acquire key from TPM, please use recovery key to unlock device."));
+        dlg.addButton(tr("Confirm"));
+        dlg.exec();
+    };
+
+    QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
+    int type = sets.value(DEV_KEY.arg(dev.mid(5)), -1).toInt();
+    switch (type) {
+    case SecKeyType::kTPMAndPIN: {
+        AcquirePinDialog dlg(tr("Please input PIN to unlock device %1").arg(dev));
+        int ret = dlg.exec();
+        QString pin = dlg.getUerInputedPassword();
+        bool ok = tpm_utils::decryptByTPM(pin, kTPMKeyPath + dev, pwd);
+        if (!ok && ret == 1)
+            showTPMError();
+
+        qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   TPM pwd for device:"
+                << dev
+                << *pwd;
+        return ok;
+    }
+    case SecKeyType::kTPMOnly: {
+        bool ok = tpm_utils::decryptByTPM("", kTPMKeyPath + dev, pwd);
+        if (!ok)
+            showTPMError();
+        qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   TPM pwd for device:"
+                << dev
+                << *pwd;
+        return ok;
+    }
+    default:
+        return false;
+    }
+
+    return true;
 }
 
 void DiskEncryptEntry::onComputerMenuSceneAdded(const QString &scene)
