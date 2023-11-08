@@ -184,6 +184,7 @@ void DiskEncryptMenuScene::deencryptDevice(const QString &dev, const QString & /
     DecryptParamsInputDialog dlg(dev);
     switch (type) {
     case SecKeyType::kTPMAndPIN: {
+        dlg.setInputPIN(true);
         if (dlg.exec() != 0)
             return;
 

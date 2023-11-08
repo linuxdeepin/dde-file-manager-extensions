@@ -15,9 +15,15 @@ QPair<QString, QString> DecryptParamsInputDialog::getInputs()
     return { devDesc, editor->text() };
 }
 
+void DecryptParamsInputDialog::setInputPIN(bool pin)
+{
+    if (pin)
+        setTitle(tr("Please input TPM PIN of %1").arg(devDesc));
+}
+
 void DecryptParamsInputDialog::initUI()
 {
-    setTitle(tr("Please input passphrase or PIN of %1").arg(devDesc));
+    setTitle(tr("Please input passphrase of %1").arg(devDesc));
     editor = new Dtk::Widget::DPasswordEdit(this);
     addContent(editor);
     addButton(tr("Confirm"));
