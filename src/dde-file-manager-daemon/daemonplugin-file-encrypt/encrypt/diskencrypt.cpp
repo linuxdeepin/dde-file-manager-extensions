@@ -118,6 +118,46 @@ void disk_encrypt_utils::bcClearCachedPendingList()
     f.close();
 }
 
+QString disk_encrypt_utils::bcExportRecoveryFile(const EncryptParams &params)
+{
+    if (!params.recoveryPath.isEmpty()) {
+        while (1) {
+            static const size_t kRecoveryKeySize = 20;
+            char recKey[kRecoveryKeySize + 1];
+            int ret = usec_get_recovery_key(recKey,
+                                            kRecoveryKeySize,
+                                            1);
+            if (ret != USEC_CRYPT_CODE_SUCCESS) {
+                qWarning() << "cannot generate recovery key!"
+                           << ret;
+                break;
+            }
+
+            if (!QDir(params.recoveryPath).exists()) {
+                qWarning() << "the recovery key path does not exists!"
+                           << params.recoveryPath;
+                break;
+            }
+
+            QString recFileName = QString("%1/%2_recovery_key.txt")
+                                          .arg(params.recoveryPath)
+                                          .arg(params.device.mid(5));
+            QFile recFile(recFileName);
+            if (!recFile.open(QIODevice::ReadWrite)) {
+                qWarning() << "cannot create recovery file!";
+                break;
+            }
+
+            recFile.write(recKey);
+            recFile.flush();
+            recFile.close();
+
+            return QString(recKey);
+        }
+    }
+    return "";
+}
+
 EncryptError disk_encrypt_funcs::bcInitHeaderFile(const EncryptParams &params,
                                                   QString &headerPath)
 {
@@ -158,6 +198,9 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
 
     std::string cPath = localPath.toStdString();
     struct crypt_device *cdev { nullptr };
+    dfmbase::FinallyUtil finalClear([&] {
+        if (cdev) crypt_free(cdev);
+    });
 
     int ret = crypt_init(&cdev,
                          cPath.c_str());
@@ -167,8 +210,6 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
                    << params.device;
         return "";
     }
-
-    dfmbase::FinallyUtil finalClear([&] { crypt_free(cdev); });
 
     crypt_set_rng_type(cdev, CRYPT_RNG_RANDOM);
 
@@ -309,6 +350,8 @@ int disk_encrypt_funcs::bcInitHeaderDevice(const QString &device,
     }
 
     struct crypt_device *cdev { nullptr };
+    dfmbase::FinallyUtil f([&] {if (cdev) crypt_free(cdev); });
+
     int ret = crypt_init(&cdev,
                          device.toStdString().c_str());
     if (ret < 0) {
@@ -472,6 +515,8 @@ int disk_encrypt_funcs::bcBackupCryptHeader(const QString &device, QString &head
 {
     headerPath = "/tmp/dm_header_" + device.mid(5);
     struct crypt_device *cdev = nullptr;
+    dfmbase::FinallyUtil f([&] { if (cdev) crypt_free(cdev); });
+
     int ret = crypt_init(&cdev,
                          device.toStdString().c_str());
     if (ret < 0) {
@@ -480,8 +525,6 @@ int disk_encrypt_funcs::bcBackupCryptHeader(const QString &device, QString &head
                    << ret;
         return ret;
     }
-
-    dfmbase::FinallyUtil f([&] { crypt_free(cdev); });
 
     ret = crypt_header_backup(cdev,
                               nullptr,
@@ -503,6 +546,9 @@ int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
              << device;
 
     struct crypt_device *cdev { nullptr };
+    dfmbase::FinallyUtil f([&] {
+        if (cdev) crypt_free(cdev);
+    });
 
     int ret = crypt_init_data_device(&cdev,
                                      device.toStdString().c_str(),
@@ -577,9 +623,10 @@ int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
         return -6;
     }
     qInfo() << "encrypt finished" << gCurrReencryptingDevice;
+    gCurrReencryptingDevice.clear();
 
     // active device for expanding fs.
-    QString activeDev = QString("dm-%1").arg(gCurrReencryptingDevice.mid(5));
+    QString activeDev = QString("dm-%1").arg(device.mid(5));
     ret = crypt_activate_by_passphrase(cdev,
                                        activeDev.toStdString().c_str(),
                                        CRYPT_ANY_SLOT,
@@ -594,17 +641,20 @@ int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
         return -7;
     }
 
-    crypt_free(cdev);
-
     fs_resize::expandFileSystem_ext(QString("/dev/mapper/%1").arg(activeDev));
 
-    gCurrReencryptingDevice.clear();
+    ret = crypt_deactivate(nullptr,
+                           activeDev.toStdString().c_str());
+    if (ret < 0) {
+        qWarning() << "cannot deactive device."
+                   << device
+                   << ret;
+    }
+
     return 0;
 }
 
-int disk_encrypt_funcs::bcEncryptProgress(uint64_t size,
-                                          uint64_t offset,
-                                          void *usrptr)
+int disk_encrypt_funcs::bcEncryptProgress(uint64_t size, uint64_t offset, void *usrptr)
 {
     qInfo() << "encrypting..."
             << size
@@ -613,6 +663,56 @@ int disk_encrypt_funcs::bcEncryptProgress(uint64_t size,
             << gCurrReencryptingDevice;
     SignalEmitter::instance()->updateEncryptProgress(gCurrReencryptingDevice,
                                                      double(offset) / size);
+    return 0;
+}
+
+int disk_encrypt_funcs::bcDecryptProgress(uint64_t size, uint64_t offset, void *usrptr)
+{
+    qInfo() << "decrypting device..." << gCurrDecryptintDevice
+            << size
+            << offset
+            << double(offset) / size;
+    SignalEmitter::instance()->updateDecryptProgress(gCurrDecryptintDevice,
+                                                     double(offset) / size);
+    return 0;
+}
+
+int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase)
+{
+    struct crypt_device *cdev { nullptr };
+    dfmbase::FinallyUtil f([&] {if (cdev) crypt_free(cdev); });
+
+    int ret = crypt_init_data_device(&cdev,
+                                     device.toStdString().c_str(),
+                                     /*device.toStdString().c_str()*/ nullptr);
+    if (ret < 0) {
+        qWarning() << "cannot init crypt device!"
+                   << device
+                   << ret;
+    }
+
+    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
+    if (ret < 0) {
+        qWarning() << "cannot load crypt device!"
+                   << device
+                   << ret;
+        return ret;
+    }
+
+    ret = crypt_keyslot_change_by_passphrase(cdev,
+                                             CRYPT_ANY_SLOT,
+                                             CRYPT_ANY_SLOT,
+                                             oldPassphrase.toStdString().c_str(),
+                                             oldPassphrase.length(),
+                                             newPassphrase.toStdString().c_str(),
+                                             newPassphrase.length());
+    if (ret < 0) {
+        qWarning() << "cannot add passphrase by old passphrase!"
+                   << device
+                   << ret;
+        return ret;
+    }
+
     return 0;
 }
 
@@ -672,93 +772,4 @@ bool block_device_utils::bcIsAlreadyMounted(const QString &device)
         return false;
     }
     return !blkDev->mountPoints().isEmpty();
-}
-
-int disk_encrypt_funcs::bcDecryptProgress(uint64_t size, uint64_t offset, void *usrptr)
-{
-    qInfo() << "decrypting device..." << gCurrDecryptintDevice
-            << size
-            << offset
-            << double(offset) / size;
-    SignalEmitter::instance()->updateDecryptProgress(gCurrDecryptintDevice,
-                                                     double(offset) / size);
-    return 0;
-}
-
-int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase)
-{
-    struct crypt_device *cdev { nullptr };
-
-    int ret = crypt_init_data_device(&cdev,
-                                     device.toStdString().c_str(),
-                                     /*device.toStdString().c_str()*/ nullptr);
-    if (ret < 0) {
-        qWarning() << "cannot init crypt device!"
-                   << device
-                   << ret;
-    }
-
-    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
-    if (ret < 0) {
-        qWarning() << "cannot load crypt device!"
-                   << device
-                   << ret;
-        return ret;
-    }
-
-    ret = crypt_keyslot_change_by_passphrase(cdev,
-                                             CRYPT_ANY_SLOT,
-                                             CRYPT_ANY_SLOT,
-                                             oldPassphrase.toStdString().c_str(),
-                                             oldPassphrase.length(),
-                                             newPassphrase.toStdString().c_str(),
-                                             newPassphrase.length());
-    if (ret < 0) {
-        qWarning() << "cannot add passphrase by old passphrase!"
-                   << device
-                   << ret;
-        return ret;
-    }
-
-    return 0;
-}
-
-QString disk_encrypt_utils::bcExportRecoveryFile(const EncryptParams &params)
-{
-    if (!params.recoveryPath.isEmpty()) {
-        while (1) {
-            static const size_t kRecoveryKeySize = 20;
-            char recKey[kRecoveryKeySize + 1];
-            int ret = usec_get_recovery_key(recKey,
-                                            kRecoveryKeySize,
-                                            1);
-            if (ret != USEC_CRYPT_CODE_SUCCESS) {
-                qWarning() << "cannot generate recovery key!"
-                           << ret;
-                break;
-            }
-
-            if (!QDir(params.recoveryPath).exists()) {
-                qWarning() << "the recovery key path does not exists!"
-                           << params.recoveryPath;
-                break;
-            }
-
-            QString recFileName = QString("%1/%2_recovery_key.txt")
-                                          .arg(params.recoveryPath)
-                                          .arg(params.device.mid(5));
-            QFile recFile(recFileName);
-            if (!recFile.open(QIODevice::ReadWrite)) {
-                qWarning() << "cannot create recovery file!";
-                break;
-            }
-
-            recFile.write(recKey);
-            recFile.flush();
-            recFile.close();
-
-            return QString(recKey);
-        }
-    }
-    return "";
 }

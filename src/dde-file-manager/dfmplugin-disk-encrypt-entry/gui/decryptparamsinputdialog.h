@@ -15,6 +15,7 @@ class DecryptParamsInputDialog : public Dtk::Widget::DDialog
 public:
     explicit DecryptParamsInputDialog(const QString &device, QWidget *parent = nullptr);
     QPair<QString, QString> getInputs();
+    void setInputPIN(bool);
 
 protected:
     void initUI();
