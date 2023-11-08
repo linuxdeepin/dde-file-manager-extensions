@@ -38,4 +38,7 @@ inline const QString kTPMKeyPath(QDir::homePath() + "/.TPMKey");
 inline constexpr char kTPMHashAlgo[] { "sha256" };
 inline constexpr char kTPMKeyAlgo[] { "aes" };
 
+#define DEV_ENCTYPE_CFG "/etc/deepin/dde-file-manager/dev_enc_type.ini"
+#define DEV_KEY QString("device/%1")
+
 #endif   // DFMPLUGIN_DISK_ENCRYPT_GLOBAL_H
