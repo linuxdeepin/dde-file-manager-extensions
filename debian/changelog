@@ -1,6 +1,7 @@
-dde-file-manager-extensions (0.0.3) UNRELEASED; urgency=medium
+dde-file-manager-extensions (1.0.0) unstable; urgency=medium
 
-  * Non-maintainer upload.
+  * Update baseline of feature disk encryption.
   *
+  * 
 
- -- xust <xushitong@uniontech.com>  Tue, 18 Jul 2023 09:55:14 +0800
+ -- xust <enc_dev@encdev-PC>  Wed, 08 Nov 2023 16:19:22 +0800
