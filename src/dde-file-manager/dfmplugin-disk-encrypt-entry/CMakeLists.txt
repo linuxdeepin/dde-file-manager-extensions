@@ -15,9 +15,7 @@ find_package(Dtk COMPONENTS Widget Core REQUIRED)
 find_package(dfm-framework REQUIRED)
 find_package(dfm-base REQUIRED)
 find_package(dfm-mount REQUIRED)
-find_package(PkgConfig REQUIRED)
-
-pkg_search_module(dfm-io REQUIRED dfm-io IMPORTED_TARGET)
+find_package(dfm-io REQUIRED)
 
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
@@ -37,6 +35,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${dfm-framework_LIBRARIES}
     ${dfm-base_LIBRARIES}
     ${dfm-mount_LIBRARIES}
+    ${dfm-io_LIBRARIES}
 )
 
 target_include_directories(${PROJECT_NAME}
