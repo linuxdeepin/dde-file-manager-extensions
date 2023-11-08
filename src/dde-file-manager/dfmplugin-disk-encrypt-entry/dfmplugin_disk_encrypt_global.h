@@ -33,7 +33,7 @@ enum EncryptJobError {
     kChgPassphraseFailed = -10,
 };
 
-inline constexpr int kPasswordSize { 32 };
+inline constexpr int kPasswordSize { 8 };
 inline const QString kTPMKeyPath(QDir::homePath() + "/.TPMKey");
 inline constexpr char kTPMHashAlgo[] { "sha256" };
 inline constexpr char kTPMKeyAlgo[] { "aes" };
