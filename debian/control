@@ -3,6 +3,7 @@ Priority: optional
 Maintainer: Deepin Packages Builder <packages@linuxdeepin.com>
 Build-Depends:
  cmake,
+ qt5base-dev,
  debhelper (>= 11),
  dde-file-manager (>= 6.0.34),
  cryptsetup (>= 2.3.7),
