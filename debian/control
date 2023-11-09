@@ -6,6 +6,7 @@ Build-Depends:
  pkg-config,
  debhelper (>= 11),
  qtbase5-dev,
+ qttools5-dev,
  libdtkwidget-dev,
  libdtkcore-dev,
  libdfm-mount-dev,
