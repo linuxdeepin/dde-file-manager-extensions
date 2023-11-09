@@ -183,6 +183,8 @@ void DiskEncryptEntry::onDecryptProgress(const QString &dev, double progress)
 
 void DiskEncryptEntry::onChgPassphraseResult(const QString &dev, const QString &, int code)
 {
+    QApplication::restoreOverrideCursor();
+
     QString title;
     QString msg;
     switch (code) {
