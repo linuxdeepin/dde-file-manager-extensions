@@ -28,6 +28,11 @@ Files: *.qrc .tx/* *CMakeLists.txt *.cmake *.cmake.in *.pc.in
 Copyright: None
 License: CC0-1.0
 
+# translations
+Files: translations/*.ts */wallpapersetting/translations/*.ts
+Copyright: UnionTech Software Technology Co., Ltd.
+License: GPL-3.0-or-later
+
 # ignore files
 Files: src/*.json src/*.xml src/*.policy src/*/pinyin.dict src/*.js src/*.ini src/*.qss src/*.theme src/*/templates/* src/*.psd src/*/com.deepin.filemanager.daemon.conf src/dfm-base/qrc/configure/*.cpp
 Copyright: None
@@ -37,3 +42,8 @@ License: CC0-1.0
 Files: README.md README.zh_CN.md docs/*
 Copyright: UnionTech Software Technology Co., Ltd.
 License: CC-BY-4.0
+
+# assets
+Files: assets/* src/apps/*/assets/*
+Copyright: UnionTech Software Technology Co., Ltd.
+License: GPL-3.0-or-later

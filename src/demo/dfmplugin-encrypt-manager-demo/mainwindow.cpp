@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "mainwindow.h"
 
 #include <DSpinner>
@@ -16,7 +20,8 @@ Q_DECLARE_METATYPE(bool *)
 
 DWIDGET_USE_NAMESPACE
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
 {
     initUi();
     initConnect();
@@ -57,17 +62,17 @@ void MainWindow::initUi()
 
 void MainWindow::initConnect()
 {
-    connect(btnCheckTpm, &QPushButton::clicked, this, [this]{
-        bool result =  dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailable").toBool();
+    connect(btnCheckTpm, &QPushButton::clicked, this, [this] {
+        bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailable").toBool();
         if (result)
             textBrowser->append("TPM is available!");
         else
             textBrowser->append("TPM is not available!");
     });
-    connect(btnCheckTcm, &QPushButton::clicked, this, [this]{
+    connect(btnCheckTcm, &QPushButton::clicked, this, [this] {
 
     });
-    connect(btnGetRandom, &QPushButton::clicked, this, [this]{
+    connect(btnGetRandom, &QPushButton::clicked, this, [this] {
         int size = editInput->text().toInt();
         QString out;
         bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPM", size, &out).toBool();
@@ -77,7 +82,7 @@ void MainWindow::initConnect()
             textBrowser->append("Get random failed!");
         }
     });
-    connect(btnCheckAlgo, &QPushButton::clicked, this, [this]{
+    connect(btnCheckAlgo, &QPushButton::clicked, this, [this] {
         const QString algoName = editInput->text();
         bool bSupport { false };
         bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgo", algoName, &bSupport).toBool();
@@ -87,19 +92,19 @@ void MainWindow::initConnect()
             textBrowser->append("Check algo name failed!");
         }
     });
-    connect(btnEncrypt, &QPushButton::clicked, this, [this]{
+    connect(btnEncrypt, &QPushButton::clicked, this, [this] {
         const QString hashAlgo = "sha256";
         const QString keyAlgo = "aes";
-        const QString keyPin = ""/*"12345678"*/;
+        const QString keyPin = "" /*"12345678"*/;
         const QString password = "Qwer@1234";
         const QString dirPath = "/home/uos/gongheng/tmpTemp";
 
         QFutureWatcher<bool> watcher;
         QEventLoop loop;
-        QFuture<bool> future = QtConcurrent::run([hashAlgo, keyAlgo, keyPin, password, dirPath]{
+        QFuture<bool> future = QtConcurrent::run([hashAlgo, keyAlgo, keyPin, password, dirPath] {
             return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPM", hashAlgo, keyAlgo, keyPin, password, dirPath).toBool();
         });
-        connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop]{
+        connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop] {
             if (watcher.result()) {
                 loop.exit(0);
             } else {
@@ -110,7 +115,7 @@ void MainWindow::initConnect()
 
         DSpinner spinner(this);
         spinner.setFixedSize(50, 50);
-        spinner.move((width() - spinner.width())/2, (height() - spinner.height())/2);
+        spinner.move((width() - spinner.width()) / 2, (height() - spinner.height()) / 2);
         spinner.start();
         spinner.show();
 
@@ -146,8 +151,8 @@ void MainWindow::initConnect()
             textBrowser->append("Encrypt failed!");
         }
     });
-    connect(btnDecrypt, &QPushButton::clicked, this, [this]{
-        const QString keyPin = ""/*"12345678"*/;
+    connect(btnDecrypt, &QPushButton::clicked, this, [this] {
+        const QString keyPin = "" /*"12345678"*/;
         const QString dirPath = "/home/uos/gongheng/tmpTemp";
         QString password;
         bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_DecryptByTPM", keyPin, dirPath, &password).toBool();
