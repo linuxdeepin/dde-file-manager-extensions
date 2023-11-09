@@ -11,7 +11,7 @@ Build-Depends:
  libdtkcore-dev,
  libdfm-mount-dev,
  libdfm-io-dev,
- dde-file-manager-dev (>= 6.0.34),
+ dde-file-manager-dev,
  libcryptsetup-dev (>= 2.3.7),
  libusec-recoverykey
 Standards-Version: 4.1.3
