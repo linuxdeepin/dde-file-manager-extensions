@@ -1,6 +1,6 @@
 dde-file-manager-extensions (1.0.0) unstable; urgency=medium
 
-  * Update baseline of feature disk encryption.
+  * Update baseline of tpm module
   *
   * 
 
