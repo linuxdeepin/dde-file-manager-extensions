@@ -7,7 +7,9 @@ Build-Depends:
  debhelper (>= 11),
  qtbase5-dev,
  qttools5-dev,
- dde-file-manager-dev,
+ libdtkwidget-dev,
+ libdtkcore-dev,
+ dde-file-manager-dev
 Standards-Version: 4.1.3
 Section: libs
 Homepage: http://www.deepin.org
