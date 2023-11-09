@@ -52,6 +52,7 @@ void bcCachePendingEncryptInfo(const QString &device, const QString &passphrase)
 void bcClearCachedPendingList();
 QStringList bcResumeDeviceList();
 QString bcExportRecoveryFile(const EncryptParams &params);
+QString bcGenerateRecoveryKey();
 }   // namespace disk_encrypt_utils
 
 namespace block_device_utils {

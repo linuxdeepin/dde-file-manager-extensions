@@ -10,11 +10,12 @@
 #include <QTextStream>
 #include <QDir>
 #include <QFile>
+#include <QLibrary>
+#include <QUuid>
 
 #include <dfm-base/utils/finallyutil.h>
 #include <dfm-mount/dmount.h>
 
-#include <usec-recoverykey.h>
 #include <libcryptsetup.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -122,17 +123,6 @@ QString disk_encrypt_utils::bcExportRecoveryFile(const EncryptParams &params)
 {
     if (!params.recoveryPath.isEmpty()) {
         while (1) {
-            static const size_t kRecoveryKeySize = 20;
-            char recKey[kRecoveryKeySize + 1];
-            int ret = usec_get_recovery_key(recKey,
-                                            kRecoveryKeySize,
-                                            1);
-            if (ret != USEC_CRYPT_CODE_SUCCESS) {
-                qWarning() << "cannot generate recovery key!"
-                           << ret;
-                break;
-            }
-
             if (!QDir(params.recoveryPath).exists()) {
                 qWarning() << "the recovery key path does not exists!"
                            << params.recoveryPath;
@@ -148,7 +138,8 @@ QString disk_encrypt_utils::bcExportRecoveryFile(const EncryptParams &params)
                 break;
             }
 
-            recFile.write(recKey);
+            QString recKey = bcGenerateRecoveryKey();
+            recFile.write(recKey.toLocal8Bit());
             recFile.flush();
             recFile.close();
 
@@ -156,6 +147,35 @@ QString disk_encrypt_utils::bcExportRecoveryFile(const EncryptParams &params)
         }
     }
     return "";
+}
+
+QString disk_encrypt_utils::bcGenerateRecoveryKey()
+{
+    QLibrary lib("usec-recoverykey");
+    dfmbase::FinallyUtil f([&] { if (lib.isLoaded()) lib.unload(); });
+
+    QString recKey = QUuid::createUuid().toString();
+    if (!lib.load()) {
+        qWarning() << "libusec-recoverykey load failed. use uuid as recovery key";
+        return recKey;
+    }
+
+    typedef int (*FnGenKey)(char *, const size_t, const size_t);
+    FnGenKey fn = (FnGenKey)(lib.resolve("usec_get_recovery_key"));
+    if (!fn) {
+        qWarning() << "libusec-recoverykey resolve failed. use uuid as recovery key";
+        return recKey;
+    } else {
+        static const size_t kRecoveryKeySize = 20;
+        char genKey[kRecoveryKeySize + 1];
+        int ret = fn(genKey, kRecoveryKeySize, 1);
+        if (ret != 0) {
+            qWarning() << "libusec-recoverykey generate failed. use uuid as recovery key";
+            return recKey;
+        }
+        recKey = genKey;
+        return recKey;
+    }
 }
 
 EncryptError disk_encrypt_funcs::bcInitHeaderFile(const EncryptParams &params,
@@ -654,24 +674,24 @@ int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
     return 0;
 }
 
-int disk_encrypt_funcs::bcEncryptProgress(uint64_t size, uint64_t offset, void *usrptr)
+int disk_encrypt_funcs::bcEncryptProgress(uint64_t size, uint64_t offset, void *)
 {
-    qInfo() << "encrypting..."
-            << size
-            << offset
-            << double(offset) / size
-            << gCurrReencryptingDevice;
+    //    qInfo() << "encrypting..."
+    //            << size
+    //            << offset
+    //            << double(offset) / size
+    //            << gCurrReencryptingDevice;
     SignalEmitter::instance()->updateEncryptProgress(gCurrReencryptingDevice,
                                                      double(offset) / size);
     return 0;
 }
 
-int disk_encrypt_funcs::bcDecryptProgress(uint64_t size, uint64_t offset, void *usrptr)
+int disk_encrypt_funcs::bcDecryptProgress(uint64_t size, uint64_t offset, void *)
 {
-    qInfo() << "decrypting device..." << gCurrDecryptintDevice
-            << size
-            << offset
-            << double(offset) / size;
+    //    qInfo() << "decrypting device..." << gCurrDecryptintDevice
+    //            << size
+    //            << offset
+    //            << double(offset) / size;
     SignalEmitter::instance()->updateDecryptProgress(gCurrDecryptintDevice,
                                                      double(offset) / size);
     return 0;
