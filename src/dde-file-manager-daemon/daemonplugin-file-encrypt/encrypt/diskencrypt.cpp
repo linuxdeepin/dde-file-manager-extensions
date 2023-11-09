@@ -152,7 +152,7 @@ QString disk_encrypt_utils::bcExportRecoveryFile(const EncryptParams &params)
 QString disk_encrypt_utils::bcGenerateRecoveryKey()
 {
     QLibrary lib("usec-recoverykey");
-    dfmbase::FinallyUtil f([&] { if (lib.isLoaded()) lib.unload(); });
+    dfmbase::FinallyUtil finalClear([&] { if (lib.isLoaded()) lib.unload(); });
 
     QString recKey = QUuid::createUuid().toString();
     if (!lib.load()) {
@@ -216,14 +216,19 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
 
     fs_resize::shrinkFileSystem_ext(params.device);
 
-    std::string cPath = localPath.toStdString();
     struct crypt_device *cdev { nullptr };
+    int ret = 0;
+
     dfmbase::FinallyUtil finalClear([&] {
         if (cdev) crypt_free(cdev);
+        if (ret < 0) {
+            ::remove(localPath.toStdString().c_str());
+            fs_resize::expandFileSystem_ext(params.device);
+        }
     });
 
-    int ret = crypt_init(&cdev,
-                         cPath.c_str());
+    ret = crypt_init(&cdev,
+                     localPath.toStdString().c_str());
     if (ret != 0) {
         qWarning() << "cannot init crypt device:"
                    << ret
@@ -271,9 +276,15 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
         .subsystem = nullptr
     };
     QString cipher = params.cipher.mid(0, params.cipher.indexOf("-"));
-    QString mode = params.cipher.mid(params.cipher.indexOf("-") + 1);
-    if (mode.isEmpty())
-        mode = "xts-plain64";
+    int idxSplit = params.cipher.indexOf("-");
+    QString mode = (idxSplit > 0)
+            ? params.cipher.mid(idxSplit + 1)
+            : "xts-plain64";
+
+    qDebug() << "encrypt cipher is"
+             << cipher
+             << "and cipher mode is"
+             << mode;
 
     ret = crypt_format(cdev,
                        CRYPT_LUKS2,
@@ -370,7 +381,7 @@ int disk_encrypt_funcs::bcInitHeaderDevice(const QString &device,
     }
 
     struct crypt_device *cdev { nullptr };
-    dfmbase::FinallyUtil f([&] {if (cdev) crypt_free(cdev); });
+    dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
 
     int ret = crypt_init(&cdev,
                          device.toStdString().c_str());
@@ -453,8 +464,8 @@ int disk_encrypt_funcs::bcDecryptDevice(const QString &device,
         return ret;
     }
 
-    dfmbase::FinallyUtil f([&] {
-        crypt_free(cdev);
+    dfmbase::FinallyUtil finalClear([&] {
+        if (cdev) crypt_free(cdev);
         ::remove(headerPath.toStdString().c_str());
     });
 
@@ -535,7 +546,7 @@ int disk_encrypt_funcs::bcBackupCryptHeader(const QString &device, QString &head
 {
     headerPath = "/tmp/dm_header_" + device.mid(5);
     struct crypt_device *cdev = nullptr;
-    dfmbase::FinallyUtil f([&] { if (cdev) crypt_free(cdev); });
+    dfmbase::FinallyUtil finalClear([&] { if (cdev) crypt_free(cdev); });
 
     int ret = crypt_init(&cdev,
                          device.toStdString().c_str());
@@ -566,7 +577,7 @@ int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
              << device;
 
     struct crypt_device *cdev { nullptr };
-    dfmbase::FinallyUtil f([&] {
+    dfmbase::FinallyUtil finalClear([&] {
         if (cdev) crypt_free(cdev);
     });
 
@@ -700,7 +711,7 @@ int disk_encrypt_funcs::bcDecryptProgress(uint64_t size, uint64_t offset, void *
 int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase)
 {
     struct crypt_device *cdev { nullptr };
-    dfmbase::FinallyUtil f([&] {if (cdev) crypt_free(cdev); });
+    dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
 
     int ret = crypt_init_data_device(&cdev,
                                      device.toStdString().c_str(),

@@ -107,7 +107,7 @@
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="90"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="157"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="195"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="197"/>
         <source>User cancelled operation</source>
         <translation>用户取消操作</translation>
     </message>
@@ -125,8 +125,8 @@
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="104"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="128"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="171"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="209"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="222"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="211"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="224"/>
         <source>Confirm</source>
         <translation>确认</translation>
     </message>
@@ -186,42 +186,42 @@
         <translation>设备%1取消加密中...</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="190"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="192"/>
         <source>Change passphrase done</source>
         <translation>密钥修改完成</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="191"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="193"/>
         <source>%1&apos;s passphrase has been changed</source>
         <translation>%1的密钥已经修改</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="194"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="196"/>
         <source>Change passphrase</source>
         <translation>修改密钥</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="198"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="200"/>
         <source>Change passphrase failed</source>
         <translation>修改密钥失败</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="199"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="201"/>
         <source>Device %1 change passphrase failed, please see log for more information.(%2)</source>
         <translation>设备%1修改密钥失败，请查看日志以获取更多信息。（%2）</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="220"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="222"/>
         <source>TPM Error</source>
         <translation>TPM 错误</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="221"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="223"/>
         <source>Cannot acquire key from TPM, please use recovery key to unlock device.</source>
         <translation>无法从 TPM 中获取密钥，请使用恢复密钥来解锁设备。</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="230"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/plugin_diskencryptentry.cpp" line="232"/>
         <source>Please input PIN to unlock device %1</source>
         <translation>请输入 PIN 来解锁设备 %1</translation>
     </message>

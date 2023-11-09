@@ -229,7 +229,7 @@ void DiskEncryptMenuScene::changePassphrase(const QString &dev, const QString & 
         dlg->deleteLater();
         if (result == 1) {
             auto inputs = dlg->getPassphrase();
-            doChangePassphrase(dev, inputs.second, inputs.first);
+            doChangePassphrase(dev, inputs.first, inputs.second);
         }
     });
     dlg->show();
