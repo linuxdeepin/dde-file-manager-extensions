@@ -28,6 +28,8 @@ public:
                  const QString &keyPin, const QString &password,
                  const QString &dirPath);
     bool decrypt(const QString &keyPin, const QString &dirPath, QString *psw);
+    bool encryptByTools(const EncryptParams &params);
+    bool decryptByTools(const DecryptParams &params, QString *pwd);
 
 private:
     bool initTpm2(const QString &hashAlgo, const QString &keyAlgo,

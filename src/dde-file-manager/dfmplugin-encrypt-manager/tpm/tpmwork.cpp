@@ -9,6 +9,8 @@
 #include <QFile>
 #include <QDir>
 
+#include <fstream>
+
 inline constexpr int kTpmOutTextMaxSize { 3000 };
 inline constexpr char kTpmLibName[] { "libutpm2.so" };
 inline constexpr char kTpmEncryptFileName[] { "tpm_encrypt.txt" };
@@ -93,6 +95,29 @@ bool TPMWork::isSupportAlgo(const QString &algoName, bool *support)
     return false;
 }
 
+bool TPMWork::initTpm2(const QString &hashAlgo, const QString &keyAlgo, const QString &keyPin, const QString &dirPath)
+{
+    if (!tpmLib->isLoaded())
+        return false;
+
+    typedef bool (*p_init)(char *algdetail, char *galg, const char *auth, const char *dir);
+    p_init utpm2_init = (p_init)tpmLib->resolve("utpm2_init");
+    if (utpm2_init) {
+        QByteArray arKeyAlgo = keyAlgo.toUtf8();
+        QByteArray arHashAlgo = hashAlgo.toUtf8();
+        QByteArray arKeyPin = keyPin.toUtf8();
+        QByteArray arDir = dirPath.toUtf8();
+        if (utpm2_init(arKeyAlgo.data(), arHashAlgo.data(), arKeyPin.data(), arDir.data())) {
+            return true;
+        } else {
+            qCritical() << "Vault: utpm2_init return false!";
+        }
+    } else {
+        qCritical() << "Vault: resolve utpm2_init failed!";
+    }
+    return false;
+}
+
 bool TPMWork::encrypt(const QString &hashAlgo, const QString &keyAlgo, const QString &keyPin, const QString &password, const QString &dirPath)
 {
     if (!initTpm2(hashAlgo, keyAlgo, keyPin, dirPath)) {
@@ -158,25 +183,184 @@ bool TPMWork::decrypt(const QString &keyPin, const QString &dirPath, QString *ps
     return false;
 }
 
-bool TPMWork::initTpm2(const QString &hashAlgo, const QString &keyAlgo, const QString &keyPin, const QString &dirPath)
+bool TPMWork::encryptByTools(const EncryptParams &params)
 {
-    if (!tpmLib->isLoaded())
+    const std::string plain  = params.plain.toStdString();
+
+    const std::string pinCode = params.pinCode.toStdString();
+
+    const std::string pcr = params.pcr.toStdString();
+    const std::string pcr_bank = params.pcr_bank.toStdString();
+
+    const std::string primary_key_alg = params.primaryKeyAlgo.toStdString();
+    const std::string primary_hash_alg = params.primaryHashAlgo.toStdString();
+    const std::string minor_key_alg = params.minorKeyAlgo.toStdString();
+    const std::string minor_hash_alg = params.minorHashAlgo.toStdString();
+
+    const std::string basePath = params.dirPath.toStdString();
+
+    const std::string plainPath = basePath + "/plain.dat";
+    const std::string ivPath = basePath + "/iv.bin";
+
+    const std::string sessionPath = basePath + "/session.dat";
+    const std::string policyPath = basePath + "/policy.dat";
+    const std::string primaryCtxPath = basePath + "/primary.ctx";
+    const std::string pubKeyPath = basePath + "/key.pub";
+    const std::string priKeyPath = basePath + "/key.priv";
+    const std::string keyNamePath = basePath + "/key.name";
+    const std::string keyCtxPath = basePath + "/key.ctx";
+    const std::string cipherPath = basePath + "/cipher.out";
+
+    const std::string pcrPath = basePath + "/pcr_val.bin";
+
+    // generate plain & iv
+    if (std::system(("echo " + plain + " > " + plainPath).c_str()))
+        return false;
+    if (std::system(("tpm2_getrandom -o " + ivPath + " 16").c_str()))
         return false;
 
-    typedef bool (*p_init)(char *algdetail, char *galg, const char *auth, const char *dir);
-    p_init utpm2_init = (p_init)tpmLib->resolve("utpm2_init");
-    if (utpm2_init) {
-        QByteArray arKeyAlgo = keyAlgo.toUtf8();
-        QByteArray arHashAlgo = hashAlgo.toUtf8();
-        QByteArray arKeyPin = keyPin.toUtf8();
-        QByteArray arDir = dirPath.toUtf8();
-        if (utpm2_init(arKeyAlgo.data(), arHashAlgo.data(), arKeyPin.data(), arDir.data())) {
-            return true;
-        } else {
-            qCritical() << "Vault: utpm2_init return false!";
-        }
+    // set policy
+    if (std::system(("tpm2_startauthsession -S " + sessionPath + " -g " + primary_hash_alg + " -G " + primary_key_alg).c_str()))
+        return false;
+    if (params.type == kTpmAndPcr) {
+        if (std::system(("tpm2_pcrread " + pcr_bank + ":" + pcr + " -o " + pcrPath).c_str()))
+            return false;
+        if (std::system(("tpm2_policypcr -S " + sessionPath + " -l " + pcr_bank + ":" + pcr + " -L " + policyPath + " -f " + pcrPath).c_str()))
+            return false;
+    } else if (params.type == kTpmAndPin) {
+        if (std::system(("tpm2_policypassword -S " + sessionPath + " -L " + policyPath).c_str()))
+            return false;
     } else {
-        qCritical() << "Vault: resolve utpm2_init failed!";
+        qCritical() << "Tpm type unkonw!";
+        return false;
     }
-    return false;
+    if (std::system(("tpm2_flushcontext " + sessionPath).c_str()))
+        return false;
+
+    // generate keys
+    if (std::system(("tpm2_createprimary -C o -g " + primary_hash_alg + " -G " + primary_key_alg + " -c " + primaryCtxPath).c_str()))
+        return false;
+    if (params.type == kTpmAndPcr) {
+        if (std::system(("tpm2_create -g " + minor_hash_alg + " -G " + minor_key_alg + " -u " + pubKeyPath + " -r " + priKeyPath + " -C " + primaryCtxPath + " -L " + policyPath).c_str()))
+            return false;
+    } else if (params.type == kTpmAndPin) {
+        if (std::system(("tpm2_create -g " + minor_hash_alg + " -G " + minor_key_alg + " -u " + pubKeyPath + " -r " + priKeyPath + " -C " + primaryCtxPath + " -L " + policyPath + " -p " + pinCode).c_str()))
+            return false;
+    } else {
+        qCritical() << "Tpm type unkonw!";
+        return false;
+    }
+    if (std::system(("tpm2_load -C " + primaryCtxPath + " -u " + pubKeyPath + " -r " + priKeyPath + " -n " + keyNamePath + " -c " + keyCtxPath).c_str()))
+        return false;
+
+    // generate cipher
+    if (std::system(("tpm2_startauthsession --policy-session -S " + sessionPath + " -g " + primary_hash_alg + " -G " + primary_key_alg).c_str()))
+        return false;
+    if (params.type == kTpmAndPcr) {
+        if (std::system(("tpm2_pcrread " + pcr_bank + ":" + pcr + " -o " + pcrPath).c_str()))
+            return false;
+        if (std::system(("tpm2_policypcr -S " + sessionPath + " -l " + pcr_bank + ":" + pcr + " -f " + pcrPath).c_str()))
+            return false;
+        if (std::system(("tpm2_encryptdecrypt -Q --iv " + ivPath + " -c " + keyCtxPath + " -o " + cipherPath + " " + plainPath + " -p session:" + sessionPath).c_str()))
+            return false;
+    } else if (params.type == kTpmAndPin) {
+        if (std::system(("tpm2_policypassword -S " + sessionPath + " -L " + policyPath).c_str()))
+            return false;
+        if (std::system(("tpm2_encryptdecrypt -Q --iv " + ivPath + " -c " + keyCtxPath + " -o " + cipherPath + " " + plainPath + " -p session:" + sessionPath + "+" + pinCode).c_str()))
+            return false;
+    } else {
+        qCritical() << "Tpm type unkonw!";
+        return false;
+    }
+    if (std::system(("tpm2_flushcontext " + sessionPath).c_str()))
+        return false;
+
+    // clean files
+    if (params.type == kTpmAndPcr) {
+        if (std::system(("rm " + keyCtxPath + " " + keyNamePath + " " + plainPath + " " + policyPath + " " + primaryCtxPath + " " + sessionPath + " " + pcrPath).c_str()))
+            return false;
+    } else if (params.type == kTpmAndPin) {
+        if (std::system(("rm " + keyCtxPath + " " + keyNamePath + " " + plainPath + " " + policyPath + " " + primaryCtxPath + " " + sessionPath).c_str()))
+            return false;
+    } else {
+        qCritical() << "Tpm type unkonw!";
+        return false;
+    }
+
+    return true;
 }
+
+bool TPMWork::decryptByTools(const DecryptParams &params, QString *pwd)
+{
+    const std::string pinCode = params.pinCode.toStdString();
+    std::string pcr = params.pcr.toStdString();
+    std::string pcr_bank = params.pcr_bank.toStdString();
+    const std::string primary_key_alg = params.primaryKeyAlgo.toStdString();
+    const std::string primary_hash_alg = params.primaryHashAlgo.toStdString();
+
+    const std::string basePath = params.dirPath.toStdString();
+
+    const std::string cipherPath = basePath + "/cipher.out";
+    const std::string ivPath = basePath + "/iv.bin";
+    const std::string pubKeyPath = basePath + "/key.pub";
+    const std::string priKeyPath = basePath + "/key.priv";
+
+    const std::string sessionPath = basePath + "/session.dat";
+    const std::string policyPath = basePath + "/policy.dat";
+    const std::string primaryCtxPath = basePath + "/primary.ctx";
+    const std::string keyNamePath = basePath + "/key.name";
+    const std::string keyCtxPath = basePath + "/key.ctx";
+    const std::string clearPath = basePath + "/clear.out";
+
+    if (std::system(("tpm2_startauthsession --policy-session -S " + sessionPath + " -g " + primary_hash_alg + " -G " + primary_key_alg).c_str()))
+        return false;
+    if (params.type == kTpmAndPcr) {
+        if (std::system(("tpm2_policypcr -S " + sessionPath + " -l " + pcr_bank + ":" + pcr).c_str()))
+            return false;
+    } else if (params.type == kTpmAndPin) {
+        if (std::system(("tpm2_policypassword -S " + sessionPath + " -L " + policyPath).c_str()))
+            return false;
+    } else {
+        qCritical() << "Tpm type unkonw!";
+        return false;
+    }
+    if (std::system(("tpm2_createprimary -C o -g " + primary_hash_alg + " -G " + primary_key_alg + " -c " + primaryCtxPath).c_str()))
+        return false;
+    if (std::system(("tpm2_load -C " + primaryCtxPath + " -u " + pubKeyPath + " -r " + priKeyPath + " -n " + keyNamePath +  " -c " + keyCtxPath).c_str()))
+        return false;
+    if (params.type == kTpmAndPcr) {
+        if (std::system(("tpm2_encryptdecrypt -Q --iv " + ivPath + " -c " + keyCtxPath + " -o " + clearPath + " " + cipherPath + " -p session:" + sessionPath).c_str()))
+            return false;
+    } else if (params.type == kTpmAndPin) {
+        if (std::system(("tpm2_encryptdecrypt -Q --iv " + ivPath + " -c " + keyCtxPath + " -o " + clearPath + " " + cipherPath + " -p session:" + sessionPath + "+" + pinCode).c_str()))
+            return false;
+    } else {
+        qCritical() << "Tpm type unkonw!";
+        return false;
+    }
+    if (std::system(("tpm2_flushcontext " + sessionPath).c_str()))
+        return false;
+
+    std::ifstream plain_ifs(clearPath, std::ios_base::in);
+    if (!plain_ifs.is_open())
+        return false;
+    std::string plain;
+    plain_ifs >> plain;
+    plain_ifs.close();
+
+    (*pwd) = QString::fromStdString(plain);
+
+    // clean files
+    if (params.type == kTpmAndPcr) {
+        std::system(("rm " + clearPath + " " + keyCtxPath + " " + keyNamePath + " " + primaryCtxPath + " " + sessionPath).c_str());
+    } else if (params.type == kTpmAndPin) {
+        std::system(("rm " + clearPath + " " + keyCtxPath + " " + keyNamePath + " " + policyPath + " " + primaryCtxPath + " " + sessionPath).c_str());
+    } else {
+        qCritical() << "Tpm type unkonw!";
+        return false;
+    }
+
+    return true;
+}
+
+
