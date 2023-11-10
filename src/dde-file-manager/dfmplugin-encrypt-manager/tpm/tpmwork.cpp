@@ -9,10 +9,43 @@
 #include <QFile>
 #include <QDir>
 
+#include <fstream>
+
+typedef enum {
+  kCTpmAndPcr,
+  kCTpmAndPin,
+} TpmProType;
+
+typedef struct {
+    TpmProType type;
+    char *primaryHashAlgo;
+    char *primaryKeyAlgo;
+    char *minorHashAlgo;
+    char *minorKeyAlgo;
+    char *dirPath;
+    char *plain;
+
+    char *pinCode;
+
+    char *pcr;
+    char *pcr_bank;
+} Utpm2EncryptParamsByTools;
+
+typedef struct {
+    TpmProType type;
+    char *primaryHashAlgo;
+    char *primaryKeyAlgo;
+    char *dirPath;
+
+    char *pinCode;
+
+    char *pcr;
+    char *pcr_bank;
+} Utpm2DecryptParamsByTools;
+
 inline constexpr int kTpmOutTextMaxSize { 3000 };
 inline constexpr char kTpmLibName[] { "libutpm2.so" };
 inline constexpr char kTpmEncryptFileName[] { "tpm_encrypt.txt" };
-
 
 DPENCRYPTMANAGER_USE_NAMESPACE
 
@@ -93,6 +126,29 @@ bool TPMWork::isSupportAlgo(const QString &algoName, bool *support)
     return false;
 }
 
+bool TPMWork::initTpm2(const QString &hashAlgo, const QString &keyAlgo, const QString &keyPin, const QString &dirPath)
+{
+    if (!tpmLib->isLoaded())
+        return false;
+
+    typedef bool (*p_init)(char *algdetail, char *galg, const char *auth, const char *dir);
+    p_init utpm2_init = (p_init)tpmLib->resolve("utpm2_init");
+    if (utpm2_init) {
+        QByteArray arKeyAlgo = keyAlgo.toUtf8();
+        QByteArray arHashAlgo = hashAlgo.toUtf8();
+        QByteArray arKeyPin = keyPin.toUtf8();
+        QByteArray arDir = dirPath.toUtf8();
+        if (utpm2_init(arKeyAlgo.data(), arHashAlgo.data(), arKeyPin.data(), arDir.data())) {
+            return true;
+        } else {
+            qCritical() << "Vault: utpm2_init return false!";
+        }
+    } else {
+        qCritical() << "Vault: resolve utpm2_init failed!";
+    }
+    return false;
+}
+
 bool TPMWork::encrypt(const QString &hashAlgo, const QString &keyAlgo, const QString &keyPin, const QString &password, const QString &dirPath)
 {
     if (!initTpm2(hashAlgo, keyAlgo, keyPin, dirPath)) {
@@ -158,25 +214,101 @@ bool TPMWork::decrypt(const QString &keyPin, const QString &dirPath, QString *ps
     return false;
 }
 
-bool TPMWork::initTpm2(const QString &hashAlgo, const QString &keyAlgo, const QString &keyPin, const QString &dirPath)
+bool TPMWork::encryptByTools(const EncryptParams &params)
 {
     if (!tpmLib->isLoaded())
         return false;
 
-    typedef bool (*p_init)(char *algdetail, char *galg, const char *auth, const char *dir);
-    p_init utpm2_init = (p_init)tpmLib->resolve("utpm2_init");
-    if (utpm2_init) {
-        QByteArray arKeyAlgo = keyAlgo.toUtf8();
-        QByteArray arHashAlgo = hashAlgo.toUtf8();
-        QByteArray arKeyPin = keyPin.toUtf8();
-        QByteArray arDir = dirPath.toUtf8();
-        if (utpm2_init(arKeyAlgo.data(), arHashAlgo.data(), arKeyPin.data(), arDir.data())) {
-            return true;
-        } else {
-            qCritical() << "Vault: utpm2_init return false!";
-        }
-    } else {
-        qCritical() << "Vault: resolve utpm2_init failed!";
+    typedef bool (*utpm2_encrypt_by_tools)(const Utpm2EncryptParamsByTools *par);
+    utpm2_encrypt_by_tools func = (utpm2_encrypt_by_tools)tpmLib->resolve("utpm2_encrypt_by_tools");
+    if (!func) {
+        qCritical() << "Vault: resolve utpm2_encrypt_by_tools failed!";
+        return false;
     }
-    return false;
+
+    Utpm2EncryptParamsByTools pa;
+    if (params.type == kTpmAndPcr) {
+        pa.type = kCTpmAndPcr;
+    } else if (params.type == kTpmAndPin) {
+        pa.type = kCTpmAndPin;
+    } else {
+        return false;
+    }
+    QByteArray arrPriHashAlgo = params.primaryHashAlgo.toUtf8();
+    pa.primaryHashAlgo = arrPriHashAlgo.data();
+    QByteArray arrPriKeyAlgo = params.primaryKeyAlgo.toUtf8();
+    pa.primaryKeyAlgo = arrPriKeyAlgo.data();
+    QByteArray arrMinHashAlgo = params.minorHashAlgo.toUtf8();
+    pa.minorHashAlgo = arrMinHashAlgo.data();
+    QByteArray arrMinKeyAlgo = params.minorKeyAlgo.toUtf8();
+    pa.minorKeyAlgo = arrMinKeyAlgo.data();
+    QByteArray arrDirPath = params.dirPath.toUtf8();
+    pa.dirPath = arrDirPath.data();
+    QByteArray arrPlain = params.plain.toUtf8();
+    pa.plain = arrPlain.data();
+
+    QByteArray arrPinCode = params.pinCode.toUtf8();
+    pa.pinCode = arrPinCode.data();
+
+    QByteArray arrPcr = params.pcr.toUtf8();
+    pa.pcr = arrPcr.data();
+    QByteArray arrPcrBank = params.pcr_bank.toUtf8();
+    pa.pcr_bank = arrPcrBank.data();
+
+    if (!func(&pa)) {
+        qCritical() << "Vault: utpm2_encrypt_by_tools return false!";
+        return false;
+    }
+
+    return true;
 }
+
+bool TPMWork::decryptByTools(const DecryptParams &params, QString *pwd)
+{
+    if (!tpmLib->isLoaded())
+        return false;
+
+    typedef bool (*utpm2_decrypt_by_tools)(const Utpm2DecryptParamsByTools *par, char *pwd, int *len);
+    utpm2_decrypt_by_tools fun = (utpm2_decrypt_by_tools) tpmLib->resolve("utpm2_decrypt_by_tools");
+    if (!fun) {
+        qCritical() << "Vault: resolve utpm2_encry_decrypt failed!";
+        return false;
+    }
+
+    Utpm2DecryptParamsByTools pa;
+    if (params.type == kTpmAndPcr) {
+        pa.type = kCTpmAndPcr;
+    } else if (params.type == kTpmAndPin) {
+        pa.type = kCTpmAndPin;
+    } else {
+        return false;
+    }
+    QByteArray arrPriHashAlgo = params.primaryHashAlgo.toUtf8();
+    pa.primaryHashAlgo = arrPriHashAlgo.data();
+    QByteArray arrPriKeyAlgo = params.primaryKeyAlgo.toUtf8();
+    pa.primaryKeyAlgo = arrPriKeyAlgo.data();
+    QByteArray arrDirPath = params.dirPath.toUtf8();
+    pa.dirPath = arrDirPath.data();
+
+    QByteArray arrPinCode = params.pinCode.toUtf8();
+    pa.pinCode = arrPinCode.data();
+
+    QByteArray arrPcr = params.pcr.toUtf8();
+    pa.pcr = arrPcr.data();
+    QByteArray arrPcrBank = params.pcr_bank.toUtf8();
+    pa.pcr_bank = arrPcrBank.data();
+
+    char password[128] = { 0 };
+    int length = sizeof(password) - 1;
+
+    if (!fun(&pa, password, &length)) {
+        qCritical() << "Vault: utpm2_encry_decrypt return failed!";
+        return false;
+
+    }
+    (*pwd) = QString::fromLatin1(password);
+
+    return true;
+}
+
+
