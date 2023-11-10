@@ -62,12 +62,12 @@ bool tpm_utils::isSupportAlgoByTPM(const QString &algoName, bool *support)
     return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgo", algoName, support).toBool();
 }
 
-bool tpm_utils::encryptByTPM(const QString &hashAlgo, const QString &keyAlgo, const QString &keyPin, const QString &password, const QString &dirPath)
+bool tpm_utils::encryptByTPM(const QVariantMap &map)
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPM", hashAlgo, keyAlgo, keyPin, password, dirPath).toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPMPro", map).toBool();
 }
 
-bool tpm_utils::decryptByTPM(const QString &keyPin, const QString &dirPath, QString *psw)
+bool tpm_utils::decryptByTPM(const QVariantMap &map, QString *psw)
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_DecryptByTPM", keyPin, dirPath, psw).toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_DecryptByTPMPro", map, psw).toBool();
 }

@@ -45,12 +45,16 @@ void MainWindow::initUi()
     btnCheckAlgo = new QPushButton(tr("Check Algo"), mainWidget);
     btnEncrypt = new QPushButton(tr("Encrypt"), mainWidget);
     btnDecrypt = new QPushButton(tr("Decrypt"), mainWidget);
+    btnEncryptTwo = new QPushButton(tr("EncryptInProcess"), mainWidget);
+    btnDecryptTwo = new QPushButton(tr("DecryptInProcess"), mainWidget);
     btnLay->addWidget(btnCheckTpm, 0, 0);
     btnLay->addWidget(btnCheckTcm, 0, 1);
     btnLay->addWidget(btnGetRandom, 0, 2);
     btnLay->addWidget(btnCheckAlgo, 0, 3);
     btnLay->addWidget(btnEncrypt, 1, 0);
     btnLay->addWidget(btnDecrypt, 1, 1);
+    btnLay->addWidget(btnEncryptTwo, 2, 0);
+    btnLay->addWidget(btnDecryptTwo, 2, 1);
 
     mainLay->addWidget(editInput);
     mainLay->addWidget(textBrowser);
@@ -95,7 +99,7 @@ void MainWindow::initConnect()
     connect(btnEncrypt, &QPushButton::clicked, this, [this] {
         const QString hashAlgo = "sha256";
         const QString keyAlgo = "aes";
-        const QString keyPin = "" /*"12345678"*/;
+        const QString keyPin = ""/*"12345678"*/;
         const QString password = "Qwer@1234";
         const QString dirPath = "/home/uos/gongheng/tmpTemp";
 
@@ -162,4 +166,156 @@ void MainWindow::initConnect()
             textBrowser->append("Decrypt failed!");
         }
     });
+    connect(btnEncryptTwo, &QPushButton::clicked, this, [this]{
+            const QString &dirPath = QDir::homePath() + "/.TPMKey";
+            QDir dir(dirPath);
+            if (!dir.exists())
+                dir.mkpath(dirPath);
+            QString pwd;
+            bool success = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPM", 14, &pwd).toBool();
+            if (!success) {
+                textBrowser->append("Create password faild!");
+                return;
+            }
+            // TPM
+            QVariantMap map {
+                { "PropertyKey_EncryptType", 1 },
+                { "PropertyKey_PrimaryHashAlgo", "sha256" },
+                { "PropertyKey_PrimaryKeyAlgo", "aes" },
+                { "PropertyKey_MinorHashAlgo", "sha256" },
+                { "PropertyKey_MinorKeyAlgo", "aes" },
+                { "PropertyKey_DirPath", dirPath },
+                { "PropertyKey_Plain", pwd },
+                { "PropertyKey_Pcr", "7" },
+                { "PropertyKey_PcrBank", "sha256" }
+            };
+//            QVariantMap map {
+//                { "PropertyKey_EncryptType", 2 },
+//                { "PropertyKey_PrimaryHashAlgo", "sha256" },
+//                { "PropertyKey_PrimaryKeyAlgo", "aes" },
+//                { "PropertyKey_MinorHashAlgo", "sha256" },
+//                { "PropertyKey_MinorKeyAlgo", "aes" },
+//                { "PropertyKey_DirPath", dirPath },
+//                { "PropertyKey_Plain", pwd },
+//                { "PropertyKey_PinCode", "pin123456" }
+//            };
+            // TCM
+    //        QVariantMap map {
+    //            { "PropertyKey_EncryptType", 1 },
+    //            { "PropertyKey_PrimaryHashAlgo", "sm3_256" },
+    //            { "PropertyKey_PrimaryKeyAlgo", "sm4" },
+    //            { "PropertyKey_MinorHashAlgo", "sm3_256" },
+    //            { "PropertyKey_MinorKeyAlgo", "sm4" },
+    //            { "PropertyKey_DirPath", dirPath },
+    //            { "PropertyKey_Plain", pwd },
+    //            { "PropertyKey_Pcr", "7" },
+    //            { "PropertyKey_PcrBank", "sm3_256" }
+    //        };
+    //        QVariantMap map {
+    //            { "PropertyKey_EncryptType", 2 },
+    //            { "PropertyKey_PrimaryHashAlgo", "sm3_256" },
+    //            { "PropertyKey_PrimaryKeyAlgo", "sm4" },
+    //            { "PropertyKey_MinorHashAlgo", "sm3_256" },
+    //            { "PropertyKey_MinorKeyAlgo", "sm4" },
+    //            { "PropertyKey_DirPath", dirPath },
+    //            { "PropertyKey_Plain", pwd },
+    //            { "PropertyKey_PinCode", "pin123456" }
+    //        };
+            QFutureWatcher<bool> watcher;
+            QEventLoop loop;
+            QFuture<bool> future = QtConcurrent::run([map]{
+                return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPMPro", map).toBool();
+            });
+            connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop]{
+                if (watcher.result()) {
+                    loop.exit(0);
+                } else {
+                    loop.exit(-1);
+                }
+            });
+            watcher.setFuture(future);
+
+            DSpinner spinner(this);
+            spinner.setFixedSize(50, 50);
+            spinner.move((width() - spinner.width())/2, (height() - spinner.height())/2);
+            spinner.start();
+            spinner.show();
+
+            int re = loop.exec();
+            bool result = (re == 0 ? true : false);
+
+            if (result) {
+                textBrowser->append(QString("Encrypt success! password is: %1").arg(pwd));
+            } else {
+                textBrowser->append("Encrypt failed!");
+            }
+        });
+
+        connect(btnDecryptTwo, &QPushButton::clicked, this, [this]{
+            const QString &dirPath = QDir::homePath() + "/.TPMKey";
+            QDir dir(dirPath);
+            if (!dir.exists())
+                dir.mkpath(dirPath);
+            QString pwd;
+            // TPM
+            QVariantMap map {
+                { "PropertyKey_EncryptType", 1 },
+                { "PropertyKey_PrimaryHashAlgo", "sha256" },
+                { "PropertyKey_PrimaryKeyAlgo", "aes" },
+                { "PropertyKey_DirPath", dirPath },
+                { "PropertyKey_Pcr", "7" },
+                { "PropertyKey_PcrBank", "sha256" }
+            };
+//            QVariantMap map {
+//                { "PropertyKey_EncryptType", 2 },
+//                { "PropertyKey_PrimaryHashAlgo", "sha256" },
+//                { "PropertyKey_PrimaryKeyAlgo", "aes" },
+//                { "PropertyKey_DirPath", dirPath },
+//                { "PropertyKey_PinCode", "pin123456" }
+//            };
+            // TCM
+    //        QVariantMap map {
+    //            { "PropertyKey_EncryptType", 1 },
+    //            { "PropertyKey_PrimaryHashAlgo", "sm3_256" },
+    //            { "PropertyKey_PrimaryKeyAlgo", "sm4" },
+    //            { "PropertyKey_DirPath", dirPath },
+    //            { "PropertyKey_Pcr", "7" },
+    //            { "PropertyKey_PcrBank", "sm3_256" }
+    //        };
+    //        QVariantMap map {
+    //            { "PropertyKey_EncryptType", 2 },
+    //            { "PropertyKey_PrimaryHashAlgo", "sm3_256" },
+    //            { "PropertyKey_PrimaryKeyAlgo", "sm4" },
+    //            { "PropertyKey_DirPath", dirPath },
+    //            { "PropertyKey_PinCode", "pin123456" }
+    //        };
+            QFutureWatcher<bool> watcher;
+            QEventLoop loop;
+            QFuture<bool> future = QtConcurrent::run([map, &pwd]{
+                return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_DecryptByTPMPro", map, &pwd).toBool();
+            });
+            connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop]{
+                if (watcher.result()) {
+                    loop.exit(0);
+                } else {
+                    loop.exit(-1);
+                }
+            });
+            watcher.setFuture(future);
+
+            DSpinner spinner(this);
+            spinner.setFixedSize(50, 50);
+            spinner.move((width() - spinner.width())/2, (height() - spinner.height())/2);
+            spinner.start();
+            spinner.show();
+
+            int re = loop.exec();
+            bool result = (re == 0 ? true : false);
+
+            if (result) {
+                textBrowser->append(QString("Decrypt success! password is: %1").arg(pwd));
+            } else {
+                textBrowser->append("Decrypt failed!");
+            }
+        });
 }

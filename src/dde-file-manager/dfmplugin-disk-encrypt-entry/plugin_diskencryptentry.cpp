@@ -231,8 +231,20 @@ bool DiskEncryptEntry::onAcquireDevicePwd(const QString &dev, QString *pwd)
     case SecKeyType::kTPMAndPIN: {
         AcquirePinDialog dlg(tr("Please input PIN to unlock device %1").arg(dev));
         int ret = dlg.exec();
+
+        const QString dirPath = kTPMKeyPath + dev;
+        QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
+        const QString hashAlgo = settings.value(kConfigKeyPriHashAlgo).toString();
+        const QString keyAlgo = settings.value(kConfigKeyPriKeyAlgo).toString();
         QString pin = dlg.getUerInputedPassword();
-        bool ok = tpm_utils::decryptByTPM(pin, kTPMKeyPath + dev, pwd);
+        QVariantMap map {
+            { "PropertyKey_EncryptType", 2 },
+            { "PropertyKey_PrimaryHashAlgo", hashAlgo },
+            { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
+            { "PropertyKey_DirPath", dirPath },
+            { "PropertyKey_PinCode", pin }
+        };
+        bool ok = tpm_utils::decryptByTPM(map, pwd);
         if (!ok && ret == 1)
             showTPMError();
 
@@ -242,7 +254,19 @@ bool DiskEncryptEntry::onAcquireDevicePwd(const QString &dev, QString *pwd)
         return ok;
     }
     case SecKeyType::kTPMOnly: {
-        bool ok = tpm_utils::decryptByTPM("", kTPMKeyPath + dev, pwd);
+        const QString dirPath = kTPMKeyPath + dev;
+        QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
+        const QString hashAlgo = settings.value(kConfigKeyPriHashAlgo).toString();
+        const QString keyAlgo = settings.value(kConfigKeyPriKeyAlgo).toString();
+        QVariantMap map {
+            { "PropertyKey_EncryptType", 1 },
+            { "PropertyKey_PrimaryHashAlgo", hashAlgo },
+            { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
+            { "PropertyKey_DirPath", dirPath },
+            { "PropertyKey_Pcr", "7" },
+            { "PropertyKey_PcrBank", hashAlgo }
+        };
+        bool ok = tpm_utils::decryptByTPM(map, pwd);
         if (!ok)
             showTPMError();
         qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   TPM pwd for device:"

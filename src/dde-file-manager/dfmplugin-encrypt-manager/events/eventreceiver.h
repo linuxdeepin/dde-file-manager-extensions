@@ -24,7 +24,9 @@ public Q_SLOTS:
     bool encrypyByTpm(const QString &hashAlgo, const QString &keyAlgo,
                       const QString &keyPin, const QString &password,
                       const QString &dirPath);
-    bool decryptByTpm(const QString &keyPin, const QString &dirPath, QString *psw);
+    bool decryptByTpm(const QString &keyPin, const QString &dirPath, QString *pwd);
+    bool encryptByTpmProcess(const QVariantMap &encryptParams);
+    bool decryptByTpmProcess(const QVariantMap &decryptParams, QString *pwd);
 
 private:
     explicit EventReceiver(QObject *parent = nullptr);

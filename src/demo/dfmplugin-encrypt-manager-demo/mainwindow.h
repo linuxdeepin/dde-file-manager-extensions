@@ -28,6 +28,9 @@ private:
     QPushButton *btnCheckAlgo { Q_NULLPTR };
     QPushButton *btnEncrypt { Q_NULLPTR };
     QPushButton *btnDecrypt { Q_NULLPTR };
+
+    QPushButton *btnEncryptTwo { Q_NULLPTR };
+    QPushButton *btnDecryptTwo { Q_NULLPTR };
 };
 
 #endif   // MAINWINDOW_H

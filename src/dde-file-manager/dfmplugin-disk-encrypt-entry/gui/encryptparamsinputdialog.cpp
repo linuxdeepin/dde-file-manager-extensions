@@ -337,13 +337,36 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
 
     if (getButton(0))
         getButton(0)->setEnabled(false);
-    const QString hashAlgo = kTPMHashAlgo;
-    const QString keyAlgo = kTPMKeyAlgo;
-    const QString pinCode = (encType->currentIndex() == kTPMOnly ? "" : encKeyEdit1->text());
+
+    QString hashAlgo;
+    QString keyAlgo;
+    if (!tpmAlgoChoice(&hashAlgo, &keyAlgo)) {
+        qCritical() << "TPM algo choice failed!";
+        return false;
+    }
+
+    QVariantMap map {
+        { "PropertyKey_PrimaryHashAlgo", hashAlgo },
+        { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
+        { "PropertyKey_MinorHashAlgo", hashAlgo },
+        { "PropertyKey_MinorKeyAlgo", keyAlgo },
+        { "PropertyKey_DirPath", dirPath },
+        { "PropertyKey_Plain", password },
+    };
+    if (encType->currentIndex() == kTPMOnly) {
+        map.insert("PropertyKey_EncryptType", 1);
+        map.insert("PropertyKey_Pcr", "7");
+        map.insert("PropertyKey_PcrBank", hashAlgo);
+    } else if (encType->currentIndex() == kTPMAndPIN) {
+        map.insert("PropertyKey_EncryptType", 2);
+        map.insert("PropertyKey_PinCode", encKeyEdit1->text());
+    } else {
+        return false;
+    }
     QFutureWatcher<bool> watcher;
     QEventLoop loop;
-    QFuture<bool> future = QtConcurrent::run([hashAlgo, keyAlgo, pinCode, password, dirPath] {
-        return tpm_utils::encryptByTPM(hashAlgo, keyAlgo, pinCode, password, dirPath);
+    QFuture<bool> future = QtConcurrent::run([map] {
+        return tpm_utils::encryptByTPM(map);
     });
     connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop] {
         if (watcher.result())
@@ -367,6 +390,11 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
             getButton(0)->setEnabled(true);
         return false;
     }
+
+    QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
+    settings.setValue(kConfigKeyPriHashAlgo, QVariant(hashAlgo));
+    settings.setValue(kConfigKeyPriKeyAlgo, QVariant(keyAlgo));
+
     if (getButton(0))
         getButton(0)->setEnabled(true);
 
@@ -377,4 +405,31 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
             << password;
 
     return true;
+}
+
+bool EncryptParamsInputDialog::tpmAlgoChoice(QString *hashAlgo, QString *keyAlgo)
+{
+    bool re1 { false };
+    bool re2 { false };
+    tpm_utils::isSupportAlgoByTPM(kTPMHashAlgo, &re1);
+    tpm_utils::isSupportAlgoByTPM(kTPMKeyAlgo, &re2);
+
+    if (re1 && re2) {
+        (*hashAlgo) = kTPMHashAlgo;
+        (*keyAlgo) = kTPMKeyAlgo;
+        return true;
+    }
+
+    re1 = false;
+    re2 = false;
+    tpm_utils::isSupportAlgoByTPM(kTCMHashAlgo, &re1);
+    tpm_utils::isSupportAlgoByTPM(kTCMKeyAlgo, &re2);
+
+    if (re1 && re2) {
+        (*hashAlgo) = kTCMHashAlgo;
+        (*keyAlgo) = kTCMKeyAlgo;
+        return true;
+    }
+
+    return false;
 }
