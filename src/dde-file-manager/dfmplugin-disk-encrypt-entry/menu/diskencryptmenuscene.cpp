@@ -188,10 +188,21 @@ void DiskEncryptMenuScene::deencryptDevice(const QString &dev, const QString & /
         if (dlg.exec() != 0)
             return;
 
+        const QString dirPath = kTPMKeyPath + dev;
+        QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
+        const QString hashAlgo = settings.value(kConfigKeyPriHashAlgo).toString();
+        const QString keyAlgo = settings.value(kConfigKeyPriKeyAlgo).toString();
         auto inputs = dlg.getInputs();
-        auto pin = inputs.second;
+        auto pin = inputs.second;        
+        QVariantMap map {
+            { "PropertyKey_EncryptType", 2 },
+            { "PropertyKey_PrimaryHashAlgo", hashAlgo },
+            { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
+            { "PropertyKey_DirPath", dirPath },
+            { "PropertyKey_PinCode", pin }
+        };
         QString pwd;
-        bool ok = tpm_utils::decryptByTPM(pin, kTPMKeyPath + dev, &pwd);
+        bool ok = tpm_utils::decryptByTPM(map, &pwd);
         if (!ok) {
             showTPMError();
             return;
@@ -202,8 +213,20 @@ void DiskEncryptMenuScene::deencryptDevice(const QString &dev, const QString & /
         doDecryptDevice(dev, pwd, paramsOnly);
     } break;
     case SecKeyType::kTPMOnly: {
+        const QString dirPath = kTPMKeyPath + dev;
+        QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
+        const QString hashAlgo = settings.value(kConfigKeyPriHashAlgo).toString();
+        const QString keyAlgo = settings.value(kConfigKeyPriKeyAlgo).toString();
+        QVariantMap map {
+            { "PropertyKey_EncryptType", 1 },
+            { "PropertyKey_PrimaryHashAlgo", hashAlgo },
+            { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
+            { "PropertyKey_DirPath", dirPath },
+            { "PropertyKey_Pcr", "7" },
+            { "PropertyKey_PcrBank", hashAlgo }
+        };
         QString pwd;
-        bool ok = tpm_utils::decryptByTPM("", kTPMKeyPath + dev, &pwd);
+        bool ok = tpm_utils::decryptByTPM(map, &pwd);
         if (!ok) {
             showTPMError();
             return;

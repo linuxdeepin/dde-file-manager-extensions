@@ -33,10 +33,14 @@ enum EncryptJobError {
     kChgPassphraseFailed = -10,
 };
 
-inline constexpr int kPasswordSize { 8 };
+inline constexpr int kPasswordSize { 14 };
 inline const QString kTPMKeyPath(QDir::homePath() + "/.TPMKey");
 inline constexpr char kTPMHashAlgo[] { "sha256" };
 inline constexpr char kTPMKeyAlgo[] { "aes" };
+inline constexpr char kTCMHashAlgo[] { "sm3_256" };
+inline constexpr char kTCMKeyAlgo[] { "sm4" };
+inline constexpr char kConfigKeyPriHashAlgo[] { "primary_hash_algo" };
+inline constexpr char kConfigKeyPriKeyAlgo[] { "primary_key_algo" };
 
 #define DEV_ENCTYPE_CFG "/etc/deepin/dde-file-manager/dev_enc_type.ini"
 #define DEV_KEY QString("device/%1")
