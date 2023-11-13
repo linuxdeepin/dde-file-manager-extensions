@@ -9,8 +9,6 @@
 #include <QFile>
 #include <QDir>
 
-#include <fstream>
-
 typedef enum {
   kCTpmAndPcr,
   kCTpmAndPin,
@@ -212,6 +210,56 @@ bool TPMWork::decrypt(const QString &keyPin, const QString &dirPath, QString *ps
         qCritical() << "Vault: resolve utpm2_encry_decrypt failed!";
     }
     return false;
+}
+
+bool TPMWork::checkTPMAvailbableByTools()
+{
+    if (!tpmLib->isLoaded())
+        return false;
+
+    typedef bool (*p_utpm2_check_tpm_by_tools)(void);
+    p_utpm2_check_tpm_by_tools utpm2_check_tpm_by_tools = (p_utpm2_check_tpm_by_tools) tpmLib->resolve("utpm2_check_tpm_by_tools");
+    if (!utpm2_check_tpm_by_tools) {
+        qCritical() << "Vault: resolve utpm2_check_tpm_by_tools failed!";
+        return false;
+    }
+
+    return utpm2_check_tpm_by_tools();
+}
+
+bool TPMWork::getRandomByTools(int size, QString *output)
+{
+    if (!tpmLib->isLoaded())
+        return false;
+
+    typedef bool (*p_utpm2_get_random_by_tools)(int size, char *buf);
+    p_utpm2_get_random_by_tools utpm2_get_random_by_tools = (p_utpm2_get_random_by_tools) tpmLib->resolve("utpm2_get_random_by_tools");
+    if (!utpm2_get_random_by_tools) {
+        qCritical() << "Vault: resolve utpm2_get_random_by_tools failed!";
+        return false;
+    }
+
+    char buf[129] = { 0 };
+    bool re = utpm2_get_random_by_tools(size, buf);
+    *output = QString::fromLatin1(buf);
+    return re;
+}
+
+bool TPMWork::isSupportAlgoByTools(const QString &algoName, bool *support)
+{
+    if (!tpmLib->isLoaded())
+        return false;
+
+    typedef bool (*p_utpm2_check_alg_by_tools)(const char *algo_name,  bool *support);
+    p_utpm2_check_alg_by_tools utpm2_check_alg_by_tools = (p_utpm2_check_alg_by_tools) tpmLib->resolve("utpm2_check_alg_by_tools");
+    if (!utpm2_check_alg_by_tools) {
+        qCritical() << "Vault: resolve utpm2_check_alg_by_tools failed!";
+        return false;
+    }
+
+    QByteArray algo = algoName.toUtf8();
+    bool re = utpm2_check_alg_by_tools(algo.data(), support);
+    return re;
 }
 
 bool TPMWork::encryptByTools(const EncryptParams &params)

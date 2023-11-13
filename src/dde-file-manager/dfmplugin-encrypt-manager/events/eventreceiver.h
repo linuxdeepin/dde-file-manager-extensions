@@ -25,6 +25,10 @@ public Q_SLOTS:
                       const QString &keyPin, const QString &password,
                       const QString &dirPath);
     bool decryptByTpm(const QString &keyPin, const QString &dirPath, QString *pwd);
+
+    bool tpmIsAvailableProcess();
+    bool getRandomByTpmProcess(int size, QString *output);
+    bool isTpmSupportAlgoProcess(const QString &algoName, bool *support);
     bool encryptByTpmProcess(const QVariantMap &encryptParams);
     bool decryptByTpmProcess(const QVariantMap &decryptParams, QString *pwd);
 
