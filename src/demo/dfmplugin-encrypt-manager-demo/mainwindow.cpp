@@ -69,7 +69,7 @@ void MainWindow::initUi()
 void MainWindow::initConnect()
 {
     connect(btnCheckTpm, &QPushButton::clicked, this, [this] {
-        bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailable").toBool();
+        bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailablePro").toBool();
         if (result)
             textBrowser->append("TPM is available!");
         else
@@ -81,7 +81,7 @@ void MainWindow::initConnect()
     connect(btnGetRandom, &QPushButton::clicked, this, [this] {
         int size = editInput->text().toInt();
         QString out;
-        bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPM", size, &out).toBool();
+        bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPMPro", size, &out).toBool();
         if (result) {
             textBrowser->append(QString("Random is: %1").arg(out));
         } else {
@@ -91,7 +91,7 @@ void MainWindow::initConnect()
     connect(btnCheckAlgo, &QPushButton::clicked, this, [this] {
         const QString algoName = editInput->text();
         bool bSupport { false };
-        bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgo", algoName, &bSupport).toBool();
+        bool result = dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgoPro", algoName, &bSupport).toBool();
         if (result) {
             textBrowser->append(QString("The check result is %1!").arg(bSupport));
         } else {
