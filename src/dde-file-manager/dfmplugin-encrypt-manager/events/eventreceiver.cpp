@@ -68,6 +68,24 @@ bool EventReceiver::decryptByTpm(const QString &keyPin, const QString &dirPath, 
     return tpm.decrypt(keyPin, dirPath, pwd);
 }
 
+bool EventReceiver::tpmIsAvailableProcess()
+{
+    TPMWork tpm;
+    return tpm.checkTPMAvailbableByTools();
+}
+
+bool EventReceiver::getRandomByTpmProcess(int size, QString *output)
+{
+    TPMWork tpm;
+    return tpm.getRandomByTools(size, output);
+}
+
+bool EventReceiver::isTpmSupportAlgoProcess(const QString &algoName, bool *support)
+{
+    TPMWork tpm;
+    return tpm.isSupportAlgoByTools(algoName, support);
+}
+
 bool EventReceiver::encryptByTpmProcess(const QVariantMap &encryptParams)
 {
     if (!encryptParams.contains(PropertyKey::kEncryptType))
@@ -181,6 +199,10 @@ void EventReceiver::initConnection()
     dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgo", this, &EventReceiver::isTpmSupportAlgo);
     dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_EncryptByTPM", this, &EventReceiver::encrypyByTpm);
     dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_DecryptByTPM", this, &EventReceiver::decryptByTpm);
+
+    dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_TPMIsAvailablePro", this, &EventReceiver::tpmIsAvailableProcess);
+    dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_GetRandomByTPMPro", this, &EventReceiver::getRandomByTpmProcess);
+    dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgoPro", this, &EventReceiver::isTpmSupportAlgoProcess);
     dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_EncryptByTPMPro", this, &EventReceiver::encryptByTpmProcess);
     dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_DecryptByTPMPro", this, &EventReceiver::decryptByTpmProcess);
 }

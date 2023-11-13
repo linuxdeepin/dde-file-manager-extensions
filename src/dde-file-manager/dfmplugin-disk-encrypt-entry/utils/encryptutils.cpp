@@ -49,17 +49,17 @@ bool fstab_utils::isFstabItem(const QString &mpt)
 
 bool tpm_utils::hasTPM()
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailable").toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailablePro").toBool();
 }
 
 bool tpm_utils::getRandomByTPM(int size, QString *output)
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPM", size, output).toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPMPro", size, output).toBool();
 }
 
 bool tpm_utils::isSupportAlgoByTPM(const QString &algoName, bool *support)
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgo", algoName, support).toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgoPro", algoName, support).toBool();
 }
 
 bool tpm_utils::encryptByTPM(const QVariantMap &map)
