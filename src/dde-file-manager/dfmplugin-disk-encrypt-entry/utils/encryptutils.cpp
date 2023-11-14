@@ -153,11 +153,12 @@ QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QSt
         { "PropertyKey_DirPath", dirPath }
     };
 
-    if (pin.isEmpty())
-        map.insert({ { "PropertyKey_Pcr", "7" },
-                     { "PropertyKey_PcrBank", hashAlgo } });
-    else
-        map.insert({ { "PropertyKey_PinCode", pin } });
+    if (pin.isEmpty()) {
+        map.insert("PropertyKey_Pcr", "7");
+        map.insert("PropertyKey_PcrBank", hashAlgo);
+    } else {
+        map.insert("PropertyKey_PinCode", pin);
+    }
 
     QString passphrase;
     bool ok = tpm_utils::decryptByTPM(map, &passphrase);
