@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "chgpassphrasedialog.h"
+#include "utils/encryptutils.h"
 
 #include <QFormLayout>
 #include <QLabel>
@@ -27,7 +28,12 @@ QPair<QString, QString> ChgPassphraseDialog::getPassphrase()
 
 void ChgPassphraseDialog::initUI()
 {
-    setTitle(tr("Change passphrase for %1").arg(device));
+    int keyType = device_utils::encKeyType(device);
+    QString keyTypeStr = tr("passphrase");
+    if (keyType == 1)   // PIN
+        keyTypeStr = tr("PIN");
+
+    setTitle(tr("Change %1 for %2").arg(keyTypeStr).arg(device));
     QFrame *content = new QFrame(this);
     QFormLayout *lay = new QFormLayout(content);
 
@@ -35,9 +41,9 @@ void ChgPassphraseDialog::initUI()
     newPass1 = new Dtk::Widget::DPasswordEdit(this);
     newPass2 = new Dtk::Widget::DPasswordEdit(this);
 
-    lay->addRow(tr("Old passphrase"), oldPass);
-    lay->addRow(tr("New passphrase"), newPass1);
-    lay->addRow(tr("Repeat new"), newPass2);
+    lay->addRow(tr("Old %1").arg(keyTypeStr), oldPass);
+    lay->addRow(tr("New %1").arg(keyTypeStr), newPass1);
+    lay->addRow(tr("Repeat %1").arg(keyTypeStr), newPass2);
 
     addContent(content);
     addButton(tr("Cancel"));
@@ -52,10 +58,15 @@ bool ChgPassphraseDialog::validatePasswd()
         QToolTip::showText(getContent(0)->mapToGlobal(p), t, this);
     };
 
+    int keyType = device_utils::encKeyType(device);
+    QString keyTypeStr = tr("passphrase");
+    if (keyType == 1)   // PIN
+        keyTypeStr = tr("PIN");
+
     auto nonEmpty = [=](Dtk::Widget::DPasswordEdit *editor) {
         QString pwd = editor->text().trimmed();
         if (pwd.isEmpty()) {
-            showText(tr("Empty"), editor->pos());
+            showText(tr("%1 cannot be empty").arg(keyTypeStr), editor->pos());
             return false;
         }
         return true;
@@ -83,12 +94,13 @@ bool ChgPassphraseDialog::validatePasswd()
     });
 
     if (factor < 3 || pwd1.length() < 8) {
-        showText(tr("Not safe"), newPass1->pos());
+        showText(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyTypeStr),
+                 newPass1->pos());
         return false;
     }
 
     if (pwd1 != pwd2) {
-        showText(tr("Not equal"), newPass2->pos());
+        showText(tr("%1 inconsistency").arg(keyTypeStr), newPass2->pos());
         return false;
     }
 

@@ -24,12 +24,12 @@
 
 FILE_ENCRYPT_USE_NS
 
-static constexpr char kResumeList[] { "/etc/resume_encrypt_list.txt" };
+static constexpr char kResumeList[] { "/etc/deepin/dde-file-manager/resume_encrypt_list.txt" };
 // used to record current reencrypting device.
 QString gCurrReencryptingDevice;
 QString gCurrDecryptintDevice;
 
-EncryptParams disk_encrypt_utils::bcConvertEncParams(const QVariantMap &params)
+EncryptParams disk_encrypt_utils::bcConvertParams(const QVariantMap &params)
 {
     // TODO(xust): the passphrase should be a cypher.
     // use openssl to provide a public key for encode the passphrase
@@ -79,8 +79,8 @@ bool disk_encrypt_utils::bcValidateParams(const EncryptParams &params)
     return true;
 }
 
-void disk_encrypt_utils::bcCachePendingEncryptInfo(const QString &device,
-                                                   const QString &passphrase)
+void disk_encrypt_utils::bcPendTask(const QString &device,
+                                    const QString &passphrase)
 {
     // TODO passphrase cannot be recored as cleartext.
     QFile f(kResumeList);
@@ -95,7 +95,7 @@ void disk_encrypt_utils::bcCachePendingEncryptInfo(const QString &device,
     f.close();
 }
 
-QStringList disk_encrypt_utils::bcResumeDeviceList()
+QStringList disk_encrypt_utils::bcPendingTasks()
 {
     QFile f(kResumeList);
     if (!f.open(QIODevice::ReadOnly)) {
@@ -109,7 +109,7 @@ QStringList disk_encrypt_utils::bcResumeDeviceList()
     return resumeList;
 }
 
-void disk_encrypt_utils::bcClearCachedPendingList()
+void disk_encrypt_utils::bcClearPendingTasks()
 {
     QFile f(kResumeList);
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
@@ -119,42 +119,45 @@ void disk_encrypt_utils::bcClearCachedPendingList()
     f.close();
 }
 
-QString disk_encrypt_utils::bcExportRecoveryFile(const EncryptParams &params)
+QString disk_encrypt_utils::bcExpRecFile(const EncryptParams &params)
 {
-    if (!params.recoveryPath.isEmpty()) {
-        while (1) {
-            if (!QDir(params.recoveryPath).exists()) {
-                qWarning() << "the recovery key path does not exists!"
-                           << params.recoveryPath;
-                break;
-            }
+    if (params.recoveryPath.isEmpty())
+        return "";
 
-            QString recFileName = QString("%1/%2_recovery_key.txt")
-                                          .arg(params.recoveryPath)
-                                          .arg(params.device.mid(5));
-            QFile recFile(recFileName);
-            if (!recFile.open(QIODevice::ReadWrite)) {
-                qWarning() << "cannot create recovery file!";
-                break;
-            }
-
-            QString recKey = bcGenerateRecoveryKey();
-            recFile.write(recKey.toLocal8Bit());
-            recFile.flush();
-            recFile.close();
-
-            return QString(recKey);
+    while (1) {
+        if (!QDir(params.recoveryPath).exists()) {
+            qWarning() << "the recovery key path does not exists!"
+                       << params.recoveryPath;
+            break;
         }
+
+        QString recFileName = QString("%1/%2_recovery_key.txt")
+                                      .arg(params.recoveryPath)
+                                      .arg(params.device.mid(5));
+        QFile recFile(recFileName);
+        if (!recFile.open(QIODevice::ReadWrite)) {
+            qWarning() << "cannot create recovery file!";
+            break;
+        }
+
+        QString recKey = bcGenRecKey();
+        recFile.write(recKey.toLocal8Bit());
+        recFile.flush();
+        recFile.close();
+
+        return QString(recKey);
     }
+
     return "";
 }
 
-QString disk_encrypt_utils::bcGenerateRecoveryKey()
+QString disk_encrypt_utils::bcGenRecKey()
 {
+    QString recKey = QUuid::createUuid().toString();
+
     QLibrary lib("usec-recoverykey");
     dfmbase::FinallyUtil finalClear([&] { if (lib.isLoaded()) lib.unload(); });
 
-    QString recKey = QUuid::createUuid().toString();
     if (!lib.load()) {
         qWarning() << "libusec-recoverykey load failed. use uuid as recovery key";
         return recKey;
@@ -165,17 +168,18 @@ QString disk_encrypt_utils::bcGenerateRecoveryKey()
     if (!fn) {
         qWarning() << "libusec-recoverykey resolve failed. use uuid as recovery key";
         return recKey;
-    } else {
-        static const size_t kRecoveryKeySize = 20;
-        char genKey[kRecoveryKeySize + 1];
-        int ret = fn(genKey, kRecoveryKeySize, 1);
-        if (ret != 0) {
-            qWarning() << "libusec-recoverykey generate failed. use uuid as recovery key";
-            return recKey;
-        }
-        recKey = genKey;
+    }
+
+    static const size_t kRecoveryKeySize = 12;
+    char genKey[kRecoveryKeySize + 1];
+    int ret = fn(genKey, kRecoveryKeySize, 1);
+    if (ret != 0) {
+        qWarning() << "libusec-recoverykey generate failed. use uuid as recovery key";
         return recKey;
     }
+
+    recKey = genKey;
+    return recKey;
 }
 
 EncryptError disk_encrypt_funcs::bcInitHeaderFile(const EncryptParams &params,
@@ -184,8 +188,7 @@ EncryptError disk_encrypt_funcs::bcInitHeaderFile(const EncryptParams &params,
     if (!disk_encrypt_utils::bcValidateParams(params))
         return kParamsNotValid;
 
-    // check if device is already encrypted
-    auto status = block_device_utils::bcQueryDeviceEncryptStatus(params.device);
+    auto status = block_device_utils::bcDevStatus(params.device);
     if (status != kNotEncrypted) {
         qWarning() << "cannot encrypt device:"
                    << params.device
@@ -193,14 +196,10 @@ EncryptError disk_encrypt_funcs::bcInitHeaderFile(const EncryptParams &params,
         return kDeviceEncrypted;
     }
 
-    // check if device is already mounted.
-    if (block_device_utils::bcIsAlreadyMounted(params.device)) {
+    if (block_device_utils::bcIsMounted(params.device)) {
         qWarning() << "device is already mounted, cannot encrypt";
         return kDeviceMounted;
     }
-
-    // DON'T encrypt those devices which is configured in /etc/fstab.
-    // daemon cannot do encrypt resume before it mounted.
 
     headerPath = bcDoSetupHeader(params);
     return headerPath.isEmpty()
@@ -249,25 +248,6 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
 
     std::string cDevice = params.device.toStdString();
 
-    // set pkbdf
-    /*
-    const auto *dftPbkdf = crypt_get_pbkdf_default(CRYPT_LUKS2);
-    struct crypt_pbkdf_type pbkdf = {
-        .type = "argon2id",
-        .hash = "sm3",
-        .time_ms = dftPbkdf->time_ms,
-        .max_memory_kb = dftPbkdf->max_memory_kb,
-        .parallel_threads = dftPbkdf->parallel_threads
-    };
-    ret = crypt_set_pbkdf_type(cdev, &pbkdf);
-    if (ret != 0) {
-        qWarning() << "cannot set PBKDF for device"
-                   << params.device
-                   << ret;
-        return "";
-    }
-*/
-
     struct crypt_params_luks2 luks2Params = {
         .data_alignment = 0,
         .data_device = cDevice.c_str(),
@@ -302,12 +282,11 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
     }
 
     // add key slots
-    std::string cPassphrase = params.passphrase.toStdString();
     ret = crypt_keyslot_add_by_volume_key(cdev,
                                           CRYPT_ANY_SLOT,
                                           nullptr,
                                           0,
-                                          cPassphrase.c_str(),
+                                          params.passphrase.toStdString().c_str(),
                                           params.passphrase.length());
     if (ret < 0) {
         qWarning() << "add key slot failed:"
@@ -316,7 +295,7 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
         return "";
     }
 
-    QString recKey = disk_encrypt_utils::bcExportRecoveryFile(params);
+    QString recKey = disk_encrypt_utils::bcExpRecFile(params);
     if (!recKey.isEmpty()) {
         ret = crypt_keyslot_add_by_volume_key(cdev,
                                               CRYPT_ANY_SLOT,
@@ -352,8 +331,8 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
 
     ret = crypt_reencrypt_init_by_passphrase(cdev,
                                              nullptr,
-                                             cPassphrase.c_str(),
-                                             strlen(cPassphrase.c_str()),
+                                             params.passphrase.toStdString().c_str(),
+                                             params.passphrase.length(),
                                              CRYPT_ANY_SLOT,
                                              0,
                                              cipher.toStdString().c_str(),
@@ -409,8 +388,8 @@ int disk_encrypt_funcs::bcInitHeaderDevice(const QString &device,
     // once restore from header file success
     // record to local file and guide user reboot device
     // to continue reencrypt.
-    disk_encrypt_utils::bcCachePendingEncryptInfo(device,
-                                                  passphrase);
+    disk_encrypt_utils::bcPendTask(device,
+                                   passphrase);
 
     return 0;
 }
@@ -747,9 +726,9 @@ int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString 
     return 0;
 }
 
-EncryptStatus block_device_utils::bcQueryDeviceEncryptStatus(const QString &device)
+EncryptStatus block_device_utils::bcDevStatus(const QString &device)
 {
-    auto blkDev = block_device_utils::bcCreateBlockDevicePtr(device);
+    auto blkDev = block_device_utils::bcCreateBlkDev(device);
     if (!blkDev) {
         qWarning() << "cannot create block device handler:"
                    << device;
@@ -772,7 +751,7 @@ EncryptStatus block_device_utils::bcQueryDeviceEncryptStatus(const QString &devi
     return kNotEncrypted;
 }
 
-QSharedPointer<dfmmount::DBlockDevice> block_device_utils::bcCreateBlockDevicePtr(const QString &device)
+DevPtr block_device_utils::bcCreateBlkDev(const QString &device)
 {
     auto mng = dfmmount::DDeviceManager::instance();
     Q_ASSERT_X(mng, "cannot create device manager", "");
@@ -794,9 +773,9 @@ QSharedPointer<dfmmount::DBlockDevice> block_device_utils::bcCreateBlockDevicePt
     return blkDev.objectCast<dfmmount::DBlockDevice>();
 }
 
-bool block_device_utils::bcIsAlreadyMounted(const QString &device)
+bool block_device_utils::bcIsMounted(const QString &device)
 {
-    auto blkDev = block_device_utils::bcCreateBlockDevicePtr(device);
+    auto blkDev = block_device_utils::bcCreateBlkDev(device);
     if (!blkDev) {
         qWarning() << "cannot create block device handler:"
                    << device;
