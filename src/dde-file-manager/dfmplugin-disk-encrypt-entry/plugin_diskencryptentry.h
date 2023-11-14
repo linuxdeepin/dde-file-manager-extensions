@@ -11,11 +11,9 @@
 
 namespace dfmplugin_diskenc {
 
-class EncryptProcessDialog;
 class DFMPLUGIN_DISK_ENCRYPT_EXPORT DiskEncryptEntry : public dpf::Plugin
 {
     Q_OBJECT
-
     Q_PLUGIN_METADATA(IID "org.deepin.plugin.filemanager" FILE "diskencryptentry.json")
 
     // Plugin interface
@@ -23,25 +21,8 @@ public:
     virtual void initialize() override;
     virtual bool start() override;
 
-protected:
-    void connectDaemonSignals();
-
-protected Q_SLOTS:
-    void onPreencryptResult(const QString &, const QString &, int);
-    void onEncryptResult(const QString &, int);
-    void onEncryptProgress(const QString &, double);
-    void onDecryptResult(const QString &, const QString &, int);
-    void onDecryptProgress(const QString &, double);
-    void onChgPassphraseResult(const QString &, const QString &, int);
-
-    bool onAcquireDevicePwd(const QString &dev, QString *pwd);
-
 private:
     void onComputerMenuSceneAdded(const QString &scene);
-
-private:
-    QMap<QString, EncryptProcessDialog *> encryptDialogs;
-    QMap<QString, EncryptProcessDialog *> decryptDialogs;
 };
 }
 

@@ -7,6 +7,7 @@
 #include "gui/encryptparamsinputdialog.h"
 #include "gui/decryptparamsinputdialog.h"
 #include "gui/chgpassphrasedialog.h"
+#include "events/eventshandler.h"
 #include "utils/encryptutils.h"
 
 #include <dfm-base/dfm_menu_defines.h>
@@ -98,15 +99,23 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
 bool DiskEncryptMenuScene::create(QMenu *)
 {
     if (itemEncrypted) {
-        QAction *act = new QAction(tr("Deencrypt"));
+        QAction *act = new QAction(tr("Cancel partition encryption"));
         act->setProperty(ActionPropertyKey::kActionID, kActIDDecrypt);
         actions.insert(kActIDDecrypt, act);
 
-        act = new QAction(tr("Change passphrase"));
+        int type = device_utils::encKeyType(devDesc);
+        if (type == kTPMOnly)
+            return true;
+
+        QString keyType = tr("passphrase");
+        if (type == kTPMAndPIN)
+            keyType = "PIN";
+
+        act = new QAction(tr("Changing the encryption %1").arg(keyType));
         act->setProperty(ActionPropertyKey::kActionID, kActIDChangePwd);
         actions.insert(kActIDChangePwd, act);
     } else {
-        QAction *act = new QAction(tr("Encrypt"));
+        QAction *act = new QAction(tr("Enable partition encryption"));
         act->setProperty(ActionPropertyKey::kActionID, kActIDEncrypt);
         actions.insert(kActIDEncrypt, act);
     }
@@ -155,31 +164,19 @@ void DiskEncryptMenuScene::updateState(QMenu *parent)
 
 void DiskEncryptMenuScene::encryptDevice(const QString &dev, const QString &uuid, bool paramsOnly)
 {
-    EncryptParamsInputDialog *dlg = new EncryptParamsInputDialog(dev);
-    connect(dlg, &EncryptParamsInputDialog::finished, qApp, [=](int result) {
-        dlg->deleteLater();
-        if (result == QDialog::Accepted) {
-            auto params = dlg->getInputs();
-            params.initOnly = paramsOnly;
-            params.uuid = uuid;
-            doEncryptDevice(params);
-        }
-    });
-    dlg->show();
+    EncryptParamsInputDialog dlg(dev);
+    int ret = dlg.exec();
+    if (ret == QDialog::Accepted) {
+        auto params = dlg.getInputs();
+        params.initOnly = paramsOnly;
+        params.uuid = uuid;
+        doEncryptDevice(params);
+    }
 }
 
 void DiskEncryptMenuScene::deencryptDevice(const QString &dev, const QString & /*uuid*/, bool paramsOnly)
 {
-    QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
-    int type = sets.value(DEV_KEY.arg(dev.mid(5)), -1).toInt();
-
-    auto showTPMError = [] {
-        Dtk::Widget::DDialog dlg;
-        dlg.setTitle(tr("TPM error"));
-        dlg.setMessage(tr("Cannot acquire passphrase from TPM"));
-        dlg.addButton(tr("Confirm"));
-        dlg.exec();
-    };
+    int type = device_utils::encKeyType(dev);
 
     DecryptParamsInputDialog dlg(dev);
     switch (type) {
@@ -187,75 +184,40 @@ void DiskEncryptMenuScene::deencryptDevice(const QString &dev, const QString & /
         dlg.setInputPIN(true);
         if (dlg.exec() != 0)
             return;
-
-        const QString dirPath = kTPMKeyPath + dev;
-        QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
-        const QString hashAlgo = settings.value(kConfigKeyPriHashAlgo).toString();
-        const QString keyAlgo = settings.value(kConfigKeyPriKeyAlgo).toString();
         auto inputs = dlg.getInputs();
-        auto pin = inputs.second;        
-        QVariantMap map {
-            { "PropertyKey_EncryptType", 2 },
-            { "PropertyKey_PrimaryHashAlgo", hashAlgo },
-            { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
-            { "PropertyKey_DirPath", dirPath },
-            { "PropertyKey_PinCode", pin }
-        };
-        QString pwd;
-        bool ok = tpm_utils::decryptByTPM(map, &pwd);
-        if (!ok) {
-            showTPMError();
-            return;
-        }
-        qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   TPM pwd for device:"
-                << dev
-                << pwd;
-        doDecryptDevice(dev, pwd, paramsOnly);
-    } break;
-    case SecKeyType::kTPMOnly: {
-        const QString dirPath = kTPMKeyPath + dev;
-        QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
-        const QString hashAlgo = settings.value(kConfigKeyPriHashAlgo).toString();
-        const QString keyAlgo = settings.value(kConfigKeyPriKeyAlgo).toString();
-        QVariantMap map {
-            { "PropertyKey_EncryptType", 1 },
-            { "PropertyKey_PrimaryHashAlgo", hashAlgo },
-            { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
-            { "PropertyKey_DirPath", dirPath },
-            { "PropertyKey_Pcr", "7" },
-            { "PropertyKey_PcrBank", hashAlgo }
-        };
-        QString pwd;
-        bool ok = tpm_utils::decryptByTPM(map, &pwd);
-        if (!ok) {
-            showTPMError();
-            return;
-        }
-        qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   TPM pwd for device:"
-                << dev
-                << pwd;
-        doDecryptDevice(dev, pwd, paramsOnly);
-    } break;
-    default:
-        if (dlg.exec() == 0) {
-            auto inputs = dlg.getInputs();
-            doDecryptDevice(inputs.first, inputs.second, paramsOnly);
-        }
+        auto pin = inputs.second;
+        QString passphrase = tpm_passphrase_utils::getPassphraseFromTPM(dev, pin);
+        doDecryptDevice(dev, passphrase, paramsOnly);
         break;
+    }
+    case SecKeyType::kTPMOnly: {
+        QString passphrase = tpm_passphrase_utils::getPassphraseFromTPM(dev, "");
+        doDecryptDevice(dev, passphrase, paramsOnly);
+    } break;
+    default: {
+        if (dlg.exec() != 0)
+            break;
+        auto inputs = dlg.getInputs();
+        doDecryptDevice(inputs.first, inputs.second, paramsOnly);
+        break;
+    }
     }
 }
 
 void DiskEncryptMenuScene::changePassphrase(const QString &dev, const QString & /*uuid*/, bool paramsOnly)
 {
-    ChgPassphraseDialog *dlg = new ChgPassphraseDialog(dev);
-    connect(dlg, &ChgPassphraseDialog::finished, qApp, [=](int result) {
-        dlg->deleteLater();
-        if (result == 1) {
-            auto inputs = dlg->getPassphrase();
-            doChangePassphrase(dev, inputs.first, inputs.second);
-        }
-    });
-    dlg->show();
+    ChgPassphraseDialog dlg(dev);
+    if (dlg.exec() != 1)
+        return;
+
+    auto inputs = dlg.getPassphrase();
+    QString oldKey = inputs.first;
+    QString newKey = inputs.second;
+    if (device_utils::encKeyType(dev) == SecKeyType::kTPMAndPIN) {
+        oldKey = tpm_passphrase_utils::getPassphraseFromTPM(dev, oldKey);
+        newKey = tpm_passphrase_utils::genPassphraseFromTPM(dev, newKey);
+    }
+    doChangePassphrase(dev, oldKey, newKey);
 }
 
 void DiskEncryptMenuScene::doEncryptDevice(const ParamsInputs &inputs)

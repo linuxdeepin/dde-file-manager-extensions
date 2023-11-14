@@ -6,6 +6,8 @@
 #include "encryptparamsinputdialog.h"
 #include "utils/encryptutils.h"
 
+#include <dfm-base/utils/finallyutil.h>
+
 #include <QVBoxLayout>
 #include <QToolTip>
 #include <QLabel>
@@ -196,13 +198,21 @@ bool EncryptParamsInputDialog::validatePassword()
     QString pwd1 = encKeyEdit1->text().trimmed();
     QString pwd2 = encKeyEdit2->text().trimmed();
 
+    QString keyType;
+    if (encType->currentIndex() == kTPMAndPIN)
+        keyType = "PIN";
+    else if (encType->currentIndex() == kPasswordOnly)
+        keyType = tr("Passphrase");
+
+    QString hint = tr("%1 cannot be empty").arg(keyType);
+
     if (pwd1.isEmpty()) {
-        showText(tr("Empty"), encKeyEdit1->pos());
+        showText(hint, encKeyEdit1->pos());
         return false;
     }
 
     if (pwd2.isEmpty()) {
-        showText(tr("Empty"), encKeyEdit2->pos());
+        showText(hint, encKeyEdit2->pos());
         return false;
     }
 
@@ -220,12 +230,13 @@ bool EncryptParamsInputDialog::validatePassword()
     });
 
     if (factor < 3 || pwd1.length() < 8) {
-        showText(tr("Not safe"), encKeyEdit1->pos());
+        showText(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyType),
+                 encKeyEdit1->pos());
         return false;
     }
 
     if (pwd1 != pwd2) {
-        showText(tr("Not equal"), encKeyEdit2->pos());
+        showText(tr("%1 inconsistency").arg(keyType), encKeyEdit2->pos());
         return false;
     }
 
@@ -265,8 +276,10 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
     } else if (currPage == kConfirmPage) {
         qDebug() << "confirm encrypt device: " << device;
         if (encType->currentIndex() == kTPMAndPIN || encType->currentIndex() == kTPMOnly) {
-            if (!encryptByTpm(device))
+            if (!encryptByTpm(device)) {
+                qWarning() << "encrypt by TPM failed!";
                 return;
+            }
         }
         accept();
     } else {
@@ -324,56 +337,31 @@ void EncryptParamsInputDialog::onEncTypeChanged(int type)
 
 bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
 {
-    QString password { "" };
-    if (!tpm_utils::getRandomByTPM(kPasswordSize, &password) || password.isEmpty()) {
-        qCritical() << "TPM get random number failed!";
-        return false;
-    }
+    auto btnNext = getButton(0);
+    if (btnNext) btnNext->setEnabled(false);
+    dfmbase::FinallyUtil finalClear([btnNext] {
+        if (btnNext) btnNext->setEnabled(true);
+    });
 
-    const QString dirPath = kTPMKeyPath + deviceName;
-    QDir dir(dirPath);
-    if (!dir.exists())
-        dir.mkpath(dirPath);
-
-    if (getButton(0))
-        getButton(0)->setEnabled(false);
-
-    QString hashAlgo;
-    QString keyAlgo;
+    QString hashAlgo, keyAlgo;
     if (!tpmAlgoChoice(&hashAlgo, &keyAlgo)) {
         qCritical() << "TPM algo choice failed!";
         return false;
     }
 
-    QVariantMap map {
-        { "PropertyKey_PrimaryHashAlgo", hashAlgo },
-        { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
-        { "PropertyKey_MinorHashAlgo", hashAlgo },
-        { "PropertyKey_MinorKeyAlgo", keyAlgo },
-        { "PropertyKey_DirPath", dirPath },
-        { "PropertyKey_Plain", password },
-    };
-    if (encType->currentIndex() == kTPMOnly) {
-        map.insert("PropertyKey_EncryptType", 1);
-        map.insert("PropertyKey_Pcr", "7");
-        map.insert("PropertyKey_PcrBank", hashAlgo);
-    } else if (encType->currentIndex() == kTPMAndPIN) {
-        map.insert("PropertyKey_EncryptType", 2);
-        map.insert("PropertyKey_PinCode", encKeyEdit1->text());
-    } else {
-        return false;
-    }
-    QFutureWatcher<bool> watcher;
+    QString pin = (encType->currentIndex() == SecKeyType::kTPMAndPIN)
+            ? encKeyEdit1->text()
+            : "";
+
     QEventLoop loop;
-    QFuture<bool> future = QtConcurrent::run([map] {
-        return tpm_utils::encryptByTPM(map);
+    QFutureWatcher<QString> watcher;
+    QFuture<QString> future = QtConcurrent::run([=] {
+        return tpm_passphrase_utils::genPassphraseFromTPM(deviceName, pin);
     });
-    connect(&watcher, &QFutureWatcher<bool>::finished, this, [&watcher, &loop] {
-        if (watcher.result())
-            loop.exit(0);
-        else
-            loop.exit(-1);
-    });
+    connect(&watcher, &QFutureWatcher<bool>::finished,
+            this, [&watcher, &loop] {
+                loop.exit(watcher.result().isEmpty() ? -1 : 0);
+            });
     watcher.setFuture(future);
 
     DSpinner spinner(this);
@@ -382,28 +370,12 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
     spinner.start();
     spinner.show();
 
-    int re = loop.exec();
-    bool result = (re == 0 ? true : false);
-    if (!result) {
+    if (loop.exec() != 0) {
         qCritical() << "TPM encrypt failed!";
-        if (getButton(0))
-            getButton(0)->setEnabled(true);
         return false;
     }
 
-    QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
-    settings.setValue(kConfigKeyPriHashAlgo, QVariant(hashAlgo));
-    settings.setValue(kConfigKeyPriKeyAlgo, QVariant(keyAlgo));
-
-    if (getButton(0))
-        getButton(0)->setEnabled(true);
-
-    tpmPassword = password;
-
-    qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   create TPM pwd for device:"
-            << device
-            << password;
-
+    tpmPassword = watcher.result();
     return true;
 }
 

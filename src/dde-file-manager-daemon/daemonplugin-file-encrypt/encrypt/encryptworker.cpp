@@ -28,21 +28,21 @@ void PrencryptWorker::run()
 {
     auto recoredSets = [](const QString &k, int v) {
         QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
-        sets.setValue(DEV_KEY.arg(k.mid(5)),
-                      v);
+        sets.setValue(DEV_KEY.arg(k.mid(5)), v);
     };
 
     if (params.value(encrypt_param_keys::kKeyInitParamsOnly, false).toBool()) {
         auto code = writeEncryptParams();
         setExitCode(code);
         setFstabTimeout();
+
         if (code == EncryptJobError::kNoError)
             recoredSets(params.value(encrypt_param_keys::kKeyDevice).toString(),
                         params.value(encrypt_param_keys::kKeyEncMode).toInt());
         return;
     }
 
-    auto encParams = disk_encrypt_utils::bcConvertEncParams(params);
+    auto encParams = disk_encrypt_utils::bcConvertParams(params);
     if (!disk_encrypt_utils::bcValidateParams(encParams)) {
         setExitCode(EncryptJobError::kInvalidEncryptParams);
         qDebug() << "invalid params" << params;
@@ -174,7 +174,7 @@ ReencryptWorker::ReencryptWorker(QObject *parent)
 
 void ReencryptWorker::run()
 {
-    auto resumeList = disk_encrypt_utils::bcResumeDeviceList();
+    auto resumeList = disk_encrypt_utils::bcPendingTasks();
     QStringList uncompleted;
 
     for (const auto &resumeItem : resumeList) {
@@ -194,7 +194,7 @@ void ReencryptWorker::run()
                  << uncompleted;
         setExitCode(EncryptJobError::kReencryptFailed);
     }
-    disk_encrypt_utils::bcClearCachedPendingList();
+    disk_encrypt_utils::bcClearPendingTasks();
 }
 
 DecryptWorker::DecryptWorker(const QString &jobID, const QVariantMap &params,

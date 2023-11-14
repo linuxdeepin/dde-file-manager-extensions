@@ -15,9 +15,18 @@
 #    define DFMPLUGIN_DISK_ENCRYPT_EXPORT Q_DECL_IMPORT
 #endif
 
+enum TPMModuleEncType {
+    kUnknow = 0,
+    kUseTpmAndPcr,
+    kUseTpmAndPin
+};
+
 inline constexpr char kDaemonBusName[] { "com.deepin.filemanager.daemon" };
 inline constexpr char kDaemonBusPath[] { "/com/deepin/filemanager/daemon/DiskEncrypt" };
 inline constexpr char kDaemonBusIface[] { "com.deepin.filemanager.daemon.DiskEncrypt" };
+
+inline constexpr char kMenuPluginName[] { "dfmplugin_menu" };
+inline constexpr char kComputerMenuSceneName[] { "ComputerMenu" };
 
 enum EncryptJobError {
     kNoError = 0,
@@ -41,8 +50,5 @@ inline constexpr char kTCMHashAlgo[] { "sm3_256" };
 inline constexpr char kTCMKeyAlgo[] { "sm4" };
 inline constexpr char kConfigKeyPriHashAlgo[] { "primary_hash_algo" };
 inline constexpr char kConfigKeyPriKeyAlgo[] { "primary_key_algo" };
-
-#define DEV_ENCTYPE_CFG "/etc/deepin/dde-file-manager/dev_enc_type.ini"
-#define DEV_KEY QString("device/%1")
 
 #endif   // DFMPLUGIN_DISK_ENCRYPT_GLOBAL_H
