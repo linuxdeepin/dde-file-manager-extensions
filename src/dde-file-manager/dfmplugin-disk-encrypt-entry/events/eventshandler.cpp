@@ -14,6 +14,7 @@
 #include <QSettings>
 #include <QDBusConnection>
 #include <QDBusInterface>
+#include <QDBusPendingCall>
 
 #include <DDialog>
 
