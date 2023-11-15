@@ -91,6 +91,14 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     }
 
     QString devMpt = extProps.value("MountPoint", "").toString();
+    QStringList disablePaths { "/efi", "/boot", "/swap" };
+    bool disable = std::any_of(disablePaths.cbegin(), disablePaths.cend(),
+                               [devMpt](auto path) { return devMpt.startsWith(path); });
+    if (disable) {
+        qInfo() << devMpt << "doesn't support encrypt";
+        return false;
+    }
+
     operatingFstabDevice = fstab_utils::isFstabItem(devMpt);
     uuid = extProps.value("IdUUID", "").toString();
     return true;

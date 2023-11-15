@@ -7,7 +7,6 @@
 #include <QFormLayout>
 #include <QLabel>
 #include <QRegularExpression>
-#include <QToolTip>
 
 using namespace dfmplugin_diskenc;
 
@@ -54,10 +53,6 @@ void ChgPassphraseDialog::initUI()
 
 bool ChgPassphraseDialog::validatePasswd()
 {
-    auto showText = [this](const QString &t, const QPoint &p) {
-        QToolTip::showText(getContent(0)->mapToGlobal(p), t, this);
-    };
-
     int keyType = device_utils::encKeyType(device);
     QString keyTypeStr = tr("passphrase");
     if (keyType == 1)   // PIN
@@ -66,7 +61,7 @@ bool ChgPassphraseDialog::validatePasswd()
     auto nonEmpty = [=](Dtk::Widget::DPasswordEdit *editor) {
         QString pwd = editor->text().trimmed();
         if (pwd.isEmpty()) {
-            showText(tr("%1 cannot be empty").arg(keyTypeStr), editor->pos());
+            editor->showAlertMessage(tr("%1 cannot be empty").arg(keyTypeStr));
             return false;
         }
         return true;
@@ -94,13 +89,12 @@ bool ChgPassphraseDialog::validatePasswd()
     });
 
     if (factor < 3 || pwd1.length() < 8) {
-        showText(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyTypeStr),
-                 newPass1->pos());
+        newPass1->showAlertMessage(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyTypeStr));
         return false;
     }
 
     if (pwd1 != pwd2) {
-        showText(tr("%1 inconsistency").arg(keyTypeStr), newPass2->pos());
+        newPass2->showAlertMessage(tr("%1 inconsistency").arg(keyTypeStr));
         return false;
     }
 

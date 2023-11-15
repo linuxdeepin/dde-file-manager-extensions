@@ -8,8 +8,9 @@
 
 #include <dfm-base/utils/finallyutil.h>
 
+#include <dfm-mount/dmount.h>
+
 #include <QVBoxLayout>
-#include <QToolTip>
 #include <QLabel>
 #include <QFormLayout>
 #include <QStackedLayout>
@@ -92,6 +93,8 @@ void EncryptParamsInputDialog::initConn()
             this, &EncryptParamsInputDialog::onButtonClicked);
     connect(encType, static_cast<void (DComboBox::*)(int)>(&DComboBox::currentIndexChanged),
             this, &EncryptParamsInputDialog::onEncTypeChanged);
+    connect(keyExportInput, &DFileChooserEdit::textChanged,
+            this, [this](const QString &path) { onExpPathChanged(path, false); });
 }
 
 QWidget *EncryptParamsInputDialog::createPasswordPage()
@@ -191,10 +194,6 @@ bool EncryptParamsInputDialog::validatePassword()
     if (encType->currentIndex() == kTPMOnly)
         return true;
 
-    auto showText = [this](const QString &t, const QPoint &p) {
-        QToolTip::showText(getContent(0)->mapToGlobal(p), t, this);
-    };
-
     QString pwd1 = encKeyEdit1->text().trimmed();
     QString pwd2 = encKeyEdit2->text().trimmed();
 
@@ -207,12 +206,12 @@ bool EncryptParamsInputDialog::validatePassword()
     QString hint = tr("%1 cannot be empty").arg(keyType);
 
     if (pwd1.isEmpty()) {
-        showText(hint, encKeyEdit1->pos());
+        encKeyEdit1->showAlertMessage(hint);
         return false;
     }
 
     if (pwd2.isEmpty()) {
-        showText(hint, encKeyEdit2->pos());
+        encKeyEdit2->showAlertMessage(hint);
         return false;
     }
 
@@ -230,22 +229,46 @@ bool EncryptParamsInputDialog::validatePassword()
     });
 
     if (factor < 3 || pwd1.length() < 8) {
-        showText(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyType),
-                 encKeyEdit1->pos());
+        encKeyEdit1->showAlertMessage(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyType));
         return false;
     }
 
     if (pwd1 != pwd2) {
-        showText(tr("%1 inconsistency").arg(keyType), encKeyEdit2->pos());
+        encKeyEdit2->showAlertMessage(tr("%1 inconsistency").arg(keyType));
         return false;
     }
 
     return true;
 }
 
-bool EncryptParamsInputDialog::validateExportPath()
+bool EncryptParamsInputDialog::validateExportPath(const QString &path, QString *msg)
 {
-    // TODO(xust):
+    auto setMsg = [&](const QString &info) { if (msg) *msg = info; };
+    if (path.isEmpty()) {
+        setMsg(tr("Recovery key export path cannot be empty!"));
+        return false;
+    }
+
+    if (!QDir(path).exists()) {
+        setMsg(tr("Recovery key export path is not exists!"));
+        return false;
+    }
+
+    QString dev = QStorageInfo(path).device();
+    using namespace dfmmount;
+    auto monitor = DDeviceManager::instance()->getRegisteredMonitor(DeviceType::kBlockDevice).objectCast<DBlockMonitor>();
+    Q_ASSERT(monitor);
+    auto devObjPaths = monitor->resolveDeviceNode(dev, {});
+    if (!devObjPaths.isEmpty()) {
+        auto objPath = devObjPaths.constFirst();
+        auto devPtr = monitor->createDeviceById(objPath);
+        if (devPtr && devPtr->getProperty(Property::kBlockCryptoBackingDevice).toString() != "/") {
+            setMsg(tr("The partition is encrypted, please export to a non-encrypted "
+                      "partition or external device such as a USB flash drive."));
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -265,12 +288,18 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
 
     int currPage = pagesLay->currentIndex();
     if (currPage == kPasswordInputPage) {
-        if (validatePassword())
-            pagesLay->setCurrentIndex(config_utils::exportKeyEnabled() ? kExportKeyPage : kConfirmPage);
+        if (!validatePassword())
+            return;
+        if (config_utils::exportKeyEnabled()) {
+            pagesLay->setCurrentIndex(kExportKeyPage);
+            onExpPathChanged(keyExportInput->text(), true);
+        } else {
+            pagesLay->setCurrentIndex(kConfirmPage);
+        }
     } else if (currPage == kExportKeyPage) {
         if (idx == 0) {
             pagesLay->setCurrentIndex(kPasswordInputPage);
-        } else if (idx == 1 && validateExportPath()) {
+        } else if (idx == 1) {
             pagesLay->setCurrentIndex(kConfirmPage);
         }
     } else if (currPage == kConfirmPage) {
@@ -333,6 +362,17 @@ void EncryptParamsInputDialog::onEncTypeChanged(int type)
     } else {
         qWarning() << "wrong encrypt type!" << type;
     }
+}
+
+void EncryptParamsInputDialog::onExpPathChanged(const QString &path, bool silent)
+{
+    auto btnNext = getButton(1);
+    if (!btnNext)
+        return;
+    QString msg;
+    btnNext->setEnabled(validateExportPath(path, &msg));
+    if (!msg.isEmpty() && !silent)
+        keyExportInput->showAlertMessage(msg);
 }
 
 bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)

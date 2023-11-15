@@ -51,13 +51,14 @@ protected:
     QWidget *createExportPage();
     QWidget *createConfirmLayout();
     bool validatePassword();
-    bool validateExportPath();
+    bool validateExportPath(const QString &path, QString *msg);
     void setPasswordInputVisible(bool visible);
 
 protected Q_SLOTS:
     void onButtonClicked(int idx);
     void onPageChanged(int page);
     void onEncTypeChanged(int type);
+    void onExpPathChanged(const QString &path, bool silent);
 
 private:
     bool encryptByTpm(const QString &deviceName);
@@ -72,6 +73,7 @@ private:
     QLabel *pinOnlyHint { nullptr };
 
     DTK_WIDGET_NAMESPACE::DFileChooserEdit *keyExportInput { nullptr };
+    bool expPathValid { false };
 
     QStackedLayout *pagesLay { nullptr };
 

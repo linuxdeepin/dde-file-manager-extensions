@@ -204,7 +204,7 @@ bool EventsHandler::onAcquireDevicePwd(const QString &dev, QString *pwd, bool *c
         *pwd = acquirePassphrase(dev, *cancelled);
         break;
     default:
-        break;
+        return false;
     }
 
     if (pwd->isEmpty() && !*cancelled) {
