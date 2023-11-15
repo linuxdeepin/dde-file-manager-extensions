@@ -200,3 +200,21 @@ bool tpm_passphrase_utils::getAlgorithm(QString &hash, QString &key)
 
     return false;
 }
+
+QString recovery_key_utils::formatRecoveryKey(const QString &raw)
+{
+    static const int kSectionLen = 6;
+    QString formatted = raw;
+    formatted.remove("-");
+    int len = formatted.length();
+    if (len > 24)
+        formatted = formatted.mid(0, 24);
+
+    len = formatted.length();
+    int dashCount = len / kSectionLen;
+    if (len % kSectionLen == 0)
+        dashCount -= 1;
+    for (; dashCount > 0; dashCount--)
+        formatted.insert(dashCount * kSectionLen, '-');
+    return formatted;
+}

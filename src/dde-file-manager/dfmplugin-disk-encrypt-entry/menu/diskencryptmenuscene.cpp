@@ -43,6 +43,8 @@ inline constexpr char kKeyOldPassphrase[] { "oldPassphrase" };
 inline constexpr char kKeyCipher[] { "cipher" };
 inline constexpr char kKeyRecoveryExportPath[] { "exportRecKeyTo" };
 inline constexpr char kKeyInitParamsOnly[] { "initParamsOnly" };
+inline constexpr char kKeyTPMConfig[] { "tpmConfig" };
+inline constexpr char kKeyValidateWithRecKey[] { "usingRecKey" };
 
 DiskEncryptMenuScene::DiskEncryptMenuScene(QObject *parent)
     : AbstractMenuScene(parent)
@@ -106,10 +108,12 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
 
 bool DiskEncryptMenuScene::create(QMenu *)
 {
+    bool hasJob = EventsHandler::instance()->hasEnDecryptJob();
     if (itemEncrypted) {
         QAction *act = new QAction(tr("Cancel partition encryption"));
         act->setProperty(ActionPropertyKey::kActionID, kActIDDecrypt);
         actions.insert(kActIDDecrypt, act);
+        act->setEnabled(!hasJob);
 
         int type = device_utils::encKeyType(devDesc);
         if (type == kTPMOnly)
@@ -126,6 +130,7 @@ bool DiskEncryptMenuScene::create(QMenu *)
         QAction *act = new QAction(tr("Enable partition encryption"));
         act->setProperty(ActionPropertyKey::kActionID, kActIDEncrypt);
         actions.insert(kActIDEncrypt, act);
+        act->setEnabled(!hasJob);
     }
 
     return true;
@@ -172,7 +177,7 @@ void DiskEncryptMenuScene::updateState(QMenu *parent)
 
 void DiskEncryptMenuScene::encryptDevice(const QString &dev, const QString &uuid, bool paramsOnly)
 {
-    EncryptParamsInputDialog dlg(dev);
+    EncryptParamsInputDialog dlg(dev, paramsOnly);
     int ret = dlg.exec();
     if (ret == QDialog::Accepted) {
         auto params = dlg.getInputs();
@@ -186,29 +191,26 @@ void DiskEncryptMenuScene::deencryptDevice(const QString &dev, const QString & /
 {
     int type = device_utils::encKeyType(dev);
 
-    DecryptParamsInputDialog dlg(dev);
-    switch (type) {
-    case SecKeyType::kTPMAndPIN: {
-        dlg.setInputPIN(true);
-        if (dlg.exec() != 0)
-            return;
-        auto inputs = dlg.getInputs();
-        auto pin = inputs.second;
-        QString passphrase = tpm_passphrase_utils::getPassphraseFromTPM(dev, pin);
-        doDecryptDevice(dev, passphrase, paramsOnly);
-        break;
-    }
-    case SecKeyType::kTPMOnly: {
+    if (type == kTPMOnly) {
         QString passphrase = tpm_passphrase_utils::getPassphraseFromTPM(dev, "");
         doDecryptDevice(dev, passphrase, paramsOnly);
-    } break;
-    default: {
-        if (dlg.exec() != 0)
-            break;
-        auto inputs = dlg.getInputs();
-        doDecryptDevice(inputs.first, inputs.second, paramsOnly);
-        break;
+        return;
     }
+
+    DecryptParamsInputDialog dlg(dev);
+    if (type == kTPMAndPIN)
+        dlg.setInputPIN(true);
+
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    qDebug() << "start decrypting device" << dev;
+    QString key = dlg.getKey();
+    if (dlg.usingRecKey() || type == kPasswordOnly)
+        doDecryptDevice(dev, key, paramsOnly);
+    else {
+        QString passphrase = tpm_passphrase_utils::getPassphraseFromTPM(dev, key);
+        doDecryptDevice(dev, passphrase, paramsOnly);
     }
 }
 
@@ -222,15 +224,33 @@ void DiskEncryptMenuScene::changePassphrase(const QString &dev, const QString & 
     QString oldKey = inputs.first;
     QString newKey = inputs.second;
     if (device_utils::encKeyType(dev) == SecKeyType::kTPMAndPIN) {
-        oldKey = tpm_passphrase_utils::getPassphraseFromTPM(dev, oldKey);
+        if (!dlg.validateByRecKey())
+            oldKey = tpm_passphrase_utils::getPassphraseFromTPM(dev, oldKey);
         newKey = tpm_passphrase_utils::genPassphraseFromTPM(dev, newKey);
     }
-    doChangePassphrase(dev, oldKey, newKey);
+    doChangePassphrase(dev, oldKey, newKey, dlg.validateByRecKey());
 }
 
 void DiskEncryptMenuScene::doEncryptDevice(const ParamsInputs &inputs)
 {
     // if tpm selected, use tpm to generate the key
+    QJsonObject tpmParams;
+    if (inputs.type != kPasswordOnly) {
+        QString keyAlgo, hashAlgo;
+        if (!tpm_passphrase_utils::getAlgorithm(hashAlgo, keyAlgo)) {
+            qWarning() << "cannot choose algorithm for tpm";
+            hashAlgo = "sha256";
+            keyAlgo = "ecc";
+        }
+
+        tpmParams = { { "keyslot", 1 },
+                      { "primary-key-alg", keyAlgo },
+                      { "primary-hash-alg", hashAlgo },
+                      { "pcr", "7" },
+                      { "pcr-bank", hashAlgo } };
+    }
+    QJsonDocument tpmJson(tpmParams);
+
     QDBusInterface iface(kDaemonBusName,
                          kDaemonBusPath,
                          kDaemonBusIface,
@@ -244,6 +264,7 @@ void DiskEncryptMenuScene::doEncryptDevice(const ParamsInputs &inputs)
             { kKeyInitParamsOnly, inputs.initOnly },
             { kKeyRecoveryExportPath, inputs.exportPath },
             { kKeyEncMode, inputs.type },
+            { kKeyTPMConfig, QString(tpmJson.toJson()) }
         };
         QDBusReply<QString> reply = iface.call("PrepareEncryptDisk", params);
         qDebug() << "preencrypt device jobid:" << reply.value();
@@ -266,10 +287,11 @@ void DiskEncryptMenuScene::doDecryptDevice(const QString &dev, const QString &pa
         };
         QDBusReply<QString> reply = iface.call("DecryptDisk", params);
         qDebug() << "preencrypt device jobid:" << reply.value();
+        QApplication::setOverrideCursor(Qt::WaitCursor);
     }
 }
 
-void DiskEncryptMenuScene::doChangePassphrase(const QString &dev, const QString oldPass, const QString &newPass)
+void DiskEncryptMenuScene::doChangePassphrase(const QString &dev, const QString oldPass, const QString &newPass, bool validateByRec)
 {
     QDBusInterface iface(kDaemonBusName,
                          kDaemonBusPath,
@@ -279,7 +301,8 @@ void DiskEncryptMenuScene::doChangePassphrase(const QString &dev, const QString 
         QVariantMap params {
             { kKeyDevice, dev },
             { kKeyPassphrase, newPass },
-            { kKeyOldPassphrase, oldPass }
+            { kKeyOldPassphrase, oldPass },
+            { kKeyValidateWithRecKey, validateByRec }
         };
         QDBusReply<QString> reply = iface.call("ChangeEncryptPassphress", params);
         qDebug() << "modify device passphrase jobid:" << reply.value();

@@ -29,6 +29,10 @@ bool exportKeyEnabled();
 QString cipherType();
 }   // namespace config_utils
 
+namespace recovery_key_utils {
+QString formatRecoveryKey(const QString &raw);
+}
+
 namespace fstab_utils {
 bool isFstabItem(const QString &mpt);
 }   // namespace fstab_utils

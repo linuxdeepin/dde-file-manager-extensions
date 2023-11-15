@@ -83,14 +83,16 @@ EncryptJobError PrencryptWorker::writeEncryptParams()
 
     QJsonObject obj;
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
-    obj.insert("device", dev);
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
+    obj.insert("device", dev);
     obj.insert("volume", dmDev);
     obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString());
-    obj.insert("passphrase", params.value(encrypt_param_keys::kKeyPassphrase).toString());
     obj.insert("key-size", 256);
     obj.insert("mode", encMode.value(params.value(encrypt_param_keys::kKeyEncMode).toInt()));
-    obj.insert("token-tpm", "");
+    obj.insert("recoverykey-path", params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString());
+
+    QJsonDocument tpmConfig = QJsonDocument::fromJson(params.value(encrypt_param_keys::kKeyTPMConfig).toString().toLocal8Bit());
+    obj.insert("tpm-config", tpmConfig.object());
 
     QJsonDocument doc(obj);
     QString encFilePath = "/boot/usec-crypt";
@@ -101,13 +103,16 @@ EncryptJobError PrencryptWorker::writeEncryptParams()
     fname = "encrypt.json";   // but now, keeps only one encrypt task.
     QFile f(encFilePath + "/" + fname);
 
-    if (f.exists())
-        return EncryptJobError::kHasPendingEncryptJob;
+    if (f.exists()) {
+        qInfo() << "has pending job, the pending job will be replaced";
+        //        return EncryptJobError::kHasPendingEncryptJob;
+    }
 
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "cannot open file for write!";
         return EncryptJobError::kCannotCreateEncryptJob;
     }
+
     f.write(doc.toJson());
     f.flush();
     f.close();
@@ -167,37 +172,25 @@ EncryptJobError PrencryptWorker::setFstabTimeout()
     return EncryptJobError::kNoError;
 }
 
-ReencryptWorker::ReencryptWorker(QObject *parent)
-    : Worker("", parent)
+ReencryptWorker::ReencryptWorker(const QString &dev,
+                                 const QString &passphrase,
+                                 QObject *parent)
+    : Worker("", parent),
+      passphrase(passphrase),
+      device(dev)
 {
 }
 
 void ReencryptWorker::run()
 {
-    auto resumeList = disk_encrypt_utils::bcPendingTasks();
-    QStringList uncompleted;
+    int ret = disk_encrypt_funcs::bcResumeReencrypt(device,
+                                                    passphrase);
 
-    for (const auto &resumeItem : resumeList) {
-        QStringList devInfo = resumeItem.split(" ", QString::SkipEmptyParts);
-        if (devInfo.count() != 2)
-            return;
-        int ret = disk_encrypt_funcs::bcResumeReencrypt(devInfo[0],
-                                                        devInfo[1]);
-        if (ret != 0)
-            uncompleted.append(resumeItem);
-
-        Q_EMIT deviceReencryptResult(devInfo[0], ret);
-    }
-
-    if (!uncompleted.isEmpty()) {
-        qDebug() << "devices are not completly encrypted..."
-                 << uncompleted;
-        setExitCode(EncryptJobError::kReencryptFailed);
-    }
-    disk_encrypt_utils::bcClearPendingTasks();
+    Q_EMIT deviceReencryptResult(device, ret);
 }
 
-DecryptWorker::DecryptWorker(const QString &jobID, const QVariantMap &params,
+DecryptWorker::DecryptWorker(const QString &jobID,
+                             const QVariantMap &params,
                              QObject *parent)
     : Worker(jobID, parent),
       params(params)
@@ -247,8 +240,10 @@ void ChgPassWorker::run()
     QString oldPass = params.value(encrypt_param_keys::kKeyOldPassphrase).toString();
     QString newPass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
 
-    int ret = disk_encrypt_funcs::bcChangePassphrase(dev,
-                                                     oldPass,
-                                                     newPass);
+    int ret = 0;
+    if (params.value(encrypt_param_keys::kKeyValidateWithRecKey, false).toBool())
+        ret = disk_encrypt_funcs::bcChangePassphraseByRecKey(dev, oldPass, newPass);
+    else
+        ret = disk_encrypt_funcs::bcChangePassphrase(dev, oldPass, newPass);
     setExitCode(ret < 0 ? EncryptJobError::kChgPassphraseFailed : EncryptJobError::kNoError);
 }

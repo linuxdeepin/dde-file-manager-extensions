@@ -16,6 +16,7 @@ public:
     static EventsHandler *instance();
     void bindDaemonSignals();
     void hookEvents();
+    bool hasEnDecryptJob();
 
 private Q_SLOTS:
     void onPreencryptResult(const QString &, const QString &, int);
@@ -29,6 +30,13 @@ private Q_SLOTS:
     QString acquirePassphrase(const QString &dev, bool &cancelled);
     QString acquirePassphraseByPIN(const QString &dev, bool &cancelled);
     QString acquirePassphraseByTPM(const QString &dev, bool &cancelled);
+
+    void showPreEncryptError(const QString &device, int code);
+    void showDecryptError(const QString &device, int code);
+    void showChgPwdError(const QString &device, int code);
+    void showReboot(const QString &device);
+
+    void requestReboot();
 
 private:
     explicit EventsHandler(QObject *parent = nullptr);

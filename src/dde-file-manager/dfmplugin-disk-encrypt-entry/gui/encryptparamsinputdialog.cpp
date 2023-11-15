@@ -35,8 +35,12 @@ enum StepPage {
     kConfirmPage,
 };
 
-EncryptParamsInputDialog::EncryptParamsInputDialog(const QString &dev, QWidget *parent)
-    : DTK_WIDGET_NAMESPACE::DDialog(parent), device(dev)
+EncryptParamsInputDialog::EncryptParamsInputDialog(const QString &dev,
+                                                   bool fstabSelected,
+                                                   QWidget *parent)
+    : DTK_WIDGET_NAMESPACE::DDialog(parent),
+      fstabItem(fstabSelected),
+      device(dev)
 {
     initUi();
     initConn();
@@ -288,7 +292,7 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
 
     int currPage = pagesLay->currentIndex();
     if (currPage == kPasswordInputPage) {
-        if (!validatePassword())
+        if (!validatePassword() && !fstabItem)
             return;
         if (config_utils::exportKeyEnabled()) {
             pagesLay->setCurrentIndex(kExportKeyPage);
@@ -361,6 +365,11 @@ void EncryptParamsInputDialog::onEncTypeChanged(int type)
         setPasswordInputVisible(false);
     } else {
         qWarning() << "wrong encrypt type!" << type;
+    }
+
+    if (fstabItem) {
+        setPasswordInputVisible(false);
+        pinOnlyHint->setHidden(type != kTPMOnly);
     }
 }
 

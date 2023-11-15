@@ -13,6 +13,7 @@
 #include <QApplication>
 #include <QSettings>
 #include <QDBusConnection>
+#include <QDBusInterface>
 
 #include <DDialog>
 
@@ -52,35 +53,20 @@ void EventsHandler::hookEvents()
                             this, &EventsHandler::onAcquireDevicePwd);
 }
 
+bool EventsHandler::hasEnDecryptJob()
+{
+    return !(encryptDialogs.isEmpty() && decryptDialogs.isEmpty());
+}
+
 void EventsHandler::onPreencryptResult(const QString &dev, const QString &, int code)
 {
     QApplication::restoreOverrideCursor();
 
-    QString title;
-    QString msg;
-    switch (code) {
-    case (EncryptJobError::kNoError):
-        title = tr("Preencrypt done");
-        msg = tr("Device %1 has been preencrypt, please reboot to finish encryption.")
-                      .arg(dev);
-        break;
-    case EncryptJobError::kUserCancelled:
-        title = tr("Encrypt disk");
-        msg = tr("User cancelled operation");
-        break;
-    default:
-        title = tr("Preencrypt failed");
-        msg = tr("Device %1 preencrypt failed, please see log for more information.(%2)")
-                      .arg(dev)
-                      .arg(code);
-        break;
+    if (code != EncryptJobError::kNoError) {
+        showPreEncryptError(dev, code);
+        return;
     }
-
-    DDialog dlg;
-    dlg.setTitle(title);
-    dlg.setMessage(msg);
-    dlg.addButton(tr("Confirm"));
-    dlg.exec();
+    showReboot(dev);
 }
 
 void EventsHandler::onEncryptResult(const QString &dev, int code)
@@ -106,73 +92,28 @@ void EventsHandler::onEncryptResult(const QString &dev, int code)
     dlg.exec();
 }
 
-void EventsHandler::onDecryptResult(const QString &dev, const QString &job, int code)
+void EventsHandler::onDecryptResult(const QString &dev, const QString &, int code)
 {
     if (decryptDialogs.contains(dev)) {
         decryptDialogs.value(dev)->deleteLater();
         decryptDialogs.remove(dev);
     }
 
-    QString title;
-    QString msg;
-    switch (code) {
-    case (EncryptJobError::kNoError):
-        title = tr("Decrypt done");
-        msg = tr("Device %1 has been decrypted").arg(dev);
-        break;
-    case EncryptJobError::kUserCancelled:
-        title = tr("Decrypt disk");
-        msg = tr("User cancelled operation");
-        break;
-    default:
-        title = tr("Decrypt failed");
-        msg = tr("Device %1 Decrypt failed, please see log for more information.(%2)")
-                      .arg(dev)
-                      .arg(code);
-        break;
-    }
-
-    DDialog dlg;
-    dlg.setTitle(title);
-    dlg.setMessage(msg);
-    dlg.addButton(tr("Confirm"));
-    dlg.exec();
+    showDecryptError(dev, code);
 }
 
 void EventsHandler::onChgPassphraseResult(const QString &dev, const QString &, int code)
 {
     QApplication::restoreOverrideCursor();
-
-    QString title;
-    QString msg;
-    switch (code) {
-    case (EncryptJobError::kNoError):
-        title = tr("Change passphrase done");
-        msg = tr("%1's passphrase has been changed").arg(dev);
-        break;
-    case EncryptJobError::kUserCancelled:
-        title = tr("Change passphrase");
-        msg = tr("User cancelled operation");
-        break;
-    default:
-        title = tr("Change passphrase failed");
-        msg = tr("Device %1 change passphrase failed, please see log for more information.(%2)")
-                      .arg(dev)
-                      .arg(code);
-        break;
-    }
-
-    DDialog dlg;
-    dlg.setTitle(title);
-    dlg.setMessage(msg);
-    dlg.addButton(tr("Confirm"));
-    dlg.exec();
+    showChgPwdError(dev, code);
 }
 
 void EventsHandler::onEncryptProgress(const QString &dev, double progress)
 {
-    if (!encryptDialogs.contains(dev))
+    if (!encryptDialogs.contains(dev)) {
+        QApplication::restoreOverrideCursor();
         encryptDialogs.insert(dev, new EncryptProcessDialog(tr("Encrypting...%1").arg(dev)));
+    }
     auto dlg = encryptDialogs.value(dev);
     dlg->updateProgress(progress);
     dlg->show();
@@ -180,8 +121,11 @@ void EventsHandler::onEncryptProgress(const QString &dev, double progress)
 
 void EventsHandler::onDecryptProgress(const QString &dev, double progress)
 {
-    if (!decryptDialogs.contains(dev))
+    if (!decryptDialogs.contains(dev)) {
+        QApplication::restoreOverrideCursor();
         decryptDialogs.insert(dev, new EncryptProcessDialog(tr("Decrypting...%1").arg(dev)));
+    }
+
     auto dlg = decryptDialogs.value(dev);
     dlg->updateProgress(progress);
     dlg->show();
@@ -257,6 +201,111 @@ QString EventsHandler::acquirePassphraseByPIN(const QString &dev, bool &cancelle
 QString EventsHandler::acquirePassphraseByTPM(const QString &dev, bool &)
 {
     return tpm_passphrase_utils::getPassphraseFromTPM(dev, "");
+}
+
+void EventsHandler::showPreEncryptError(const QString &dev, int code)
+{
+    QString title;
+    QString msg;
+    switch (code) {
+    case (EncryptJobError::kNoError):
+        title = tr("Preencrypt done");
+        msg = tr("Device %1 has been preencrypt, please reboot to finish encryption.")
+                      .arg(dev);
+        break;
+    case EncryptJobError::kUserCancelled:
+        title = tr("Encrypt disk");
+        msg = tr("User cancelled operation");
+        break;
+    default:
+        title = tr("Preencrypt failed");
+        msg = tr("Device %1 preencrypt failed, please see log for more information.(%2)")
+                      .arg(dev)
+                      .arg(code);
+        break;
+    }
+
+    DDialog dlg;
+    dlg.setTitle(title);
+    dlg.setMessage(msg);
+    dlg.addButton(tr("Confirm"));
+    dlg.exec();
+}
+
+void EventsHandler::showDecryptError(const QString &dev, int code)
+{
+    QString title;
+    QString msg;
+    switch (code) {
+    case (EncryptJobError::kNoError):
+        title = tr("Decrypt done");
+        msg = tr("Device %1 has been decrypted").arg(dev);
+        break;
+    case EncryptJobError::kUserCancelled:
+        title = tr("Decrypt disk");
+        msg = tr("User cancelled operation");
+        break;
+    default:
+        title = tr("Decrypt failed");
+        msg = tr("Device %1 Decrypt failed, please see log for more information.(%2)")
+                      .arg(dev)
+                      .arg(code);
+        break;
+    }
+
+    DDialog dlg;
+    dlg.setTitle(title);
+    dlg.setMessage(msg);
+    dlg.addButton(tr("Confirm"));
+    dlg.exec();
+}
+
+void EventsHandler::showChgPwdError(const QString &dev, int code)
+{
+
+    QString title;
+    QString msg;
+    switch (code) {
+    case (EncryptJobError::kNoError):
+        title = tr("Change passphrase done");
+        msg = tr("%1's passphrase has been changed").arg(dev);
+        break;
+    case EncryptJobError::kUserCancelled:
+        title = tr("Change passphrase");
+        msg = tr("User cancelled operation");
+        break;
+    default:
+        title = tr("Change passphrase failed");
+        msg = tr("Device %1 change passphrase failed, please see log for more information.(%2)")
+                      .arg(dev)
+                      .arg(code);
+        break;
+    }
+
+    DDialog dlg;
+    dlg.setTitle(title);
+    dlg.setMessage(msg);
+    dlg.addButton(tr("Confirm"));
+    dlg.exec();
+}
+
+void EventsHandler::showReboot(const QString &device)
+{
+    DDialog dlg;
+    dlg.setTitle(tr("Preencrypt done"));
+    dlg.setMessage(tr("Device %1 has been preencrypt, please reboot to finish encryption.")
+                           .arg(device));
+    dlg.addButtons({ tr("Reboot later"), tr("Reboot now") });
+    if (dlg.exec() == 1)
+        requestReboot();
+}
+
+void EventsHandler::requestReboot()
+{
+    QDBusInterface sessMng("com.deepin.SessionManager",
+                           "/com/deepin/SessionManager",
+                           "com.deepin.SessionManager");
+    sessMng.asyncCall("RequestReboot");
 }
 
 EventsHandler::EventsHandler(QObject *parent)
