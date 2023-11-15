@@ -41,7 +41,7 @@ class EncryptParamsInputDialog : public DTK_WIDGET_NAMESPACE::DDialog
 {
     Q_OBJECT
 public:
-    explicit EncryptParamsInputDialog(const QString &dev, QWidget *parent = nullptr);
+    explicit EncryptParamsInputDialog(const QString &dev, bool fstabSelected, QWidget *parent = nullptr);
     ParamsInputs getInputs();
 
 protected:
@@ -64,19 +64,20 @@ private:
     bool encryptByTpm(const QString &deviceName);
     bool tpmAlgoChoice(QString *hashAlgo, QString *keyAlgo);
 
+private:
     DTK_WIDGET_NAMESPACE::DComboBox *encType { nullptr };
     DTK_WIDGET_NAMESPACE::DPasswordEdit *encKeyEdit1 { nullptr };
     DTK_WIDGET_NAMESPACE::DPasswordEdit *encKeyEdit2 { nullptr };
+    DTK_WIDGET_NAMESPACE::DFileChooserEdit *keyExportInput { nullptr };
 
     QLabel *keyHint1 { nullptr };
     QLabel *keyHint2 { nullptr };
     QLabel *pinOnlyHint { nullptr };
-
-    DTK_WIDGET_NAMESPACE::DFileChooserEdit *keyExportInput { nullptr };
-    bool expPathValid { false };
-
     QStackedLayout *pagesLay { nullptr };
 
+private:
+    bool expPathValid { false };
+    bool fstabItem { false };
     QString device;
     QString tpmPassword;
 };

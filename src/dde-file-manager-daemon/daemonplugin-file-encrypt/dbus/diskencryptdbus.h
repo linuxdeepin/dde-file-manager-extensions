@@ -35,6 +35,7 @@ Q_SIGNALS:
 
 private:
     bool checkAuth(const QString &actID);
+    void startReencrypt(const QString &dev, const QString &passphrase);
 };
 
 FILE_ENCRYPT_END_NS

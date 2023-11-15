@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "unlockpartitiondialog.h"
+#include "utils/encryptutils.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -51,6 +52,7 @@ void UnlockPartitionDialog::initUI()
     if (unlockBtn) unlockBtn->setEnabled(false);
 
     updateUserHint();
+    setOnButtonClickedClose(false);
 }
 
 void UnlockPartitionDialog::initConnect()
@@ -58,14 +60,23 @@ void UnlockPartitionDialog::initConnect()
     connect(this, &DDialog::buttonClicked, this, &UnlockPartitionDialog::handleButtonClicked);
     connect(chgUnlockType, &DCommandLinkButton::clicked, this, &UnlockPartitionDialog::switchUnlockType);
     connect(passwordLineEdit, &DPasswordEdit::textChanged, this, [this](const QString &txt) {
+        QString newText = txt;
+        QSignalBlocker blocker(sender());
+        if (currType == kRec) {
+            newText = recovery_key_utils::formatRecoveryKey(newText);
+            passwordLineEdit->setText(newText);
+        }
         auto unlockBtn = getButton(1);
-        if (unlockBtn) unlockBtn->setEnabled(txt.length() != 0);
+        if (unlockBtn) unlockBtn->setEnabled(newText.length() != 0);
     });
 }
 
 void UnlockPartitionDialog::updateUserHint()
 {
     setTitle(tr("Unlock encryption partition"));
+    passwordLineEdit->setEchoMode(QLineEdit::Password);
+    passwordLineEdit->setEchoButtonIsVisible(true);
+
     chgUnlockType->setText(tr("Unlock by recovery key"));
     switch (currType) {
     case kRec: {
@@ -75,6 +86,8 @@ void UnlockPartitionDialog::updateUserHint()
                 : tr("Unlock by PIN");
         chgUnlockType->setText(text);
         passwordLineEdit->setPlaceholderText(tr("Please input recovery key to unlock device"));
+        passwordLineEdit->setEchoMode(QLineEdit::Normal);
+        passwordLineEdit->setEchoButtonIsVisible(false);
         break;
     }
     case kPwd:
@@ -89,10 +102,19 @@ void UnlockPartitionDialog::updateUserHint()
 void UnlockPartitionDialog::handleButtonClicked(int index, QString text)
 {
     Q_UNUSED(text)
-    if (index == 1)
+    if (index == 1) {
         key = passwordLineEdit->text();
-
-    accept();
+        if (currType == kRec) {
+            key.remove("-");
+            if (key.length() != 24) {
+                passwordLineEdit->showAlertMessage(tr("Recovery key is not valid!"));
+                return;
+            }
+        }
+        accept();
+        return;
+    }
+    reject();
 }
 
 void UnlockPartitionDialog::switchUnlockType()

@@ -2,29 +2,111 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "decryptparamsinputdialog.h"
+#include "utils/encryptutils.h"
+
+#include <QVBoxLayout>
 
 using namespace dfmplugin_diskenc;
 DecryptParamsInputDialog::DecryptParamsInputDialog(const QString &device, QWidget *parent)
     : Dtk::Widget::DDialog(parent), devDesc(device)
 {
     initUI();
+    connect(recSwitch, &Dtk::Widget::DCommandLinkButton::clicked,
+            this, &DecryptParamsInputDialog::onRecSwitchClicked);
+    connect(editor, &Dtk::Widget::DPasswordEdit::textChanged,
+            this, &DecryptParamsInputDialog::onKeyChanged);
+    connect(this, &DecryptParamsInputDialog::buttonClicked,
+            this, &DecryptParamsInputDialog::onButtonClicked);
+    updateUserHints();
 }
 
-QPair<QString, QString> DecryptParamsInputDialog::getInputs()
+QString DecryptParamsInputDialog::getKey()
 {
-    return { devDesc, editor->text() };
+    QString key = editor->text();
+    if (usingRecKey())
+        key.remove("-");
+    return key;
 }
 
 void DecryptParamsInputDialog::setInputPIN(bool pin)
 {
-    if (pin)
-        setTitle(tr("Please input TPM PIN of %1").arg(devDesc));
+    requestPIN = pin;
+    updateUserHints();
+}
+
+bool DecryptParamsInputDialog::usingRecKey()
+{
+    return useRecKey;
+}
+
+void DecryptParamsInputDialog::onRecSwitchClicked()
+{
+    useRecKey = !useRecKey;
+    if (useRecKey) {
+        editor->setEchoMode(QLineEdit::Normal);
+        editor->setEchoButtonIsVisible(false);
+        editor->setPlaceholderText(tr("Please input recovery key to decrypt device"));
+        recSwitch->setText(tr("Validate with %1").arg(requestPIN ? tr("PIN") : tr("passphrase")));
+        setTitle(tr("Please input recovery key of %1").arg(devDesc));
+    } else {
+        editor->setEchoMode(QLineEdit::Password);
+        editor->setEchoButtonIsVisible(true);
+        editor->setPlaceholderText(tr("Please input %1 to decrypt device").arg(requestPIN ? tr("PIN") : tr("passphrase")));
+        recSwitch->setText(tr("Validate with recovery key"));
+        setTitle(tr("Please input %1 of %2")
+                         .arg(requestPIN ? tr("PIN") : tr("passphrase"))
+                         .arg(devDesc));
+    }
+}
+
+void DecryptParamsInputDialog::onKeyChanged(const QString &key)
+{
+    if (!usingRecKey())
+        return;
+    QSignalBlocker blocker(sender());
+    auto formatted = recovery_key_utils::formatRecoveryKey(key);
+    editor->setText(formatted);
+}
+
+void DecryptParamsInputDialog::onButtonClicked(int idx)
+{
+    if (idx != 0) {
+        reject();
+        return;
+    }
+
+    if (getKey().isEmpty()) {
+        QString keyType = requestPIN ? tr("PIN") : tr("Passphrase");
+        if (usingRecKey())
+            keyType = tr("Recovery key");
+        editor->showAlertMessage(tr("%1 cannot be empty!").arg(keyType));
+        return;
+    }
+
+    else if (usingRecKey() && getKey().length() != 24) {
+        editor->showAlertMessage(tr("Recovery key is not valid!"));
+        return;
+    }
+
+    accept();
+}
+
+void DecryptParamsInputDialog::updateUserHints()
+{
+    useRecKey = true;
+    onRecSwitchClicked();
 }
 
 void DecryptParamsInputDialog::initUI()
 {
     setTitle(tr("Please input passphrase of %1").arg(devDesc));
+    QFrame *content = new QFrame(this);
+    QVBoxLayout *lay = new QVBoxLayout(content);
     editor = new Dtk::Widget::DPasswordEdit(this);
-    addContent(editor);
+    lay->addWidget(editor);
+    recSwitch = new Dtk::Widget::DCommandLinkButton("", this);
+    lay->addWidget(recSwitch, 0, Qt::AlignRight);
+    addContent(content);
     addButton(tr("Confirm"));
+    setOnButtonClickedClose(false);
 }

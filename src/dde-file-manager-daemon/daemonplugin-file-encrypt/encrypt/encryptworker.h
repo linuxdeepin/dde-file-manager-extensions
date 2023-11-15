@@ -72,7 +72,9 @@ class ReencryptWorker : public Worker
 {
     Q_OBJECT
 public:
-    explicit ReencryptWorker(QObject *parent = nullptr);
+    explicit ReencryptWorker(const QString &dev,
+                             const QString &passphrase,
+                             QObject *parent = nullptr);
 
 Q_SIGNALS:
     void updateReencryptProgress(const QString &device,
@@ -84,6 +86,8 @@ protected:
     void run() override;
 
 private:
+    QString passphrase;
+    QString device;
 };
 
 class DecryptWorker : public Worker

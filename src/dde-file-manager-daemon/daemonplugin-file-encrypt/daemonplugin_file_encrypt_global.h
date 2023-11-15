@@ -31,6 +31,9 @@ inline constexpr char kKeyOldPassphrase[] { "oldPassphrase" };
 inline constexpr char kKeyCipher[] { "cipher" };
 inline constexpr char kKeyRecoveryExportPath[] { "exportRecKeyTo" };
 inline constexpr char kKeyInitParamsOnly[] { "initParamsOnly" };
+inline constexpr char kKeyTPMConfig[] { "tpmConfig" };
+inline constexpr char kKeyValidateWithRecKey[] { "usingRecKey" };
+
 }   // namespace encrypt_param_keys
 
 struct EncryptParams

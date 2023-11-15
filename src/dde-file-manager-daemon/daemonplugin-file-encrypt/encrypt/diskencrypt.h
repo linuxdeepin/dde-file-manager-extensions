@@ -38,6 +38,7 @@ QString bcDoSetupHeader(const EncryptParams &params);
 int bcInitHeaderDevice(const QString &device, const QString &passphrase, const QString &headerPath);
 int bcResumeReencrypt(const QString &device, const QString &passphrase);
 int bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase);
+int bcChangePassphraseByRecKey(const QString &device, const QString &oldPassphrase, const QString &newPassphrase);
 int bcDecryptDevice(const QString &device, const QString &passphrase);
 int bcBackupCryptHeader(const QString &device, QString &headerPath);
 QString bcPrepareHeaderFile(const QString &device);
@@ -49,10 +50,6 @@ int bcDecryptProgress(uint64_t size, uint64_t offset, void *usrptr);
 namespace disk_encrypt_utils {
 EncryptParams bcConvertParams(const QVariantMap &params);
 bool bcValidateParams(const EncryptParams &params);
-
-void bcPendTask(const QString &device, const QString &passphrase);
-void bcClearPendingTasks();
-QStringList bcPendingTasks();
 
 QString bcExpRecFile(const EncryptParams &params);
 QString bcGenRecKey();
