@@ -17,6 +17,7 @@ public:
     void bindDaemonSignals();
     void hookEvents();
     bool hasEnDecryptJob();
+    bool onAcquireDevicePwd(const QString &dev, QString *pwd, bool *giveup);
 
 private Q_SLOTS:
     void onPreencryptResult(const QString &, const QString &, int);
@@ -25,7 +26,6 @@ private Q_SLOTS:
     void onDecryptResult(const QString &, const QString &, int);
     void onDecryptProgress(const QString &, double);
     void onChgPassphraseResult(const QString &, const QString &, int);
-    bool onAcquireDevicePwd(const QString &dev, QString *pwd, bool *giveup);
 
     QString acquirePassphrase(const QString &dev, bool &cancelled);
     QString acquirePassphraseByPIN(const QString &dev, bool &cancelled);

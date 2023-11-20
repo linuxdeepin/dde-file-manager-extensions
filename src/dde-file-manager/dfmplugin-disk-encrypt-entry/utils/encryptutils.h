@@ -8,6 +8,12 @@
 #include <QString>
 #include <QVariantMap>
 
+namespace dfmmount {
+class DBlockDevice;
+}
+
+typedef QSharedPointer<dfmmount::DBlockDevice> BlockDev;
+
 namespace dfmplugin_diskenc {
 
 namespace tpm_utils {
@@ -39,7 +45,13 @@ bool isFstabItem(const QString &mpt);
 
 namespace device_utils {
 int encKeyType(const QString &dev);
+BlockDev createBlockDevice(const QString &devObjPath);
 }   // namespace device_utils
+
+namespace dialog_utils {
+void showInfo(const QString &title, const QString &msg);
+void showError(const QString &title, const QString &msg);
+}
 
 }   // namespace dfmplugin_diskenc
 

@@ -7,9 +7,12 @@
 
 #include <dfm-framework/event/event.h>
 
+#include <dfm-mount/dmount.h>
+
 #include <QSettings>
 
 #include <dconfig.h>
+#include <DDialog>
 
 #include <fstab.h>
 
@@ -217,4 +220,32 @@ QString recovery_key_utils::formatRecoveryKey(const QString &raw)
     for (; dashCount > 0; dashCount--)
         formatted.insert(dashCount * kSectionLen, '-');
     return formatted;
+}
+
+void dialog_utils::showError(const QString &title, const QString &msg)
+{
+    Dtk::Widget::DDialog d;
+    d.setTitle(title);
+    d.setMessage(msg);
+    d.setIcon(QIcon::fromTheme("dialog-error"));
+    d.addButton(qApp->translate("dfmplugin_diskenc::ChgPassphraseDialog", "Confirm"));
+    d.exec();
+}
+
+BlockDev device_utils::createBlockDevice(const QString &devObjPath)
+{
+    using namespace dfmmount;
+    auto monitor = DDeviceManager::instance()->getRegisteredMonitor(DeviceType::kBlockDevice).objectCast<DBlockMonitor>();
+    Q_ASSERT(monitor);
+    return monitor->createDeviceById(devObjPath).objectCast<DBlockDevice>();
+}
+
+void dialog_utils::showInfo(const QString &title, const QString &msg)
+{
+    Dtk::Widget::DDialog d;
+    d.setTitle(title);
+    d.setMessage(msg);
+    d.setIcon(QIcon::fromTheme("dialog-info"));
+    d.addButton(qApp->translate("dfmplugin_diskenc::ChgPassphraseDialog", "Confirm"));
+    d.exec();
 }
