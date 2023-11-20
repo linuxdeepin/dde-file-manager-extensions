@@ -42,6 +42,7 @@ bool DecryptParamsInputDialog::usingRecKey()
 void DecryptParamsInputDialog::onRecSwitchClicked()
 {
     useRecKey = !useRecKey;
+    editor->clear();
     if (useRecKey) {
         editor->setEchoMode(QLineEdit::Normal);
         editor->setEchoButtonIsVisible(false);
@@ -99,6 +100,7 @@ void DecryptParamsInputDialog::updateUserHints()
 
 void DecryptParamsInputDialog::initUI()
 {
+    setIcon(QIcon::fromTheme("drive-harddisk-root"));
     setTitle(tr("Please input passphrase of %1").arg(devDesc));
     QFrame *content = new QFrame(this);
     QVBoxLayout *lay = new QVBoxLayout(content);

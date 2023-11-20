@@ -44,6 +44,8 @@ bool ChgPassphraseDialog::validateByRecKey()
 
 void ChgPassphraseDialog::initUI()
 {
+    setIcon(QIcon::fromTheme("drive-harddisk-root"));
+
     int keyType = device_utils::encKeyType(device);
     QString keyTypeStr = tr("passphrase");
     if (keyType == 1)   // PIN
@@ -153,6 +155,7 @@ void ChgPassphraseDialog::onButtonClicked(int idx)
 void ChgPassphraseDialog::onRecSwitchClicked()
 {
     usingRecKey = !usingRecKey;
+    oldPass->clear();
     if (usingRecKey) {
         oldKeyHint->setText(tr("Recovery key"));
         oldPass->setEchoMode(QLineEdit::Normal);
