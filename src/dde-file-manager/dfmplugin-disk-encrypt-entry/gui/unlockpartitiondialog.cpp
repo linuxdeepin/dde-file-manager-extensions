@@ -32,7 +32,7 @@ UnlockPartitionDialog::~UnlockPartitionDialog()
 
 void UnlockPartitionDialog::initUI()
 {
-    setIcon(QIcon::fromTheme("dialog-warning"));
+    setIcon(QIcon::fromTheme("drive-harddisk-root"));
 
     QFrame *content = new QFrame;
     passwordLineEdit = new DPasswordEdit;
@@ -123,7 +123,7 @@ void UnlockPartitionDialog::switchUnlockType()
         currType = initType;
     else if (currType == kPin || currType == kPwd)
         currType = kRec;
-
+    passwordLineEdit->clear();
     updateUserHint();
 }
 
