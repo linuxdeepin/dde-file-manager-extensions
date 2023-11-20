@@ -48,10 +48,14 @@ protected:
     static void encryptDevice(const QString &dev, const QString &uuid, bool paramsOnly = false);
     static void deencryptDevice(const QString &dev, const QString &uuid, bool paramsOnly = false);
     static void changePassphrase(const QString &dev, const QString &uuid, bool paramsOnly = false);
+    static void unlockDevice(const QString &dev);
 
     static void doEncryptDevice(const ParamsInputs &inputs);
     static void doDecryptDevice(const QString &dev, const QString &passphrase, bool paramsOnly);
     static void doChangePassphrase(const QString &dev, const QString oldPass, const QString &newPass, bool validateByRec);
+
+    static void onUnlocked(bool ok, dfmmount::OperationErrorInfo, QString);
+    static void onMounted(bool ok, dfmmount::OperationErrorInfo, QString);
 
     void unmountBefore(const std::function<void(const QString &, const QString &, bool)> &after);
     enum OpType { kUnmount,
@@ -65,7 +69,9 @@ private:
     QString devDesc;
     bool itemEncrypted { false };
     bool operatingFstabDevice { false };
+    bool selectionMounted { false };
     QString uuid;
+    QVariantHash selectedItemInfo;
 };
 
 }

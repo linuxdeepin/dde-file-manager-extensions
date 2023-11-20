@@ -7,12 +7,15 @@
 #include "gui/encryptparamsinputdialog.h"
 #include "gui/decryptparamsinputdialog.h"
 #include "gui/chgpassphrasedialog.h"
+#include "gui/unlockpartitiondialog.h"
 #include "events/eventshandler.h"
 #include "utils/encryptutils.h"
 
 #include <dfm-base/dfm_menu_defines.h>
 #include <dfm-base/base/schemefactory.h>
 #include <dfm-base/interfaces/fileinfo.h>
+
+#include <dfm-mount/dmount.h>
 
 #include <QDebug>
 #include <QMenu>
@@ -32,6 +35,7 @@ DFMBASE_USE_NAMESPACE
 using namespace dfmplugin_diskenc;
 
 static constexpr char kActIDEncrypt[] { "de_0_encrypt" };
+static constexpr char kActIDUnlock[] { "de_0_unlock" };
 static constexpr char kActIDDecrypt[] { "de_1_decrypt" };
 static constexpr char kActIDChangePwd[] { "de_2_changePwd" };
 
@@ -76,13 +80,13 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
         return false;
     info->refresh();
 
-    QVariantHash extProps = info->extraProperties();
-    devDesc = extProps.value("Device", "").toString();
+    selectedItemInfo = info->extraProperties();
+    devDesc = selectedItemInfo.value("Device", "").toString();
     if (devDesc.isEmpty())
         return false;
 
-    const QString &idType = extProps.value("IdType").toString();
-    const QString &idVersion = extProps.value("IdVersion").toString();
+    const QString &idType = selectedItemInfo.value("IdType").toString();
+    const QString &idVersion = selectedItemInfo.value("IdVersion").toString();
     const QStringList &supportedFS { "ext4", "ext3", "ext2" };
     if (idType == "crypto_LUKS") {
         if (idVersion == "1")
@@ -92,7 +96,7 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
         return false;
     }
 
-    QString devMpt = extProps.value("MountPoint", "").toString();
+    QString devMpt = selectedItemInfo.value("MountPoint", "").toString();
     QStringList disablePaths { "/efi", "/boot", "/swap" };
     bool disable = std::any_of(disablePaths.cbegin(), disablePaths.cend(),
                                [devMpt](auto path) { return devMpt.startsWith(path); });
@@ -102,7 +106,11 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     }
 
     operatingFstabDevice = fstab_utils::isFstabItem(devMpt);
-    uuid = extProps.value("IdUUID", "").toString();
+    if (selectedItemInfo.contains("ClearBlockDeviceInfo")) {
+        auto dmInfo = selectedItemInfo.value("ClearBlockDeviceInfo").toHash();
+        selectionMounted = !dmInfo.value("MountPoint", "").toString().isEmpty();
+    }
+    uuid = selectedItemInfo.value("IdUUID", "").toString();
     return true;
 }
 
@@ -110,7 +118,13 @@ bool DiskEncryptMenuScene::create(QMenu *)
 {
     bool hasJob = EventsHandler::instance()->hasEnDecryptJob();
     if (itemEncrypted) {
-        QAction *act = new QAction(tr("Cancel partition encryption"));
+        QAction *act = nullptr;
+
+        act = new QAction(tr("Unlock encrypted partition"));
+        act->setProperty(ActionPropertyKey::kActionID, kActIDUnlock);
+        actions.insert(kActIDUnlock, act);
+
+        act = new QAction(tr("Cancel partition encryption"));
         act->setProperty(ActionPropertyKey::kActionID, kActIDDecrypt);
         actions.insert(kActIDDecrypt, act);
         act->setEnabled(!hasJob);
@@ -146,6 +160,8 @@ bool DiskEncryptMenuScene::triggered(QAction *action)
         operatingFstabDevice ? deencryptDevice(devDesc, uuid, true) : unmountBefore(deencryptDevice);
     else if (actID == kActIDChangePwd)
         changePassphrase(devDesc, uuid, true);
+    else if (actID == kActIDUnlock)
+        unlockDevice(selectedItemInfo.value("Id").toString());
     else
         return false;
     return true;
@@ -172,6 +188,10 @@ void DiskEncryptMenuScene::updateState(QMenu *parent)
     std::for_each(actions.begin(), actions.end(), [=](QAction *val) {
         parent->insertAction(before, val);
         val->setParent(parent);
+
+        if (val->property(ActionPropertyKey::kActionID).toString() == kActIDUnlock
+            && selectionMounted)
+            val->setVisible(false);
     });
 }
 
@@ -229,6 +249,24 @@ void DiskEncryptMenuScene::changePassphrase(const QString &dev, const QString & 
         newKey = tpm_passphrase_utils::genPassphraseFromTPM(dev, newKey);
     }
     doChangePassphrase(dev, oldKey, newKey, dlg.validateByRecKey());
+}
+
+void DiskEncryptMenuScene::unlockDevice(const QString &devObjPath)
+{
+    auto blkDev = device_utils::createBlockDevice(devObjPath);
+    if (!blkDev)
+        return;
+
+    QString pwd;
+    bool cancel { false };
+    bool ok = EventsHandler::instance()->onAcquireDevicePwd(blkDev->device(), &pwd, &cancel);
+    if (pwd.isEmpty() && ok) {
+        qWarning() << "acquire pwd faield!!!";
+        return;
+    }
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    blkDev->unlockAsync(pwd, {}, onUnlocked);
 }
 
 void DiskEncryptMenuScene::doEncryptDevice(const ParamsInputs &inputs)
@@ -310,21 +348,38 @@ void DiskEncryptMenuScene::doChangePassphrase(const QString &dev, const QString 
     }
 }
 
+void DiskEncryptMenuScene::onUnlocked(bool ok, dfmmount::OperationErrorInfo info, QString clearDev)
+{
+    QApplication::restoreOverrideCursor();
+    if (!ok && info.code != dfmmount::DeviceError::kUDisksErrorNotAuthorizedDismissed) {
+        qWarning() << "unlock device failed!" << info.message;
+        dialog_utils::showError(tr("Unlock device failed"),
+                                tr("Wrong password"));
+        return;
+    }
+
+    auto dev = device_utils::createBlockDevice(clearDev);
+    if (!dev)
+        return;
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    dev->mountAsync({}, onMounted);
+}
+
+void DiskEncryptMenuScene::onMounted(bool ok, dfmmount::OperationErrorInfo info, QString mountPoint)
+{
+    QApplication::restoreOverrideCursor();
+    if (!ok && info.code != dfmmount::DeviceError::kUDisksErrorNotAuthorizedDismissed) {
+        qWarning() << "mount device failed!" << info.message;
+        dialog_utils::showError(tr("Mount device failed"), "");
+        return;
+    }
+}
+
 void DiskEncryptMenuScene::unmountBefore(const std::function<void(const QString &, const QString &, bool)> &after)
 {
     using namespace dfmmount;
-    auto mng = DDeviceManager::instance()
-                       ->getRegisteredMonitor(DeviceType::kBlockDevice)
-                       .objectCast<DBlockMonitor>();
-    Q_ASSERT(mng);
-
-    QStringList objPaths = mng->resolveDeviceNode(devDesc, {});
-    if (objPaths.isEmpty()) {
-        qWarning() << "cannot resolve objpath of" << devDesc;
-        return;
-    }
-    auto blk = mng->createDeviceById(objPaths.constFirst())
-                       .objectCast<DBlockDevice>();
+    auto blk = device_utils::createBlockDevice(selectedItemInfo.value("Id").toString());
     if (!blk)
         return;
 
@@ -336,31 +391,24 @@ void DiskEncryptMenuScene::unmountBefore(const std::function<void(const QString 
         if (clearPath.length() > 1) {
             auto lock = [=] {
                 blk->lockAsync({}, [=](bool ok, OperationErrorInfo err) {
-                    if (ok)
-                        after(device, devUUID, writeParamsOnly);
-                    else
-                        onUnmountError(kLock, device, err);
+                    ok ? after(device, devUUID, writeParamsOnly)
+                       : onUnmountError(kLock, device, err);
                 });
             };
             auto onUnmounted = [=](bool ok, const OperationErrorInfo &err) {
-                if (ok)
-                    lock();
-                else
-                    onUnmountError(kUnmount, device, err);
+                ok ? lock() : onUnmountError(kUnmount, device, err);
             };
 
             // do unmount cleardev
-            auto clearDev = mng->createDeviceById(clearPath);
+            auto clearDev = device_utils::createBlockDevice(clearPath);
             clearDev->unmountAsync({}, onUnmounted);
         } else {
             after(device, devUUID, writeParamsOnly);
         }
     } else {
         blk->unmountAsync({}, [=](bool ok, OperationErrorInfo err) {
-            if (ok)
-                after(device, devUUID, writeParamsOnly);
-            else
-                onUnmountError(kUnmount, device, err);
+            ok ? after(device, devUUID, writeParamsOnly)
+               : onUnmountError(kUnmount, device, err);
         });
     }
 }
@@ -371,9 +419,6 @@ void DiskEncryptMenuScene::onUnmountError(OpType t, const QString &dev, const df
              << dev
              << err.message;
     QString operation = (t == kUnmount) ? tr("unmount") : tr("lock");
-    Dtk::Widget::DDialog d;
-    d.setTitle(tr("Encrypt failed"));
-    d.setMessage(tr("Cannot %1 device %2").arg(operation, dev));
-    d.addButton(tr("Close"));
-    d.exec();
+    dialog_utils::showError(tr("Encrypt failed"),
+                            tr("Cannot %1 device %2").arg(operation, dev));
 }

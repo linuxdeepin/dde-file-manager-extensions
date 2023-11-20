@@ -86,11 +86,7 @@ void EventsHandler::onEncryptResult(const QString &dev, int code)
                       .arg(code);
     }
 
-    DDialog dlg;
-    dlg.setTitle(title);
-    dlg.setMessage(msg);
-    dlg.addButton(tr("Confirm"));
-    dlg.exec();
+    dialog_utils::showInfo(title, msg);
 }
 
 void EventsHandler::onDecryptResult(const QString &dev, const QString &, int code)
@@ -161,12 +157,7 @@ bool EventsHandler::onAcquireDevicePwd(const QString &dev, QString *pwd, bool *c
         else
             title = tr("TPM error");
 
-        DDialog dlg;
-        dlg.setTitle(title);
-        dlg.setMessage(tr("Please use recovery key to unlock device."));
-        dlg.addButton(tr("Confirm"));
-        dlg.exec();
-
+        dialog_utils::showInfo(title, tr("Please use recovery key to unlock device."));
         *cancelled = true;
     }
 
@@ -226,11 +217,7 @@ void EventsHandler::showPreEncryptError(const QString &dev, int code)
         break;
     }
 
-    DDialog dlg;
-    dlg.setTitle(title);
-    dlg.setMessage(msg);
-    dlg.addButton(tr("Confirm"));
-    dlg.exec();
+    dialog_utils::showInfo(title, msg);
 }
 
 void EventsHandler::showDecryptError(const QString &dev, int code)
@@ -254,11 +241,7 @@ void EventsHandler::showDecryptError(const QString &dev, int code)
         break;
     }
 
-    DDialog dlg;
-    dlg.setTitle(title);
-    dlg.setMessage(msg);
-    dlg.addButton(tr("Confirm"));
-    dlg.exec();
+    dialog_utils::showInfo(title, msg);
 }
 
 void EventsHandler::showChgPwdError(const QString &dev, int code)
@@ -283,16 +266,13 @@ void EventsHandler::showChgPwdError(const QString &dev, int code)
         break;
     }
 
-    DDialog dlg;
-    dlg.setTitle(title);
-    dlg.setMessage(msg);
-    dlg.addButton(tr("Confirm"));
-    dlg.exec();
+    dialog_utils::showInfo(title, msg);
 }
 
 void EventsHandler::showReboot(const QString &device)
 {
     DDialog dlg;
+    dlg.setIcon(QIcon::fromTheme("dialog-info"));
     dlg.setTitle(tr("Preencrypt done"));
     dlg.setMessage(tr("Device %1 has been preencrypt, please reboot to finish encryption.")
                            .arg(device));
