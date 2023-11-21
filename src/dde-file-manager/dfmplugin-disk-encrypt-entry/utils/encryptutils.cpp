@@ -222,16 +222,6 @@ QString recovery_key_utils::formatRecoveryKey(const QString &raw)
     return formatted;
 }
 
-void dialog_utils::showError(const QString &title, const QString &msg)
-{
-    Dtk::Widget::DDialog d;
-    d.setTitle(title);
-    d.setMessage(msg);
-    d.setIcon(QIcon::fromTheme("dialog-error"));
-    d.addButton(qApp->translate("dfmplugin_diskenc::ChgPassphraseDialog", "Confirm"));
-    d.exec();
-}
-
 BlockDev device_utils::createBlockDevice(const QString &devObjPath)
 {
     using namespace dfmmount;
@@ -240,12 +230,24 @@ BlockDev device_utils::createBlockDevice(const QString &devObjPath)
     return monitor->createDeviceById(devObjPath).objectCast<DBlockDevice>();
 }
 
-void dialog_utils::showInfo(const QString &title, const QString &msg)
+void dialog_utils::showDialog(const QString &title, const QString &msg, DialogType type)
 {
+    QString icon;
+    switch (type) {
+    case kInfo:
+        icon = "dialog-info";
+        break;
+    case kWarning:
+        icon = "dialog-warning";
+        break;
+    case kError:
+        icon = "dialog-error";
+        break;
+    }
     Dtk::Widget::DDialog d;
     d.setTitle(title);
     d.setMessage(msg);
-    d.setIcon(QIcon::fromTheme("dialog-info"));
+    d.setIcon(QIcon::fromTheme(icon));
     d.addButton(qApp->translate("dfmplugin_diskenc::ChgPassphraseDialog", "Confirm"));
     d.exec();
 }

@@ -45,6 +45,7 @@ QString bcPrepareHeaderFile(const QString &device);
 
 int bcEncryptProgress(uint64_t size, uint64_t offset, void *usrptr);
 int bcDecryptProgress(uint64_t size, uint64_t offset, void *usrptr);
+
 }   // namespace disk_encrypt_funcs
 
 namespace disk_encrypt_utils {

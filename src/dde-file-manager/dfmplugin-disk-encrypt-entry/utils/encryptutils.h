@@ -49,8 +49,12 @@ BlockDev createBlockDevice(const QString &devObjPath);
 }   // namespace device_utils
 
 namespace dialog_utils {
-void showInfo(const QString &title, const QString &msg);
-void showError(const QString &title, const QString &msg);
+enum DialogType {
+    kInfo,
+    kWarning,
+    kError,
+};
+void showDialog(const QString &title, const QString &msg, DialogType type);
 }
 
 }   // namespace dfmplugin_diskenc

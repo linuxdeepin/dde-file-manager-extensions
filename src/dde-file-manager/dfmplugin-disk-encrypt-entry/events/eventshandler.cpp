@@ -72,6 +72,7 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &, int 
 
 void EventsHandler::onEncryptResult(const QString &dev, int code)
 {
+    QApplication::restoreOverrideCursor();
     if (encryptDialogs.contains(dev)) {
         delete encryptDialogs.value(dev);
         encryptDialogs.remove(dev);
@@ -86,11 +87,12 @@ void EventsHandler::onEncryptResult(const QString &dev, int code)
                       .arg(code);
     }
 
-    dialog_utils::showInfo(title, msg);
+    dialog_utils::showDialog(title, msg, code != 0 ? dialog_utils::kError : dialog_utils::kInfo);
 }
 
 void EventsHandler::onDecryptResult(const QString &dev, const QString &, int code)
 {
+    QApplication::restoreOverrideCursor();
     if (decryptDialogs.contains(dev)) {
         decryptDialogs.value(dev)->deleteLater();
         decryptDialogs.remove(dev);
@@ -109,7 +111,10 @@ void EventsHandler::onEncryptProgress(const QString &dev, double progress)
 {
     if (!encryptDialogs.contains(dev)) {
         QApplication::restoreOverrideCursor();
-        encryptDialogs.insert(dev, new EncryptProcessDialog(tr("Encrypting...%1").arg(dev)));
+        auto dlg = new EncryptProcessDialog(tr("Encrypting...%1").arg(dev));
+        connect(dlg, &EncryptProcessDialog::destroyed,
+                this, [this, dev] { encryptDialogs.remove(dev); });
+        encryptDialogs.insert(dev, dlg);
     }
     auto dlg = encryptDialogs.value(dev);
     dlg->updateProgress(progress);
@@ -157,7 +162,8 @@ bool EventsHandler::onAcquireDevicePwd(const QString &dev, QString *pwd, bool *c
         else
             title = tr("TPM error");
 
-        dialog_utils::showInfo(title, tr("Please use recovery key to unlock device."));
+        dialog_utils::showDialog(title, tr("Please use recovery key to unlock device."),
+                                 dialog_utils::kInfo);
         *cancelled = true;
     }
 
@@ -199,6 +205,7 @@ void EventsHandler::showPreEncryptError(const QString &dev, int code)
 {
     QString title;
     QString msg;
+    bool showError = false;
     switch (code) {
     case (EncryptJobError::kNoError):
         title = tr("Preencrypt done");
@@ -214,16 +221,19 @@ void EventsHandler::showPreEncryptError(const QString &dev, int code)
         msg = tr("Device %1 preencrypt failed, please see log for more information.(%2)")
                       .arg(dev)
                       .arg(code);
+        showError = true;
         break;
     }
 
-    dialog_utils::showInfo(title, msg);
+    dialog_utils::showDialog(title, msg,
+                             showError ? dialog_utils::kError : dialog_utils::kInfo);
 }
 
 void EventsHandler::showDecryptError(const QString &dev, int code)
 {
     QString title;
     QString msg;
+    bool showFailed = false;
     switch (code) {
     case (EncryptJobError::kNoError):
         title = tr("Decrypt done");
@@ -238,10 +248,12 @@ void EventsHandler::showDecryptError(const QString &dev, int code)
         msg = tr("Device %1 Decrypt failed, please see log for more information.(%2)")
                       .arg(dev)
                       .arg(code);
+        showFailed = true;
         break;
     }
 
-    dialog_utils::showInfo(title, msg);
+    dialog_utils::showDialog(title, msg,
+                             showFailed ? dialog_utils::kError : dialog_utils::kInfo);
 }
 
 void EventsHandler::showChgPwdError(const QString &dev, int code)
@@ -249,6 +261,7 @@ void EventsHandler::showChgPwdError(const QString &dev, int code)
 
     QString title;
     QString msg;
+    bool showError = false;
     switch (code) {
     case (EncryptJobError::kNoError):
         title = tr("Change passphrase done");
@@ -263,10 +276,12 @@ void EventsHandler::showChgPwdError(const QString &dev, int code)
         msg = tr("Device %1 change passphrase failed, please see log for more information.(%2)")
                       .arg(dev)
                       .arg(code);
+        showError = true;
         break;
     }
 
-    dialog_utils::showInfo(title, msg);
+    dialog_utils::showDialog(title, msg,
+                             showError ? dialog_utils::kError : dialog_utils::kInfo);
 }
 
 void EventsHandler::showReboot(const QString &device)

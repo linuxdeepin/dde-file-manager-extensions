@@ -23,20 +23,84 @@
 
 FILE_ENCRYPT_USE_NS
 
-static constexpr char kResumeList[] { "/etc/deepin/dde-file-manager/resume_encrypt_list.txt" };
+#define CHECK_INT(checkVal, msg, retVal)   \
+    if ((checkVal) < 0) {                  \
+        qWarning() << (msg) << (checkVal); \
+        return retVal;                     \
+    }
+#define CHECK_BOOL(checkVal, msg, retVal) \
+    if (!(checkVal)) {                    \
+        qWarning() << (msg);              \
+        return retVal;                    \
+    }
+
 // used to record current reencrypting device.
 QString gCurrReencryptingDevice;
 QString gCurrDecryptintDevice;
+bool gInterruptEncFlag { false };
+
+struct crypt_params_reencrypt *encryptParams()
+{
+    static struct crypt_params_luks2 reencLuks2
+    {
+        .sector_size = 512
+    };
+
+    static struct crypt_params_reencrypt reencParams
+    {
+        .mode = CRYPT_REENCRYPT_ENCRYPT,
+        .direction = CRYPT_REENCRYPT_BACKWARD,
+        .resilience = "datashift",
+        .hash = "sha256",
+        .data_shift = 32 * 1024,
+        .max_hotzone_size = 0,
+        .device_size = 0,
+        .luks2 = &reencLuks2,
+        .flags = CRYPT_REENCRYPT_INITIALIZE_ONLY | CRYPT_REENCRYPT_MOVE_FIRST_SEGMENT
+    };
+    return &reencParams;
+}
+struct crypt_params_reencrypt *decryptParams()
+{
+    static struct crypt_params_reencrypt params
+    {
+        .mode = CRYPT_REENCRYPT_DECRYPT,
+        .direction = CRYPT_REENCRYPT_BACKWARD,
+        .resilience = "checksum",
+        .hash = "sha256",
+        .data_shift = 0,
+        .max_hotzone_size = 0,
+        .device_size = 0
+    };
+    return &params;
+}
+struct crypt_params_reencrypt *resumeParams()
+{
+    static struct crypt_params_reencrypt params
+    {
+        .mode = CRYPT_REENCRYPT_REENCRYPT,
+        .direction = CRYPT_REENCRYPT_FORWARD,
+        .resilience = "checksum",
+        .hash = "sha256",
+        .max_hotzone_size = 0,
+        .device_size = 0,
+        .flags = CRYPT_REENCRYPT_RESUME_ONLY
+    };
+    return &params;
+}
+void parseCipher(const QString &fullCipher, QString *cipher, QString *mode, int *len)
+{
+    Q_ASSERT(cipher && mode);
+    *cipher = fullCipher.mid(0, fullCipher.indexOf("-"));
+    int idxSplit = fullCipher.indexOf("-");
+    *mode = (idxSplit > 0)
+            ? fullCipher.mid(idxSplit + 1)
+            : "xts-plain64";
+}
 
 EncryptParams disk_encrypt_utils::bcConvertParams(const QVariantMap &params)
 {
-    // TODO(xust): the passphrase should be a cypher.
-    // use openssl to provide a public key for encode the passphrase
-    // and the private key to decode passphrase
-
-    auto toString = [&params](const QString &key) {
-        return params.value(key).toString();
-    };
+    auto toString = [&params](const QString &key) { return params.value(key).toString(); };
     return { .device = toString(encrypt_param_keys::kKeyDevice),
              .passphrase = toString(encrypt_param_keys::kKeyPassphrase),   // decode()
              .cipher = toString(encrypt_param_keys::kKeyCipher),
@@ -188,28 +252,20 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
         }
     });
 
-    ret = crypt_init(&cdev,
-                     localPath.toStdString().c_str());
-    if (ret != 0) {
-        qWarning() << "cannot init crypt device:"
-                   << ret
-                   << params.device;
-        return "";
-    }
+    ret = crypt_init(&cdev, localPath.toStdString().c_str());
+    CHECK_INT(ret, "init crypt failed " + params.device, "");
 
     crypt_set_rng_type(cdev, CRYPT_RNG_RANDOM);
 
     ret = crypt_set_data_offset(cdev, 32 * 1024);   // offset 32M
-    if (ret != 0) {
-        qWarning() << "cannot set offset 32M:"
-                   << ret
-                   << params.device;
-    }
+    CHECK_INT(ret, "cannot set offset " + params.device, "");
 
-    // seems that PBKDF is not necessary, complete it later.
+    QString cipher, mode;
+    int keyLen = 256;
+    parseCipher(params.cipher, &cipher, &mode, &keyLen);
+    qDebug() << "encrypt with cipher:" << cipher << mode << keyLen;
 
     std::string cDevice = params.device.toStdString();
-
     struct crypt_params_luks2 luks2Params = {
         .data_alignment = 0,
         .data_device = cDevice.c_str(),
@@ -217,45 +273,23 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
         .label = nullptr,
         .subsystem = nullptr
     };
-    QString cipher = params.cipher.mid(0, params.cipher.indexOf("-"));
-    int idxSplit = params.cipher.indexOf("-");
-    QString mode = (idxSplit > 0)
-            ? params.cipher.mid(idxSplit + 1)
-            : "xts-plain64";
-
-    qDebug() << "encrypt cipher is"
-             << cipher
-             << "and cipher mode is"
-             << mode;
-
     ret = crypt_format(cdev,
                        CRYPT_LUKS2,
                        cipher.toStdString().c_str(),
                        mode.toStdString().c_str(),
                        nullptr,
                        nullptr,
-                       256 / 8,
+                       keyLen / 8,
                        &luks2Params);
-    if (ret < 0) {
-        qWarning() << "luks format failed for device:"
-                   << params.device
-                   << ret;
-        return "";
-    }
+    CHECK_INT(ret, "format failed " + params.device, "");
 
-    // add key slots
     ret = crypt_keyslot_add_by_volume_key(cdev,
                                           CRYPT_ANY_SLOT,
                                           nullptr,
                                           0,
                                           params.passphrase.toStdString().c_str(),
                                           params.passphrase.length());
-    if (ret < 0) {
-        qWarning() << "add key slot failed:"
-                   << params.device
-                   << ret;
-        return "";
-    }
+    CHECK_INT(ret, "add key failed " + params.device, "");
 
     QString recKey = disk_encrypt_utils::bcExpRecFile(params);
     if (!recKey.isEmpty()) {
@@ -272,25 +306,6 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
         }
     }
 
-    // Initialize reencryption metadata using passphrase.
-    struct crypt_params_luks2 reencLuks2
-    {
-        .sector_size = 512
-    };
-
-    struct crypt_params_reencrypt reencParams
-    {
-        .mode = CRYPT_REENCRYPT_ENCRYPT,
-        .direction = CRYPT_REENCRYPT_BACKWARD,
-        .resilience = "datashift",
-        .hash = "sha256",
-        .data_shift = 32 * 1024,
-        .max_hotzone_size = 0,
-        .device_size = 0,
-        .luks2 = &reencLuks2,
-        .flags = CRYPT_REENCRYPT_INITIALIZE_ONLY | CRYPT_REENCRYPT_MOVE_FIRST_SEGMENT
-    };
-
     ret = crypt_reencrypt_init_by_passphrase(cdev,
                                              nullptr,
                                              params.passphrase.toStdString().c_str(),
@@ -299,14 +314,21 @@ QString disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params)
                                              0,
                                              cipher.toStdString().c_str(),
                                              mode.toStdString().c_str(),
-                                             &reencParams);
-    if (ret < 0) {
-        qWarning() << "failed to init reencrypt!"
-                   << params.device
-                   << ret;
-        return "";
-    }
+                                             encryptParams());
+    CHECK_INT(ret, "init reencryption failed " + params.device, "");
 
+    // active device for expanding fs.
+    QString activeDev = QString("dm-%1").arg(params.device.mid(5));
+    ret = crypt_activate_by_passphrase(cdev,
+                                       activeDev.toStdString().c_str(),
+                                       CRYPT_ANY_SLOT,
+                                       params.passphrase.toStdString().c_str(),
+                                       params.passphrase.length(),
+                                       CRYPT_ACTIVATE_NO_JOURNAL);
+    CHECK_INT(ret, "acitve device failed " + params.device + activeDev, "");
+    fs_resize::expandFileSystem_ext(QString("/dev/mapper/%1").arg(activeDev));
+    ret = crypt_deactivate(nullptr, activeDev.toStdString().c_str());
+    CHECK_INT(ret, "deacitvi device failed " + params.device, localPath);
     return localPath;
 }
 
@@ -314,39 +336,22 @@ int disk_encrypt_funcs::bcInitHeaderDevice(const QString &device,
                                            const QString &passphrase,
                                            const QString &headerPath)
 {
-    if (headerPath.isEmpty() || device.isEmpty()) {
-        qWarning() << "device or header file path is empty"
-                   << device
-                   << headerPath;
-        return -1;
-    }
+    Q_ASSERT_X(!headerPath.isEmpty() && !device.isEmpty(),
+               "input params cannot be empty!", "");
 
     struct crypt_device *cdev { nullptr };
-    dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
+    dfmbase::FinallyUtil finalClear([&] {
+        if (cdev) crypt_free(cdev);
+        if (!headerPath.isEmpty()) ::remove(headerPath.toStdString().c_str());
+    });
 
-    int ret = crypt_init(&cdev,
-                         device.toStdString().c_str());
-    if (ret < 0) {
-        qWarning() << "cannot init crypt device for device"
-                   << device
-                   << ret;
-        return -2;
-    }
+    int ret = crypt_init(&cdev, device.toStdString().c_str());
+    CHECK_INT(ret, "init device failed " + device, -2);
 
     ret = crypt_header_restore(cdev,
                                CRYPT_LUKS2,
                                headerPath.toStdString().c_str());
-    if (ret < 0) {
-        qWarning() << "cannot restore header from file"
-                   << headerPath
-                   << "for device"
-                   << device
-                   << ret;
-        return -3;
-    }
-
-    ::remove(headerPath.toStdString().c_str());
-
+    CHECK_INT(ret, "restore header failed " + device + headerPath, -3);
     return 0;
 }
 
@@ -356,22 +361,11 @@ QString disk_encrypt_funcs::bcPrepareHeaderFile(const QString &device)
     int fd = open(localPath.toStdString().c_str(),
                   O_CREAT | O_EXCL | O_WRONLY,
                   S_IRUSR | S_IWUSR);
-    if (fd == -1) {
-        qWarning() << "cannot create temp encrypt header:"
-                   << strerror(errno)
-                   << device;
-        return "";
-    }
+    CHECK_INT(fd, "create tmp file failed " + device + strerror(errno), "");
 
     int ret = posix_fallocate(fd, 0, 32 * 1024 * 1024);
     close(fd);
-    if (ret != 0) {
-        qWarning() << "failed to allocate space for file:"
-                   << localPath
-                   << ret
-                   << device;
-        return "";
-    }
+    CHECK_BOOL(ret == 0, "allocate file failed " + localPath, "");
     return localPath;
 }
 
@@ -380,66 +374,34 @@ int disk_encrypt_funcs::bcDecryptDevice(const QString &device,
 {
     // backup header first
     QString headerPath;
-    int ret = bcBackupCryptHeader(device, headerPath);
-    if (ret < 0) {
-        qWarning() << "cannot backup device header"
-                   << device
-                   << ret;
-        return ret;
-    }
-
+    uint32_t flags;
     struct crypt_device *cdev = nullptr;
+    dfmbase::FinallyUtil finalClear([&] {
+        if (cdev) crypt_free(cdev);
+        if (!headerPath.isEmpty()) ::remove(headerPath.toStdString().c_str());
+        gCurrDecryptintDevice.clear();
+    });
+    gCurrDecryptintDevice = device;
+
+    int ret = bcBackupCryptHeader(device, headerPath);
+    CHECK_INT(ret, "backup header failed " + device, ret);
+
     ret = crypt_init_data_device(&cdev,
                                  headerPath.toStdString().c_str(),
                                  device.toStdString().c_str());
-    if (ret < 0) {
-        qWarning() << "cannot init deivce"
-                   << device
-                   << ret;
-        return ret;
-    }
-
-    dfmbase::FinallyUtil finalClear([&] {
-        if (cdev) crypt_free(cdev);
-        ::remove(headerPath.toStdString().c_str());
-    });
+    CHECK_INT(ret, "init device failed " + device, ret);
 
     ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
-    if (ret < 0) {
-        qWarning() << "cannot load crypt device!"
-                   << device
-                   << ret;
-        return ret;
-    }
+    CHECK_INT(ret, "load device failed " + device, ret);
 
-    uint32_t flags;
     ret = crypt_persistent_flags_get(cdev,
                                      CRYPT_FLAGS_REQUIREMENTS,
                                      &flags);
-    if (ret < 0) {
-        qWarning() << "cannot get requirements flag"
-                   << device
-                   << ret;
-        return ret;
-    }
-
-    if (flags & (CRYPT_REQUIREMENT_OFFLINE_REENCRYPT | CRYPT_REQUIREMENT_OFFLINE_REENCRYPT)) {
-        qWarning() << "device need to be encrypt, cannot decrypt"
-                   << device
-                   << flags;
-        return -1;
-    }
-
-    struct crypt_params_reencrypt params
-    {
-        .mode = CRYPT_REENCRYPT_DECRYPT,
-        .direction = CRYPT_REENCRYPT_BACKWARD,
-        .resilience = "checksum",
-        .hash = "sha256",
-        .data_shift = 0,
-        .max_hotzone_size = 0,
-        .device_size = 0
-    };
+    CHECK_INT(ret, "get device flag failed " + device, ret);
+    bool underEncrypting = (flags & CRYPT_REQUIREMENT_OFFLINE_REENCRYPT) || (flags & CRYPT_REQUIREMENT_ONLINE_REENCRYPT);
+    CHECK_BOOL(!underEncrypting,
+               "device is under encrypting... " + device + " the flags are: " + QString::number(flags),
+               -1);
 
     ret = crypt_reencrypt_init_by_passphrase(cdev,
                                              nullptr,
@@ -449,31 +411,14 @@ int disk_encrypt_funcs::bcDecryptDevice(const QString &device,
                                              CRYPT_ANY_SLOT,
                                              nullptr,
                                              nullptr,
-                                             &params);
-    if (ret < 0) {
-        qWarning() << "cannot init reencrypt!"
-                   << device
-                   << ret;
-        return ret;
-    }
+                                             decryptParams());
+    CHECK_INT(ret, "init reencrypt failed " + device, ret);
 
-    gCurrDecryptintDevice = device;
     ret = crypt_reencrypt(cdev, bcDecryptProgress);
-    gCurrDecryptintDevice.clear();
-    if (ret < 0) {
-        qWarning() << "decrypt device failed!"
-                   << device
-                   << ret;
-        return ret;
-    }
+    CHECK_INT(ret, "decrypt failed" + device, ret);
 
-    bool res = fs_resize::recoverySuperblock_ext(device,
-                                                 headerPath);
-    if (!res) {
-        qWarning() << "cannot recovery fs superblock!"
-                   << device;
-        return -2;
-    }
+    bool res = fs_resize::recoverySuperblock_ext(device, headerPath);
+    CHECK_BOOL(res, "recovery fs failed " + device, -2);
     return 0;
 }
 
@@ -483,25 +428,13 @@ int disk_encrypt_funcs::bcBackupCryptHeader(const QString &device, QString &head
     struct crypt_device *cdev = nullptr;
     dfmbase::FinallyUtil finalClear([&] { if (cdev) crypt_free(cdev); });
 
-    int ret = crypt_init(&cdev,
-                         device.toStdString().c_str());
-    if (ret < 0) {
-        qWarning() << "cannot init crypt struct!"
-                   << device
-                   << ret;
-        return ret;
-    }
+    int ret = crypt_init(&cdev, device.toStdString().c_str());
+    CHECK_INT(ret, "init device failed " + device, ret);
 
     ret = crypt_header_backup(cdev,
                               nullptr,
                               headerPath.toStdString().c_str());
-    if (ret < 0) {
-        qWarning() << "cannot backup device header!"
-                   << device
-                   << ret;
-        return ret;
-    }
-
+    CHECK_INT(ret, "backup header failed " + device, ret);
     return 0;
 }
 
@@ -510,136 +443,73 @@ int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
 {
     qDebug() << "start resume encryption for device"
              << device;
-
+    gCurrReencryptingDevice = device;
     struct crypt_device *cdev { nullptr };
     dfmbase::FinallyUtil finalClear([&] {
         if (cdev) crypt_free(cdev);
+        gCurrDecryptintDevice.clear();
     });
 
     int ret = crypt_init_data_device(&cdev,
                                      device.toStdString().c_str(),
                                      device.toStdString().c_str());
-    if (ret < 0) {
-        qWarning() << "cannot init crypt device!"
-                   << device
-                   << ret;
-        return -1;
-    }
+    CHECK_INT(ret, "init device failed " + device, -1);
 
     ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
-    if (ret < 0) {
-        qWarning() << "cannot load crypt device"
-                   << device
-                   << ret;
-        return -2;
-    }
+    CHECK_INT(ret, "load device failed " + device, -2);
 
-    // obtain the flags of reencrypt
     uint32_t flags;
     ret = crypt_persistent_flags_get(cdev,
                                      CRYPT_FLAGS_REQUIREMENTS,
                                      &flags);
-    if (ret < 0) {
-        qWarning() << "cannot read crypt requirements for device"
-                   << device
-                   << ret;
-        return -3;
-    }
+    CHECK_INT(ret, "read flags failed " + device, -3);
+    CHECK_BOOL(flags & CRYPT_REQUIREMENT_ONLINE_REENCRYPT,
+               "wrong flags " + device + " flags " + QString::number(flags),
+               -4);
 
-    if (!(flags & CRYPT_REQUIREMENT_ONLINE_REENCRYPT)) {
-        qWarning() << "crypt flag not correct." << flags;
-        return -4;
-    }
-
-    struct crypt_params_reencrypt params
-    {
-        .mode = CRYPT_REENCRYPT_REENCRYPT,
-        .direction = CRYPT_REENCRYPT_FORWARD,
-        .resilience = "checksum",
-        .hash = "sha256",
-        .max_hotzone_size = 0,
-        .device_size = 0,
-        .flags = CRYPT_REENCRYPT_RESUME_ONLY
-    };
-    std::string cPass = passphrase.toStdString();
     ret = crypt_reencrypt_init_by_passphrase(cdev,
                                              nullptr,
-                                             cPass.c_str(),
+                                             passphrase.toStdString().c_str(),
                                              passphrase.length(),
                                              CRYPT_ANY_SLOT,
                                              CRYPT_ANY_SLOT,
                                              nullptr,
                                              nullptr,
-                                             &params);
-    if (ret < 0) {
-        qWarning() << "cannot init reencrypt in resume mode"
-                   << device
-                   << ret;
-        return -5;
-    }
+                                             resumeParams());
+    CHECK_INT(ret, "init reencrypt failed " + device, -5);
 
-    gCurrReencryptingDevice = device;
-    ret = crypt_reencrypt(cdev,
-                          bcEncryptProgress);
-    if (ret < 0) {
-        qWarning() << "cannot start resume reencrypt"
-                   << device
-                   << ret;
-        gCurrReencryptingDevice.clear();
-        return -6;
-    }
-    qInfo() << "encrypt finished" << gCurrReencryptingDevice;
-    gCurrReencryptingDevice.clear();
+    ret = crypt_reencrypt(cdev, bcEncryptProgress);
+    CHECK_INT(ret, "start resume failed " + device, -6);
 
     // active device for expanding fs.
     QString activeDev = QString("dm-%1").arg(device.mid(5));
     ret = crypt_activate_by_passphrase(cdev,
                                        activeDev.toStdString().c_str(),
                                        CRYPT_ANY_SLOT,
-                                       cPass.c_str(),
+                                       passphrase.toStdString().c_str(),
                                        passphrase.length(),
                                        CRYPT_ACTIVATE_NO_JOURNAL);
-    if (ret < 0) {
-        qWarning() << "cannot active device"
-                   << device
-                   << activeDev
-                   << ret;
-        return -7;
-    }
+    CHECK_INT(ret, "acitve device failed " + device + activeDev, -7);
 
     fs_resize::expandFileSystem_ext(QString("/dev/mapper/%1").arg(activeDev));
 
     ret = crypt_deactivate(nullptr,
                            activeDev.toStdString().c_str());
-    if (ret < 0) {
-        qWarning() << "cannot deactive device."
-                   << device
-                   << ret;
-    }
-
+    CHECK_INT(ret, "deacitvi device failed " + device, 0);
     return 0;
 }
 
 int disk_encrypt_funcs::bcEncryptProgress(uint64_t size, uint64_t offset, void *)
 {
-    //    qInfo() << "encrypting..."
-    //            << size
-    //            << offset
-    //            << double(offset) / size
-    //            << gCurrReencryptingDevice;
-    SignalEmitter::instance()->updateEncryptProgress(gCurrReencryptingDevice,
-                                                     double(offset) / size);
+    Q_EMIT SignalEmitter::instance()->updateEncryptProgress(gCurrReencryptingDevice,
+                                                            double(offset) / size);
     return 0;
 }
 
 int disk_encrypt_funcs::bcDecryptProgress(uint64_t size, uint64_t offset, void *)
 {
-    //    qInfo() << "decrypting device..." << gCurrDecryptintDevice
-    //            << size
-    //            << offset
-    //            << double(offset) / size;
-    SignalEmitter::instance()->updateDecryptProgress(gCurrDecryptintDevice,
-                                                     double(offset) / size);
+    Q_EMIT SignalEmitter::instance()->updateDecryptProgress(gCurrDecryptintDevice,
+                                                            double(offset) / size);
     return 0;
 }
 
@@ -648,22 +518,11 @@ int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString 
     struct crypt_device *cdev { nullptr };
     dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
 
-    int ret = crypt_init_data_device(&cdev,
-                                     device.toStdString().c_str(),
-                                     /*device.toStdString().c_str()*/ nullptr);
-    if (ret < 0) {
-        qWarning() << "cannot init crypt device!"
-                   << device
-                   << ret;
-    }
+    int ret = crypt_init_data_device(&cdev, device.toStdString().c_str(), nullptr);
+    CHECK_INT(ret, "init device failed " + device, ret);
 
     ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
-    if (ret < 0) {
-        qWarning() << "cannot load crypt device!"
-                   << device
-                   << ret;
-        return ret;
-    }
+    CHECK_INT(ret, "load device failed " + device, ret);
 
     ret = crypt_keyslot_change_by_passphrase(cdev,
                                              CRYPT_ANY_SLOT,
@@ -672,13 +531,7 @@ int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString 
                                              oldPassphrase.length(),
                                              newPassphrase.toStdString().c_str(),
                                              newPassphrase.length());
-    if (ret < 0) {
-        qWarning() << "cannot add passphrase by old passphrase!"
-                   << device
-                   << ret;
-        return ret;
-    }
-
+    CHECK_INT(ret, "change passphrase failed " + device, ret);
     return 0;
 }
 
@@ -690,19 +543,10 @@ int disk_encrypt_funcs::bcChangePassphraseByRecKey(const QString &device, const 
     int ret = crypt_init_data_device(&cdev,
                                      device.toStdString().c_str(),
                                      /*device.toStdString().c_str()*/ nullptr);
-    if (ret < 0) {
-        qWarning() << "cannot init crypt device!"
-                   << device
-                   << ret;
-    }
+    CHECK_INT(ret, "init device failed " + device, ret);
 
     ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
-    if (ret < 0) {
-        qWarning() << "cannot load crypt device!"
-                   << device
-                   << ret;
-        return ret;
-    }
+    CHECK_INT(ret, "load device failed " + device, ret);
 
     ret = crypt_keyslot_add_by_passphrase(cdev,
                                           CRYPT_ANY_SLOT,
@@ -710,13 +554,7 @@ int disk_encrypt_funcs::bcChangePassphraseByRecKey(const QString &device, const 
                                           recoveryKey.length(),
                                           newPassphrase.toStdString().c_str(),
                                           newPassphrase.length());
-    if (ret < 0) {
-        qWarning() << "cannot add passphrase by recovery key!"
-                   << device
-                   << ret;
-        return ret;
-    }
-
+    CHECK_INT(ret, "change passphrase by rec key failed " + device, ret);
     return 0;
 }
 

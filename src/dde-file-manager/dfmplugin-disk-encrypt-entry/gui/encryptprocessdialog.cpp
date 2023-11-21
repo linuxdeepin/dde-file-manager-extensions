@@ -15,6 +15,8 @@ EncryptProcessDialog::EncryptProcessDialog(const QString &title, QWidget *parent
     : DDialog(parent), title(title)
 {
     initUI();
+    connect(this, &EncryptProcessDialog::buttonClicked,
+            this, &EncryptProcessDialog::onBtnClicked);
 }
 
 void EncryptProcessDialog::updateProgress(double progress)
@@ -27,6 +29,8 @@ void EncryptProcessDialog::updateProgress(double progress)
 void EncryptProcessDialog::initUI()
 {
     clearContents();
+    setIcon(QIcon::fromTheme("drive-harddisk-root"));
+
     QFrame *frame = new QFrame(this);
     QHBoxLayout *lay = new QHBoxLayout(this);
     frame->setLayout(lay);
@@ -39,5 +43,10 @@ void EncryptProcessDialog::initUI()
     progress->start();
 
     setTitle(title);
-    setCloseButtonVisible(false);
+
+    addButton(tr("Cancel"));
+}
+
+void EncryptProcessDialog::onBtnClicked(int idx)
+{
 }
