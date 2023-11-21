@@ -24,6 +24,9 @@ public:
 protected:
     void initUI();
 
+protected Q_SLOTS:
+    void onBtnClicked(int idx);
+
 private:
     DWaterProgress *progress { nullptr };
 

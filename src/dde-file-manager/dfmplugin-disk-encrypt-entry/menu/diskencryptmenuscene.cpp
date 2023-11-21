@@ -353,8 +353,9 @@ void DiskEncryptMenuScene::onUnlocked(bool ok, dfmmount::OperationErrorInfo info
     QApplication::restoreOverrideCursor();
     if (!ok && info.code != dfmmount::DeviceError::kUDisksErrorNotAuthorizedDismissed) {
         qWarning() << "unlock device failed!" << info.message;
-        dialog_utils::showError(tr("Unlock device failed"),
-                                tr("Wrong password"));
+        dialog_utils::showDialog(tr("Unlock device failed"),
+                                 tr("Wrong password"),
+                                 dialog_utils::kError);
         return;
     }
 
@@ -371,7 +372,7 @@ void DiskEncryptMenuScene::onMounted(bool ok, dfmmount::OperationErrorInfo info,
     QApplication::restoreOverrideCursor();
     if (!ok && info.code != dfmmount::DeviceError::kUDisksErrorNotAuthorizedDismissed) {
         qWarning() << "mount device failed!" << info.message;
-        dialog_utils::showError(tr("Mount device failed"), "");
+        dialog_utils::showDialog(tr("Mount device failed"), "", dialog_utils::kError);
         return;
     }
 }
@@ -419,6 +420,7 @@ void DiskEncryptMenuScene::onUnmountError(OpType t, const QString &dev, const df
              << dev
              << err.message;
     QString operation = (t == kUnmount) ? tr("unmount") : tr("lock");
-    dialog_utils::showError(tr("Encrypt failed"),
-                            tr("Cannot %1 device %2").arg(operation, dev));
+    dialog_utils::showDialog(tr("Encrypt failed"),
+                             tr("Cannot %1 device %2").arg(operation, dev),
+                             dialog_utils::kError);
 }

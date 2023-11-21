@@ -22,6 +22,7 @@ FILE_ENCRYPT_USE_NS
 #define JOB_ID QString("job_%1")
 static constexpr char kActionEncrypt[] { "com.deepin.filemanager.daemon.DiskEncrypt.Encrypt" };
 static constexpr char kActionDecrypt[] { "com.deepin.filemanager.daemon.DiskEncrypt.Decrypt" };
+static constexpr char kActionInterrupt[] { "com.deepin.filemanager.daemon.DiskEncrypt.Interrupt" };
 static constexpr char kActionChgPwd[] { "com.deepin.filemanager.daemon.DiskEncrypt.ChangePassphrase" };
 
 static constexpr char kObjPath[] { "/com/deepin/filemanager/daemon/DiskEncrypt" };
