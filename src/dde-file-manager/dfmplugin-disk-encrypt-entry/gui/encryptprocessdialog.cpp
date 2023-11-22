@@ -43,8 +43,8 @@ void EncryptProcessDialog::initUI()
     progress->start();
 
     setTitle(title);
-
-    addButton(tr("Cancel"));
+    setCloseButtonVisible(false);
+    //    addButton(tr("Cancel"));
 }
 
 void EncryptProcessDialog::onBtnClicked(int idx)
