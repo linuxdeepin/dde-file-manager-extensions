@@ -235,7 +235,7 @@ void dialog_utils::showDialog(const QString &title, const QString &msg, DialogTy
     QString icon;
     switch (type) {
     case kInfo:
-        icon = "dialog-info";
+        icon = "dialog-information";
         break;
     case kWarning:
         icon = "dialog-warning";

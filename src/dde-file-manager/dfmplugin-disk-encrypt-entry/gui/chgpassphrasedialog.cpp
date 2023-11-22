@@ -51,7 +51,7 @@ void ChgPassphraseDialog::initUI()
     if (keyType == 1)   // PIN
         keyTypeStr = tr("PIN");
 
-    setTitle(tr("Change %1 for %2").arg(keyTypeStr).arg(device));
+    setTitle(tr("Modify %1").arg(keyTypeStr));
     QFrame *content = new QFrame(this);
     QVBoxLayout *contentLay = new QVBoxLayout(content);
     QFormLayout *lay = new QFormLayout();
@@ -61,6 +61,11 @@ void ChgPassphraseDialog::initUI()
     oldPass = new Dtk::Widget::DPasswordEdit(this);
     newPass1 = new Dtk::Widget::DPasswordEdit(this);
     newPass2 = new Dtk::Widget::DPasswordEdit(this);
+
+    QString placeHolder = tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyTypeStr);
+    oldPass->setPlaceholderText(placeHolder);
+    newPass1->setPlaceholderText(placeHolder);
+    newPass2->setPlaceholderText(tr("Please enter %1 again").arg(keyTypeStr));
 
     lay->addRow(oldKeyHint, oldPass);
     lay->addRow(tr("New %1").arg(encType), newPass1);
@@ -161,11 +166,13 @@ void ChgPassphraseDialog::onRecSwitchClicked()
         oldPass->setEchoMode(QLineEdit::Normal);
         oldPass->setEchoButtonIsVisible(false);
         recSwitch->setText(tr("Validate with %1").arg(encType));
+        oldPass->setPlaceholderText(tr("Please input recovery key"));
     } else {
         oldKeyHint->setText(tr("Old %1").arg(encType));
         oldPass->setEchoMode(QLineEdit::Password);
         oldPass->setEchoButtonIsVisible(true);
         recSwitch->setText(tr("Validate with recovery key"));
+        oldPass->setPlaceholderText(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(encType));
     }
 }
 
