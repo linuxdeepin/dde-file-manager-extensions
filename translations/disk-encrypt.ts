@@ -65,7 +65,7 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="79"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="251"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="256"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>

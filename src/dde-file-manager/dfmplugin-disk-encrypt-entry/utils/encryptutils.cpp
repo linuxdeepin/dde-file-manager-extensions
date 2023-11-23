@@ -88,6 +88,11 @@ int device_utils::encKeyType(const QString &dev)
 {
     QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
     int type = sets.value(DEV_KEY.arg(dev.mid(5)), -1).toInt();
+    if (type == -1) {
+        qInfo() << "not recorded encrypted device, regard as enc by passphrase" << dev;
+        type = 0;
+    }
+
     return type;
 }
 
