@@ -7,3 +7,4 @@ usr/lib/*/dde-file-manager/plugins/daemon-edge/libdaemonplugin-file-encrypt.so*
 usr/share/dsg/configs/org.deepin.dde.file-manager/org.deepin.dde.file-manager.diskencrypt.json
 
 usr/share/polkit-1/actions/com.deepin.filemanager.daemon.diskencrypt.policy
+etc/polkit-1/localauthority/10-vendor.d/99-dde-file-manager-encrypt.pkla
