@@ -72,10 +72,16 @@ execute_process(
         -no-obsolete
         ${CMAKE_SOURCE_DIR}/translations/disk-encrypt_zh_CN.ts
 
-    COMMAND lrelease
-        ${CMAKE_SOURCE_DIR}/translations/disk-encrypt_zh_CN.ts
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+execute_process(
     COMMAND lrelease
         ${CMAKE_SOURCE_DIR}/translations/disk-encrypt.ts
+    COMMAND lrelease
+        ${CMAKE_SOURCE_DIR}/translations/disk-encrypt_zh_CN.ts
+
     WORKING_DIRECTORY
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
