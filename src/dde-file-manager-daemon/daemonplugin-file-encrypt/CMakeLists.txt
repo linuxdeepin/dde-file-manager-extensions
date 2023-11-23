@@ -63,6 +63,8 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${DFM_PLUGIN_DAEMON_EDGE_DIR
 message(">>>> install ${PROJECT_NAME} into ${DFM_PLUGIN_DAEMON_EDGE_DIR}")
 
 set(PolicyDir "${CMAKE_INSTALL_PREFIX}/share/polkit-1/actions")
-install(FILES ${CMAKE_SOURCE_DIR}/assets/polkit/com.deepin.filemanager.daemon.diskencrypt.policy
+install(FILES ${CMAKE_SOURCE_DIR}/assets/polkit/policy/com.deepin.filemanager.daemon.diskencrypt.policy
     DESTINATION ${PolicyDir})
+install(FILES ${CMAKE_SOURCE_DIR}/assets/polkit/rules/99-dde-file-manager-encrypt.pkla
+    DESTINATION /etc/polkit-1/localauthority/10-vendor.d)
 
