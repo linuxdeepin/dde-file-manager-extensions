@@ -9,6 +9,7 @@
 
 #include <QObject>
 #include <QDBusContext>
+#include <QDBusServiceWatcher>
 
 FILE_ENCRYPT_BEGIN_NS
 class DiskEncryptDBus : public QObject, public QDBusContext
@@ -33,9 +34,21 @@ Q_SIGNALS:
     void EncryptProgress(const QString &device, double progress);
     void DecryptProgress(const QString &device, double progress);
 
+private Q_SLOTS:
+    void onEncryptDBusRegistered(const QString &service);
+    void onEncryptDBusUnregistered(const QString &service);
+    void onFstabDiskEncProgressUpdated(const QString &dev, long offset, long total);
+    void onFstabDiskEncFinished(const QString &dev, int result, const QString &errstr);
+
 private:
     bool checkAuth(const QString &actID);
     void startReencrypt(const QString &dev, const QString &passphrase);
+    void triggerReencrypt();
+
+    bool readEncryptDevice(QString *backingDev, QString *clearDev);
+
+private:
+    QSharedPointer<QDBusServiceWatcher> watcher;
 };
 
 FILE_ENCRYPT_END_NS
