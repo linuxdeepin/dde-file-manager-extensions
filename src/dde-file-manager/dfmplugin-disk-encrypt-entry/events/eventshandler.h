@@ -34,7 +34,8 @@ private Q_SLOTS:
     void showPreEncryptError(const QString &device, int code);
     void showDecryptError(const QString &device, int code);
     void showChgPwdError(const QString &device, int code);
-    void showReboot(const QString &device);
+    void showRebootOnPreencrypted(const QString &device);
+    void showRebootOnDecrypted(const QString &device);
 
     void requestReboot();
 

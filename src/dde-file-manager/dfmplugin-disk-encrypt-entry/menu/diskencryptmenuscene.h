@@ -45,19 +45,19 @@ public:
     virtual void updateState(QMenu *parent) override;
 
 protected:
-    static void encryptDevice(const QString &dev, const QString &uuid, bool paramsOnly = false);
-    static void deencryptDevice(const QString &dev, const QString &uuid, bool paramsOnly = false);
-    static void changePassphrase(const QString &dev, const QString &uuid, bool paramsOnly = false);
+    static void encryptDevice(const DeviceEncryptParam &param);
+    static void deencryptDevice(const DeviceEncryptParam &param);
+    static void changePassphrase(const DeviceEncryptParam &param);
     static void unlockDevice(const QString &dev);
 
-    static void doEncryptDevice(const ParamsInputs &inputs);
-    static void doDecryptDevice(const QString &dev, const QString &passphrase, bool paramsOnly);
+    static void doEncryptDevice(const DeviceEncryptParam &param);
+    static void doDecryptDevice(const DeviceEncryptParam &param);
     static void doChangePassphrase(const QString &dev, const QString oldPass, const QString &newPass, bool validateByRec);
 
     static void onUnlocked(bool ok, dfmmount::OperationErrorInfo, QString);
     static void onMounted(bool ok, dfmmount::OperationErrorInfo, QString);
 
-    void unmountBefore(const std::function<void(const QString &, const QString &, bool)> &after);
+    void unmountBefore(const std::function<void(const DeviceEncryptParam &)> &after);
     enum OpType { kUnmount,
                   kLock };
     static void onUnmountError(OpType t, const QString &dev, const dfmmount::OperationErrorInfo &err);
@@ -65,13 +65,11 @@ protected:
 private:
     QMap<QString, QAction *> actions;
 
-    QUrl selectedItem;
-    QString devDesc;
     bool itemEncrypted { false };
-    bool operatingFstabDevice { false };
     bool selectionMounted { false };
-    QString uuid;
     QVariantHash selectedItemInfo;
+
+    DeviceEncryptParam param;
 };
 
 }

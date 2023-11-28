@@ -8,12 +8,13 @@
 #include "notification/notifications.h"
 
 #include <dfm-framework/dpf.h>
-#include <dfm-mount/ddevicemanager.h>
+#include <dfm-mount/dmount.h>
 
 #include <QDBusConnection>
 #include <QtConcurrent>
 #include <QDateTime>
 #include <QDebug>
+#include <QSettings>
 
 #include <libcryptsetup.h>
 
@@ -23,10 +24,9 @@ FILE_ENCRYPT_USE_NS
 static constexpr char kActionEncrypt[] { "com.deepin.filemanager.daemon.DiskEncrypt.Encrypt" };
 static constexpr char kActionDecrypt[] { "com.deepin.filemanager.daemon.DiskEncrypt.Decrypt" };
 static constexpr char kActionChgPwd[] { "com.deepin.filemanager.daemon.DiskEncrypt.ChangePassphrase" };
-
 static constexpr char kObjPath[] { "/com/deepin/filemanager/daemon/DiskEncrypt" };
-
 static constexpr char kEncConfigPath[] { "/boot/usec-crypt/encrypt.json" };
+static constexpr char kDeviceEncryptTypeConfig[] {"/etc/deepin/dde-file-manager/dev_enc_type.ini"};
 
 DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
     : QObject(parent),
@@ -49,6 +49,8 @@ DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
             this, &DiskEncryptDBus::onEncryptDBusUnregistered);
 
     triggerReencrypt();
+
+    QtConcurrent::run([this]{ diskCheck(); });
 }
 
 DiskEncryptDBus::~DiskEncryptDBus()
@@ -106,7 +108,8 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
 
     QString pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
-    if (dev.isEmpty() || pass.isEmpty()) {
+    if (dev.isEmpty()
+        || (pass.isEmpty() && !params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool())) {
         qDebug() << "cannot decrypt, params are not valid";
         return "";
     }
@@ -160,9 +163,10 @@ void DiskEncryptDBus::onEncryptDBusRegistered(const QString &service)
                                                     this,
                                                     slot);
     };
-    bool connected = conn("DiskReencryptProgress", SLOT(onFstabDiskEncProgressUpdated(const QString &, long, long)));
-    connected &= conn("DiskReencryptResult", SLOT(onFstabDiskEncFinished(const QString &, int, const QString &);));
-    qInfo() << service << "  signal connected: " << connected;
+    bool connected = conn("DiskReencryptProgress", SLOT(onFstabDiskEncProgressUpdated(const QString &, qint64, qint64)));
+    qInfo() << service << "  signal connected: " << connected << "DiskReencryptProgress";
+    connected &= conn("DiskReencryptResult", SLOT(onFstabDiskEncFinished(const QString &, int, const QString &)));
+    qInfo() << service << "  signal connected: " << connected << "DiskReencryptResult";
 }
 
 void DiskEncryptDBus::onEncryptDBusUnregistered(const QString &service)
@@ -176,14 +180,14 @@ void DiskEncryptDBus::onEncryptDBusUnregistered(const QString &service)
                                                        this,
                                                        slot);
     };
-    bool disconnected = disconn("DiskReencryptProgress", SLOT(onFstabDiskEncProgressUpdated(const QString &, long, long)));
-    disconnected &= disconn("DiskReencryptResult", SLOT(onFstabDiskEncFinished(const QString &, int, const QString &);));
+    bool disconnected = disconn("DiskReencryptProgress", SLOT(onFstabDiskEncProgressUpdated(const QString &, qint64, qint64)));
+    disconnected &= disconn("DiskReencryptResult", SLOT(onFstabDiskEncFinished(const QString &, int, const QString &)));
     qInfo() << service << "  signal disconnected: " << disconnected;
 }
 
-void DiskEncryptDBus::onFstabDiskEncProgressUpdated(const QString &dev, long offset, long total)
+void DiskEncryptDBus::onFstabDiskEncProgressUpdated(const QString &dev, qint64 offset, qint64 total)
 {
-    Q_EMIT EncryptProgress(dev, (1.0 * offset) / total);
+    Q_EMIT EncryptProgress(currentEncryptingDevice, (1.0 * offset) / total);
 }
 
 void DiskEncryptDBus::onFstabDiskEncFinished(const QString &dev, int result, const QString &errstr)
@@ -219,8 +223,8 @@ void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphra
 
 void DiskEncryptDBus::triggerReencrypt()
 {
-    QString backingDev, clearDev;
-    if (!readEncryptDevice(&backingDev, &clearDev)) {
+    QString clearDev;
+    if (!readEncryptDevice(&currentEncryptingDevice, &clearDev)) {
         qInfo() << "no encrypt config or config is invalid.";
         return;
     }
@@ -246,6 +250,83 @@ void DiskEncryptDBus::triggerReencrypt()
     devHandler.close();
 }
 
+void DiskEncryptDBus::diskCheck()
+{
+    QMap<QString, QString> dev2uuid, uuid2dev;
+    getDeviceMapper(&dev2uuid, &uuid2dev);
+
+    QSettings config(kDeviceEncryptTypeConfig, QSettings::IniFormat);
+    QStringList encrypted = config.allKeys();
+    QStringList decrypted;
+    for (const auto &dev: encrypted) {
+        QString devDesc = dev;
+        devDesc = devDesc.replace("device", "/dev");
+        if (dev2uuid.contains(devDesc)) {
+            decrypted.append(devDesc);
+            config.remove(dev);
+        }
+    }
+    if (decrypted.isEmpty())
+        return;
+
+    qDebug() << "these devices are not encrypted anymore:" << decrypted;
+
+    updateCrypttab(decrypted);
+    int ret = system("update-initramfs -u");
+    qDebug() << "initramfs updated: " << ret;
+}
+
+void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev)
+{
+    Q_ASSERT(dev2uuid && uuid2dev);
+    using namespace dfmmount;
+    auto monitor = DDeviceManager::instance()->getRegisteredMonitor(DeviceType::kBlockDevice)
+                       .objectCast<DBlockMonitor>();
+    Q_ASSERT(monitor);
+
+    const QStringList &objPaths = monitor->getDevices();
+    for (const auto &objPath: objPaths) {
+        auto blkPtr = monitor->createDeviceById(objPath).objectCast<DBlockDevice>();
+        if (!blkPtr) continue;
+        QString uuid = blkPtr->getProperty(dfmmount::Property::kBlockIDUUID).toString();
+        if (uuid.isEmpty()) continue;
+        bool isLuks = blkPtr->getProperty(dfmmount::Property::kBlockIDType).toString().startsWith("luks_");
+        if (isLuks) continue;
+        bool isClear = blkPtr->getProperty(dfmmount::Property::kEncryptedCleartextDevice).toString().length() > 1;
+        if (isClear) continue;
+        QString dev = blkPtr->device();
+        uuid = QString("UUID=") + uuid;
+        dev2uuid->insert(dev, uuid);
+        uuid2dev->insert(uuid, dev);
+    }
+}
+
+void DiskEncryptDBus::updateCrypttab(const QStringList &decryptedDevs)
+{
+    QFile crypttab("/etc/crypttab");
+    if (!crypttab.open(QIODevice::ReadWrite)) {
+        qWarning() << "cannot open crypttab for rw";
+        return;
+    }
+    auto content = crypttab.readAll();
+    crypttab.close();
+    QByteArrayList lines = content.split('\n');
+    for (int i = lines.count() - 1; i >= 0; --i) {
+        QString line = lines.at(i);
+        auto items = line.split(QRegularExpression(R"( |\t)"), QString::SkipEmptyParts);
+        if (items.count() < 2) continue;
+        if (decryptedDevs.contains(items.at(1)))
+            lines.removeAt(i);
+    }
+    content = lines.join('\n');
+    if (!crypttab.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qWarning() << "cannot open cryppttab for update";
+        return;
+    }
+    crypttab.write(content);
+    crypttab.close();
+}
+
 bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev)
 {
     Q_ASSERT(backingDev && clearDev);
@@ -264,7 +345,7 @@ bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev)
     QJsonDocument doc = QJsonDocument::fromJson(encConfig.readAll());
     encConfig.close();
     QJsonObject config = doc.object();
-    QJsonValue devVal = config.value("device");
+    QJsonValue devVal = config.value("device_path");
     QJsonValue volVal = config.value("volume");
     if (devVal.isUndefined() || volVal.isUndefined()) {
         qWarning() << "invalid encrypt config! device or volume is empty!";

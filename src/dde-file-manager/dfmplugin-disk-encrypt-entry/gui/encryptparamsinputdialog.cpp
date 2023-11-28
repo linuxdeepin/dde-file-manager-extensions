@@ -46,7 +46,7 @@ EncryptParamsInputDialog::EncryptParamsInputDialog(const QString &dev,
     initConn();
 }
 
-ParamsInputs EncryptParamsInputDialog::getInputs()
+DeviceEncryptParam EncryptParamsInputDialog::getInputs()
 {
     QString password;
     if (kTPMAndPIN == encType->currentIndex() || kTPMOnly == encType->currentIndex()) {
@@ -56,11 +56,10 @@ ParamsInputs EncryptParamsInputDialog::getInputs()
         password = encKeyEdit1->text();
     }
 
-    return { device,
-             "",
-             static_cast<SecKeyType>(encType->currentIndex()),
-             password,
-             keyExportInput->text() };
+    return DeviceEncryptParam { .devDesc = device,
+                                .type = static_cast<SecKeyType>(encType->currentIndex()),
+                                .key = password,
+                                .exportPath = keyExportInput->text() };
 }
 
 void EncryptParamsInputDialog::initUi()

@@ -27,7 +27,7 @@ enum SecKeyType {
     kTPMOnly,
 };
 
-struct ParamsInputs
+struct DeviceEncryptParam
 {
     QString devDesc;
     QString uuid;
@@ -42,7 +42,7 @@ class EncryptParamsInputDialog : public DTK_WIDGET_NAMESPACE::DDialog
     Q_OBJECT
 public:
     explicit EncryptParamsInputDialog(const QString &dev, bool fstabSelected, QWidget *parent = nullptr);
-    ParamsInputs getInputs();
+    DeviceEncryptParam getInputs();
 
 protected:
     void initUi();

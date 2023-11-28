@@ -40,6 +40,8 @@ enum EncryptJobError {
     kFstabOpenFailed = -8,
     kUserCancelled = -9,
     kChgPassphraseFailed = -10,
+    kFileOpenFailed = -11,
+    kRebootRequired = -12,
 };
 
 inline constexpr int kPasswordSize { 14 };

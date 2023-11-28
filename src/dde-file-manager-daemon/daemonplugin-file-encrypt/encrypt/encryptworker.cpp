@@ -13,8 +13,17 @@
 
 FILE_ENCRYPT_USE_NS
 
-#define DEV_ENCTYPE_CFG "/etc/deepin/dde-file-manager/dev_enc_type.ini"
 #define DEV_KEY QString("device/%1")
+static constexpr char kDeviceEncryptTypeConfig[] {"/etc/deepin/dde-file-manager/dev_enc_type.ini"};
+static constexpr char kBootUsecPath []{"/boot/usec-crypt"};
+
+void createUsecPathIfNotExist() {
+    QDir d(kBootUsecPath);
+    if (!d.exists()) {
+        bool ok = d.mkpath(kBootUsecPath);
+        qDebug() << kBootUsecPath << " path created: " << ok;
+    }
+}
 
 PrencryptWorker::PrencryptWorker(const QString &jobID,
                                  const QVariantMap &params,
@@ -27,7 +36,7 @@ PrencryptWorker::PrencryptWorker(const QString &jobID,
 void PrencryptWorker::run()
 {
     auto recoredSets = [](const QString &k, int v) {
-        QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
+        QSettings sets(kDeviceEncryptTypeConfig, QSettings::IniFormat);
         sets.setValue(DEV_KEY.arg(k.mid(5)), v);
     };
 
@@ -84,29 +93,30 @@ EncryptJobError PrencryptWorker::writeEncryptParams()
     QJsonObject obj;
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
-    obj.insert("device", dev);
+    QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
+    obj.insert("device", dev); // use uuid
+    obj.insert("device_path", dev);
     obj.insert("volume", dmDev);
     obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString());
     obj.insert("key-size", "256");
     obj.insert("mode", encMode.value(params.value(encrypt_param_keys::kKeyEncMode).toInt()));
-    obj.insert("recoverykey-path", params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString());
+
+    QString expPath = params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString();
+    if (!expPath.isEmpty()) {
+        expPath.append(QString("/recovery_key_%1.txt").arg(dev.mid(5)));
+        expPath.replace("//", "/");
+    }
+    obj.insert("recoverykey-path", expPath);
 
     QJsonDocument tpmConfig = QJsonDocument::fromJson(params.value(encrypt_param_keys::kKeyTPMConfig).toString().toLocal8Bit());
     obj.insert("tpm-config", tpmConfig.object());
-
     QJsonDocument doc(obj);
-    QString encFilePath = "/boot/usec-crypt";
-    QDir d;
-    d.mkdir(encFilePath);
 
-    QString fname = dev.replace("/", "_");   // maybe someday multi job supported
-    fname = "encrypt.json";   // but now, keeps only one encrypt task.
-    QFile f(encFilePath + "/" + fname);
+    createUsecPathIfNotExist();
 
-    if (f.exists()) {
+    QFile f(QString("%1/encrypt.json").arg(kBootUsecPath));
+    if (f.exists())
         qInfo() << "has pending job, the pending job will be replaced";
-        //        return EncryptJobError::kHasPendingEncryptJob;
-    }
 
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "cannot open file for write!";
@@ -200,7 +210,7 @@ DecryptWorker::DecryptWorker(const QString &jobID,
 void DecryptWorker::run()
 {
     auto removeSets = [](const QString &k) {
-        QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
+        QSettings sets(kDeviceEncryptTypeConfig, QSettings::IniFormat);
         sets.remove(DEV_KEY.arg(k.mid(5)));
     };
 
@@ -225,7 +235,26 @@ void DecryptWorker::run()
 
 EncryptJobError DecryptWorker::writeDecryptParams()
 {
-    return EncryptJobError::kNoError;
+    QJsonObject obj;
+    QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
+    obj.insert("device_path", dev);
+    QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
+    obj.insert("device", dev); // TODO use uuid
+    QJsonDocument doc(obj);
+
+    createUsecPathIfNotExist();
+
+    QFile f(QString("%1/decrypt.json").arg(kBootUsecPath));
+    if (f.exists())
+        qInfo() << "the decrypt task will be replaced";
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qWarning() << "cannot open decrypt file for writing";
+        return EncryptJobError::kFileOpenFailed;
+    }
+
+    f.write(doc.toJson());
+    f.close();
+    return EncryptJobError::kRebootRequired;
 }
 
 ChgPassWorker::ChgPassWorker(const QString &jobID, const QVariantMap &params, QObject *parent)
