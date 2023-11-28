@@ -281,7 +281,7 @@ void DiskEncryptMenuScene::doEncryptDevice(const ParamsInputs &inputs)
             keyAlgo = "ecc";
         }
 
-        tpmParams = { { "keyslot", 1 },
+        tpmParams = { { "keyslot", "1" },
                       { "primary-key-alg", keyAlgo },
                       { "primary-hash-alg", hashAlgo },
                       { "pcr", "7" },

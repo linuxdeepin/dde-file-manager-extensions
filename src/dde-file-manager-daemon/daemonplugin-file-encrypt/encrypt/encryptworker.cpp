@@ -87,7 +87,7 @@ EncryptJobError PrencryptWorker::writeEncryptParams()
     obj.insert("device", dev);
     obj.insert("volume", dmDev);
     obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString());
-    obj.insert("key-size", 256);
+    obj.insert("key-size", "256");
     obj.insert("mode", encMode.value(params.value(encrypt_param_keys::kKeyEncMode).toInt()));
     obj.insert("recoverykey-path", params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString());
 
