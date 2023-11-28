@@ -37,18 +37,22 @@ Q_SIGNALS:
 private Q_SLOTS:
     void onEncryptDBusRegistered(const QString &service);
     void onEncryptDBusUnregistered(const QString &service);
-    void onFstabDiskEncProgressUpdated(const QString &dev, long offset, long total);
+    void onFstabDiskEncProgressUpdated(const QString &dev, qint64 offset, qint64 total);
     void onFstabDiskEncFinished(const QString &dev, int result, const QString &errstr);
 
 private:
     bool checkAuth(const QString &actID);
     void startReencrypt(const QString &dev, const QString &passphrase);
     void triggerReencrypt();
+    void diskCheck();
+    void getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev);
+    void updateCrypttab(const QStringList &decryptedDevs);
 
     bool readEncryptDevice(QString *backingDev, QString *clearDev);
 
 private:
     QSharedPointer<QDBusServiceWatcher> watcher;
+    QString currentEncryptingDevice;
 };
 
 FILE_ENCRYPT_END_NS
