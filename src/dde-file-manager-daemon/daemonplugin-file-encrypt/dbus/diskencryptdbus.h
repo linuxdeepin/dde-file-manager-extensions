@@ -45,8 +45,9 @@ private:
     void startReencrypt(const QString &dev, const QString &passphrase);
     void triggerReencrypt();
     void diskCheck();
-    void getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev);
-    void updateCrypttab(const QStringList &decryptedDevs);
+    static void getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev);
+    static void updateCrypttab(const QStringList &decryptedDevs);
+    static void updateInitrd();
 
     bool readEncryptDevice(QString *backingDev, QString *clearDev);
 
