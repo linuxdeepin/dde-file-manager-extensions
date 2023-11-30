@@ -247,6 +247,9 @@ void DiskEncryptDBus::triggerReencrypt()
     }
 
     qInfo() << "about to start encrypting" << clearDev;
+    QTimer::singleShot(1000, qApp, []{
+        QtConcurrent::run([]{ updateInitrd(); });
+    });
     devHandler.close();
 }
 
@@ -272,8 +275,7 @@ void DiskEncryptDBus::diskCheck()
     qDebug() << "these devices are not encrypted anymore:" << decrypted;
 
     updateCrypttab(decrypted);
-    int ret = system("update-initramfs -u");
-    qDebug() << "initramfs updated: " << ret;
+    updateInitrd();
 }
 
 void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev)
@@ -325,6 +327,12 @@ void DiskEncryptDBus::updateCrypttab(const QStringList &decryptedDevs)
     }
     crypttab.write(content);
     crypttab.close();
+}
+
+void DiskEncryptDBus::updateInitrd()
+{
+    int ret = system("update-initramfs -u");
+    qDebug() << "initramfs updated: " << ret;
 }
 
 bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev)
