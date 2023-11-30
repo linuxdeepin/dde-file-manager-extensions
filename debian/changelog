@@ -1,3 +1,9 @@
+dde-file-manager-extensions (1.1.4) unstable; urgency=medium
+
+  * fstab device encryption support 
+
+ -- xushitong <xushitong@uniontech.com>  Wed, 29 Nov 2023 10:09:00 +0800
+
 dde-file-manager-extensions (1.1.3) unstable; urgency=medium
 
   * fix some issues.
