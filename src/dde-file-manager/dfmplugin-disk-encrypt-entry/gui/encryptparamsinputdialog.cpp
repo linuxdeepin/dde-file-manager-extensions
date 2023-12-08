@@ -306,7 +306,7 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
             pagesLay->setCurrentIndex(kConfirmPage);
         }
     } else if (currPage == kConfirmPage) {
-        qDebug() << "confirm encrypt device: " << device;
+        qDebug() << "confirm encrypt device: " << device << encType->currentIndex();
         if (encType->currentIndex() == kTPMAndPIN || encType->currentIndex() == kTPMOnly) {
             if (!encryptByTpm(device)) {
                 qWarning() << "encrypt by TPM failed!";

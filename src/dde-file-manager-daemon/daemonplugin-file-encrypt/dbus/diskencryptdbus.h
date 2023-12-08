@@ -25,6 +25,7 @@ public Q_SLOTS:
     QString PrepareEncryptDisk(const QVariantMap &params);
     QString DecryptDisk(const QVariantMap &params);
     QString ChangeEncryptPassphress(const QVariantMap &params);
+    QString QueryTPMToken(const QString &device);
 
 Q_SIGNALS:
     void PrepareEncryptDiskResult(const QString &device, const QString &jobID, int errCode);
@@ -42,7 +43,8 @@ private Q_SLOTS:
 
 private:
     bool checkAuth(const QString &actID);
-    void startReencrypt(const QString &dev, const QString &passphrase);
+    void startReencrypt(const QString &dev, const QString &passphrase, const QString &token);
+    void setToken(const QString &dev, const QString &token);
     void triggerReencrypt();
     void diskCheck();
     static void getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev);

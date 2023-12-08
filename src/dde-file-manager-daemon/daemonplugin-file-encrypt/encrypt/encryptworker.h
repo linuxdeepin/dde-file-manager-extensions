@@ -10,6 +10,7 @@
 #include <QMutex>
 
 FILE_ENCRYPT_BEGIN_NS
+#define TOKEN_FILE_PATH QString("/tmp/%1_tpm_token.json")
 
 enum class EncryptJobError {
     kNoError = 0,
@@ -25,6 +26,7 @@ enum class EncryptJobError {
     kChgPassphraseFailed = -10,
     kFileOpenFailed = -11,
     kRebootRequired = -12,
+    kSetTokenFailed,
 };
 
 class Worker : public QThread

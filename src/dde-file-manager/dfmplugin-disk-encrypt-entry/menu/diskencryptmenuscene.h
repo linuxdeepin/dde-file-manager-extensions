@@ -47,12 +47,16 @@ public:
 protected:
     static void encryptDevice(const DeviceEncryptParam &param);
     static void deencryptDevice(const DeviceEncryptParam &param);
-    static void changePassphrase(const DeviceEncryptParam &param);
+    static void changePassphrase(DeviceEncryptParam param);
     static void unlockDevice(const QString &dev);
 
     static void doEncryptDevice(const DeviceEncryptParam &param);
     static void doDecryptDevice(const DeviceEncryptParam &param);
-    static void doChangePassphrase(const QString &dev, const QString oldPass, const QString &newPass, bool validateByRec);
+    static void doChangePassphrase(const DeviceEncryptParam &param);
+
+    static QString generateTPMConfig();
+    static QString generateTPMToken(const QString &device, bool pin);
+    static QString getBase64Of(const QString &fileName);
 
     static void onUnlocked(bool ok, dfmmount::OperationErrorInfo, QString);
     static void onMounted(bool ok, dfmmount::OperationErrorInfo, QString);

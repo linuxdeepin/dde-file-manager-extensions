@@ -67,6 +67,8 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &, int 
         showPreEncryptError(dev, code);
         return;
     }
+
+    qInfo() << "reboot is required..." << dev;
     showRebootOnPreencrypted(dev);
 }
 
@@ -313,6 +315,7 @@ void EventsHandler::showRebootOnDecrypted(const QString &device)
 
 void EventsHandler::requestReboot()
 {
+    qInfo() << "reboot is confirmed...";
     QDBusInterface sessMng("com.deepin.SessionManager",
                            "/com/deepin/SessionManager",
                            "com.deepin.SessionManager");

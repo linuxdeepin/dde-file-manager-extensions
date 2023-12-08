@@ -14,7 +14,6 @@
 FILE_ENCRYPT_USE_NS
 
 #define DEV_KEY QString("device/%1")
-static constexpr char kDeviceEncryptTypeConfig[] {"/etc/deepin/dde-file-manager/dev_enc_type.ini"};
 static constexpr char kBootUsecPath []{"/boot/usec-crypt"};
 
 void createUsecPathIfNotExist() {
@@ -35,19 +34,10 @@ PrencryptWorker::PrencryptWorker(const QString &jobID,
 
 void PrencryptWorker::run()
 {
-    auto recoredSets = [](const QString &k, int v) {
-        QSettings sets(kDeviceEncryptTypeConfig, QSettings::IniFormat);
-        sets.setValue(DEV_KEY.arg(k.mid(5)), v);
-    };
-
     if (params.value(encrypt_param_keys::kKeyInitParamsOnly, false).toBool()) {
         auto code = writeEncryptParams();
         setExitCode(code);
         setFstabTimeout();
-
-        if (code == EncryptJobError::kNoError)
-            recoredSets(params.value(encrypt_param_keys::kKeyDevice).toString(),
-                        params.value(encrypt_param_keys::kKeyEncMode).toInt());
         return;
     }
 
@@ -78,8 +68,16 @@ void PrencryptWorker::run()
         return;
     }
 
-    recoredSets(params.value(encrypt_param_keys::kKeyDevice).toString(),
-                params.value(encrypt_param_keys::kKeyEncMode).toInt());
+    if (!encParams.tpmToken.isEmpty()) {
+        QFile f(QString(TOKEN_FILE_PATH).arg(encParams.device.mid(5)));
+        if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            qWarning() << "cannot open file to cache token";
+            return;
+        }
+        f.write(encParams.tpmToken.toLocal8Bit());
+        f.flush();
+        f.close();
+    }
 }
 
 EncryptJobError PrencryptWorker::writeEncryptParams()
@@ -209,11 +207,6 @@ DecryptWorker::DecryptWorker(const QString &jobID,
 
 void DecryptWorker::run()
 {
-    auto removeSets = [](const QString &k) {
-        QSettings sets(kDeviceEncryptTypeConfig, QSettings::IniFormat);
-        sets.remove(DEV_KEY.arg(k.mid(5)));
-    };
-
     bool initOnly = params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool();
     if (initOnly) {
         setExitCode(writeDecryptParams());
@@ -230,7 +223,6 @@ void DecryptWorker::run()
                  << ret;
         return;
     }
-    removeSets(device);
 }
 
 EncryptJobError DecryptWorker::writeDecryptParams()
@@ -274,5 +266,13 @@ void ChgPassWorker::run()
         ret = disk_encrypt_funcs::bcChangePassphraseByRecKey(dev, oldPass, newPass);
     else
         ret = disk_encrypt_funcs::bcChangePassphrase(dev, oldPass, newPass);
+
+    QString token = params.value(encrypt_param_keys::kKeyTPMToken).toString();
+    if (!token.isEmpty() && ret == 0) {
+        ret = disk_encrypt_funcs::bcSetToken(dev, token);
+        if (ret != 0) // update token failed, need to rollback the change.
+            disk_encrypt_funcs::bcChangePassphrase(dev, newPass, oldPass);
+    }
+
     setExitCode(ret < 0 ? EncryptJobError::kChgPassphraseFailed : EncryptJobError::kNoError);
 }

@@ -7,7 +7,6 @@
 #include "gui/encryptparamsinputdialog.h"
 #include "gui/decryptparamsinputdialog.h"
 #include "gui/chgpassphrasedialog.h"
-#include "gui/unlockpartitiondialog.h"
 #include "events/eventshandler.h"
 #include "utils/encryptutils.h"
 
@@ -48,6 +47,7 @@ inline constexpr char kKeyCipher[] { "cipher" };
 inline constexpr char kKeyRecoveryExportPath[] { "exportRecKeyTo" };
 inline constexpr char kKeyInitParamsOnly[] { "initParamsOnly" };
 inline constexpr char kKeyTPMConfig[] { "tpmConfig" };
+inline constexpr char kKeyTPMToken[] { "tpmToken" };
 inline constexpr char kKeyValidateWithRecKey[] { "usingRecKey" };
 
 DiskEncryptMenuScene::DiskEncryptMenuScene(QObject *parent)
@@ -111,7 +111,11 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     param.devDesc = device;
     param.initOnly = fstab_utils::isFstabItem(devMpt);
     param.uuid = selectedItemInfo.value("IdUUID", "").toString();
-    param.type = static_cast<SecKeyType>(device_utils::encKeyType(device));
+    param.deviceDisplayName = info->displayOf(dfmbase::FileInfo::kFileDisplayName);
+    param.type = SecKeyType::kPasswordOnly;
+    if (itemEncrypted)
+        param.type = static_cast<SecKeyType>(device_utils::encKeyType(device));
+
     return true;
 }
 
@@ -213,6 +217,12 @@ void DiskEncryptMenuScene::deencryptDevice(const DeviceEncryptParam &param)
     if (inputs.type == kTPMOnly) {
         QString passphrase = tpm_passphrase_utils::getPassphraseFromTPM(inputs.devDesc, "");
         inputs.key = passphrase;
+        if (passphrase.isEmpty()) {
+            dialog_utils::showDialog(tr("Error"),
+                                     tr("Cannot resolve passphrase from TPM"),
+                                     dialog_utils::DialogType::kError);
+            return;
+        }
         doDecryptDevice(inputs);
         return;
     }
@@ -230,11 +240,15 @@ void DiskEncryptMenuScene::deencryptDevice(const DeviceEncryptParam &param)
         doDecryptDevice(inputs);
     else {
         inputs.key = tpm_passphrase_utils::getPassphraseFromTPM(inputs.devDesc, inputs.key);
+        if (inputs.key.isEmpty()) {
+            dialog_utils::showDialog(tr("Error"), tr("PIN error"), dialog_utils::DialogType::kError);
+            return;
+        }
         doDecryptDevice(inputs);
     }
 }
 
-void DiskEncryptMenuScene::changePassphrase(const DeviceEncryptParam &param)
+void DiskEncryptMenuScene::changePassphrase(DeviceEncryptParam param)
 {
     QString dev = param.devDesc;
     ChgPassphraseDialog dlg(param.devDesc);
@@ -245,11 +259,19 @@ void DiskEncryptMenuScene::changePassphrase(const DeviceEncryptParam &param)
     QString oldKey = inputs.first;
     QString newKey = inputs.second;
     if (param.type == SecKeyType::kTPMAndPIN) {
-        if (!dlg.validateByRecKey())
+        if (!dlg.validateByRecKey()) {
             oldKey = tpm_passphrase_utils::getPassphraseFromTPM(dev, oldKey);
+            if (oldKey.isEmpty()) {
+                dialog_utils::showDialog(tr("Error"), tr("PIN error"), dialog_utils::DialogType::kError);
+                return;
+            }
+        }
         newKey = tpm_passphrase_utils::genPassphraseFromTPM(dev, newKey);
     }
-    doChangePassphrase(dev, oldKey, newKey, dlg.validateByRecKey());
+    param.validateByRecKey = dlg.validateByRecKey();
+    param.key = oldKey;
+    param.newKey = newKey;
+    doChangePassphrase(param);
 }
 
 void DiskEncryptMenuScene::unlockDevice(const QString &devObjPath)
@@ -273,22 +295,11 @@ void DiskEncryptMenuScene::unlockDevice(const QString &devObjPath)
 void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
 {
     // if tpm selected, use tpm to generate the key
-    QJsonObject tpmParams;
+    QString tpmConfig, tpmToken;
     if (param.type != kPasswordOnly) {
-        QString keyAlgo, hashAlgo;
-        if (!tpm_passphrase_utils::getAlgorithm(hashAlgo, keyAlgo)) {
-            qWarning() << "cannot choose algorithm for tpm";
-            hashAlgo = "sha256";
-            keyAlgo = "ecc";
-        }
-
-        tpmParams = { { "keyslot", "1" },
-                      { "primary-key-alg", keyAlgo },
-                      { "primary-hash-alg", hashAlgo },
-                      { "pcr", "7" },
-                      { "pcr-bank", hashAlgo } };
+        tpmConfig = generateTPMConfig();
+        tpmToken = generateTPMToken(param.devDesc, param.type == kTPMAndPIN);
     }
-    QJsonDocument tpmJson(tpmParams);
 
     QDBusInterface iface(kDaemonBusName,
                          kDaemonBusPath,
@@ -302,9 +313,11 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
             { kKeyPassphrase, param.key },
             { kKeyInitParamsOnly, param.initOnly },
             { kKeyRecoveryExportPath, param.exportPath },
-            { kKeyEncMode, static_cast<int>(param.type) },
-            { kKeyTPMConfig, QString(tpmJson.toJson()) }
+            { kKeyEncMode, static_cast<int>(param.type) }
         };
+        if (!tpmConfig.isEmpty()) params.insert(kKeyTPMConfig, tpmConfig);
+        if (!tpmToken.isEmpty()) params.insert(kKeyTPMToken, tpmToken);
+
         QDBusReply<QString> reply = iface.call("PrepareEncryptDisk", params);
         qDebug() << "preencrypt device jobid:" << reply.value();
         QApplication::setOverrideCursor(Qt::WaitCursor);
@@ -331,23 +344,112 @@ void DiskEncryptMenuScene::doDecryptDevice(const DeviceEncryptParam &param)
     }
 }
 
-void DiskEncryptMenuScene::doChangePassphrase(const QString &dev, const QString oldPass, const QString &newPass, bool validateByRec)
+void DiskEncryptMenuScene::doChangePassphrase(const DeviceEncryptParam &param)
 {
+    QString token;
+    if (param.type != SecKeyType::kPasswordOnly) {
+        // new tpm token should be setted.
+        QFile f(kGlobalTPMConfigPath + param.devDesc + "/token.json");
+        if (!f.open(QIODevice::ReadOnly)) {
+            qWarning() << "cannot read old tpm token!!!";
+            return;
+        }
+        QJsonDocument oldTokenDoc = QJsonDocument::fromJson(f.readAll());
+        f.close();
+        QJsonObject oldTokenObj = oldTokenDoc.object();
+
+        QString newToken = generateTPMToken(param.devDesc, param.type == SecKeyType::kTPMAndPIN);
+        QJsonDocument newTokenDoc = QJsonDocument::fromJson(newToken.toLocal8Bit());
+        QJsonObject newTokenObj = newTokenDoc.object();
+
+        oldTokenObj.insert("enc", newTokenObj.value("enc"));
+        oldTokenObj.insert("kek-priv", newTokenObj.value("kek-priv"));
+        oldTokenObj.insert("kek-pub", newTokenObj.value("kek-pub"));
+        oldTokenObj.insert("iv", newTokenObj.value("iv"));
+        oldTokenObj.insert("keyslots", QJsonArray()); // TODO: use the old keyslots makes the invoke failed.
+        newTokenDoc.setObject(oldTokenObj);
+        token = newTokenDoc.toJson(QJsonDocument::Compact);
+    }
+
     QDBusInterface iface(kDaemonBusName,
                          kDaemonBusPath,
                          kDaemonBusIface,
                          QDBusConnection::systemBus());
     if (iface.isValid()) {
         QVariantMap params {
-            { kKeyDevice, dev },
-            { kKeyPassphrase, newPass },
-            { kKeyOldPassphrase, oldPass },
-            { kKeyValidateWithRecKey, validateByRec }
+            { kKeyDevice, param.devDesc },
+            { kKeyPassphrase, param.newKey },
+            { kKeyOldPassphrase, param.key },
+            { kKeyValidateWithRecKey, param.validateByRecKey },
+            { kKeyTPMToken, token}
         };
         QDBusReply<QString> reply = iface.call("ChangeEncryptPassphress", params);
         qDebug() << "modify device passphrase jobid:" << reply.value();
         QApplication::setOverrideCursor(Qt::WaitCursor);
     }
+}
+
+QString DiskEncryptMenuScene::generateTPMConfig()
+{
+    QString keyAlgo, hashAlgo;
+    if (!tpm_passphrase_utils::getAlgorithm(hashAlgo, keyAlgo)) {
+        qWarning() << "cannot choose algorithm for tpm";
+        hashAlgo = "sha256";
+        keyAlgo = "ecc";
+    }
+
+    QJsonObject tpmParams;
+    tpmParams = { { "keyslot", "1" },
+                 { "primary-key-alg", keyAlgo },
+                 { "primary-hash-alg", hashAlgo },
+                 { "pcr", "7" },
+                 { "pcr-bank", hashAlgo } };
+    return QJsonDocument(tpmParams).toJson();
+}
+
+QString DiskEncryptMenuScene::generateTPMToken(const QString &device, bool pin)
+{
+    QString tpmConfig = generateTPMConfig();
+    QJsonDocument doc = QJsonDocument::fromJson(tpmConfig.toLocal8Bit());
+    QJsonObject token = doc.object();
+
+    // keep same with usec.
+    // https://gerrit.uniontech.com/plugins/gitiles/usec-crypt-kit/+/refs/heads/master/src/boot-crypt/util.cpp
+    // j["type"] = "usec-tpm2";
+    // j["keyslots"] = {"0"};
+    // j["kek-priv"] = encoded_priv_key;
+    // j["kek-pub"] = encoded_pub_key;
+    // j["primary-key-alg"] = primary_key_alg;
+    // j["primary-hash-alg"] = primary_hash_alg;
+    // j["iv"] = encoded_iv;
+    // j["enc"] = encoded_cipher;
+    // j["pin"] = pin;
+    // j["pcr"] = pcr;
+    // j["pcr-bank"] = pcr_bank;
+
+    token.remove("keyslot");
+    token.insert("type", "usec-tpm2");
+    token.insert("keyslots", QJsonArray::fromStringList({ "0" }));
+    token.insert("kek-priv", getBase64Of(kGlobalTPMConfigPath + device + "/key.priv"));
+    token.insert("kek-pub", getBase64Of(kGlobalTPMConfigPath + device + "/key.pub"));
+    token.insert("iv", getBase64Of(kGlobalTPMConfigPath + device + "/iv.bin"));
+    token.insert("enc", getBase64Of(kGlobalTPMConfigPath + device + "/cipher.out"));
+    token.insert("pin", pin ? "1" : "0");
+
+    doc.setObject(token);
+    return doc.toJson(QJsonDocument::Compact);
+}
+
+QString DiskEncryptMenuScene::getBase64Of(const QString &fileName)
+{
+    QFile f(fileName);
+    if (!f.open(QIODevice::ReadOnly)) {
+        qDebug() << "cannot read file of" << fileName;
+        return "";
+    }
+    QByteArray contents = f.readAll();
+    f.close();
+    return QString(contents.toBase64());
 }
 
 void DiskEncryptMenuScene::onUnlocked(bool ok, dfmmount::OperationErrorInfo info, QString clearDev)
