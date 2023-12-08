@@ -45,6 +45,7 @@ bool isFstabItem(const QString &mpt);
 
 namespace device_utils {
 int encKeyType(const QString &dev);
+void cacheToken(const QString &device, const QVariantMap &token);
 BlockDev createBlockDevice(const QString &devObjPath);
 }   // namespace device_utils
 

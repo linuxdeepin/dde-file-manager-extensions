@@ -33,8 +33,11 @@ struct DeviceEncryptParam
     QString uuid;
     SecKeyType type;
     QString key;
+    QString newKey;
     QString exportPath;
+    QString deviceDisplayName;
     bool initOnly;
+    bool validateByRecKey;
 };
 
 class EncryptParamsInputDialog : public DTK_WIDGET_NAMESPACE::DDialog

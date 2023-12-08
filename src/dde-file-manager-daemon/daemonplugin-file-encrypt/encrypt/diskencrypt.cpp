@@ -11,6 +11,8 @@
 #include <QDir>
 #include <QFile>
 #include <QLibrary>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include <dfm-base/utils/finallyutil.h>
 #include <dfm-mount/dmount.h>
@@ -104,7 +106,9 @@ EncryptParams disk_encrypt_utils::bcConvertParams(const QVariantMap &params)
     return { .device = toString(encrypt_param_keys::kKeyDevice),
              .passphrase = toString(encrypt_param_keys::kKeyPassphrase),   // decode()
              .cipher = toString(encrypt_param_keys::kKeyCipher),
-             .recoveryPath = toString(encrypt_param_keys::kKeyRecoveryExportPath) };
+             .recoveryPath = toString(encrypt_param_keys::kKeyRecoveryExportPath),
+             .tpmToken = toString(encrypt_param_keys::kKeyTPMToken),
+    };
 }
 
 bool disk_encrypt_utils::bcValidateParams(const EncryptParams &params)
@@ -558,6 +562,66 @@ int disk_encrypt_funcs::bcChangePassphraseByRecKey(const QString &device, const 
     return 0;
 }
 
+
+int disk_encrypt_funcs::bcGetToken(const QString &device, QString *tokenJson)
+{
+    Q_ASSERT(tokenJson);
+    struct crypt_device *cdev { nullptr };
+    dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
+
+    int ret = crypt_init(&cdev,
+                         device.toStdString().c_str());
+    CHECK_INT(ret, "init device failed " + device, ret);
+
+    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
+    CHECK_INT(ret, "load device failed " + device, ret);
+
+    for (int i = 0; i < 32 /* LUKS2_TOKENS_MAX */; ++i) {
+        const char *token { nullptr };
+        if ((ret = crypt_token_json_get(cdev, i, &token)) < 0)
+            continue;
+        QString json(token);
+        if (json.contains("usec-tpm2")) {
+            // qInfo() << "found token:" << json;
+            QJsonDocument doc = QJsonDocument::fromJson(token);
+            QJsonObject obj = doc.object();
+            obj.insert("token_index", i);
+            doc.setObject(obj);
+            *tokenJson = doc.toJson();
+            return 0;
+        }
+    }
+
+    qInfo() << "token not found." << device;
+    return 0;
+}
+
+int disk_encrypt_funcs::bcSetToken(const QString &device, const QString &token)
+{
+    if (token.isEmpty())
+        return 0;
+
+    QJsonDocument doc = QJsonDocument::fromJson(token.toLocal8Bit());
+    QJsonObject obj = doc.object();
+    int tokenIndex = obj.value("token_index").toInt(CRYPT_ANY_TOKEN);
+
+    struct crypt_device *cdev { nullptr };
+    dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
+
+    int ret = crypt_init(&cdev,
+                         device.toStdString().c_str());
+    CHECK_INT(ret, "init device failed " + device, ret);
+
+    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
+    CHECK_INT(ret, "load device failed " + device, ret);
+
+    ret = crypt_token_json_set(cdev,
+                               tokenIndex,
+                               token.toStdString().c_str());
+    CHECK_INT(ret, "set token failed " + device, ret);
+    return 0;
+}
+
 EncryptStatus block_device_utils::bcDevStatus(const QString &device)
 {
     auto blkDev = block_device_utils::bcCreateBlkDev(device);
@@ -615,3 +679,4 @@ bool block_device_utils::bcIsMounted(const QString &device)
     }
     return !blkDev->mountPoints().isEmpty();
 }
+

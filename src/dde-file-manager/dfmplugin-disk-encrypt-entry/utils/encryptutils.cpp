@@ -10,6 +10,11 @@
 #include <dfm-mount/dmount.h>
 
 #include <QSettings>
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QDir>
 
 #include <dconfig.h>
 #include <DDialog>
@@ -86,14 +91,25 @@ bool tpm_utils::decryptByTPM(const QVariantMap &map, QString *psw)
 
 int device_utils::encKeyType(const QString &dev)
 {
-    QSettings sets(DEV_ENCTYPE_CFG, QSettings::IniFormat);
-    int type = sets.value(DEV_KEY.arg(dev.mid(5)), -1).toInt();
-    if (type == -1) {
-        qInfo() << "not recorded encrypted device, regard as enc by passphrase" << dev;
-        type = 0;
-    }
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    if (iface.isValid()) {
+        QDBusReply<QString> reply = iface.call("QueryTPMToken", dev);
+        if (!reply.isValid()) return 0;
+        QString tokenJson = reply.value();
+        if (tokenJson.isEmpty()) return 0;
 
-    return type;
+        QJsonDocument doc = QJsonDocument::fromJson(tokenJson.toLocal8Bit());
+        QJsonObject obj = doc.object();
+        cacheToken(dev, obj.toVariantMap());
+        QString usePin = obj.value("pin").toString("");
+        if (usePin.isEmpty()) return 0;
+        if (usePin == "1") return 1;
+        if (usePin == "0") return 2;
+    }
+    return 0;
 }
 
 QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QString &pin)
@@ -105,7 +121,7 @@ QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QSt
         return "";
     }
 
-    const QString dirPath = kTPMKeyPath + dev;
+    const QString dirPath = kGlobalTPMConfigPath + dev;
     QDir dir(dirPath);
     if (!dir.exists())
         dir.mkpath(dirPath);
@@ -150,7 +166,7 @@ QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QSt
 
 QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QString &pin)
 {
-    const QString dirPath = kTPMKeyPath + dev;
+    const QString dirPath = kGlobalTPMConfigPath + dev;
     QSettings tpmSets(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
     const QString hashAlgo = tpmSets.value(kConfigKeyPriHashAlgo).toString();
     const QString keyAlgo = tpmSets.value(kConfigKeyPriKeyAlgo).toString();
@@ -255,4 +271,56 @@ void dialog_utils::showDialog(const QString &title, const QString &msg, DialogTy
     d.setIcon(QIcon::fromTheme(icon));
     d.addButton(qApp->translate("dfmplugin_diskenc::ChgPassphraseDialog", "Confirm"));
     d.exec();
+}
+
+void device_utils::cacheToken(const QString &device, const QVariantMap &token)
+{
+    if (token.isEmpty()) {
+        QDir tmp("/tmp");
+        tmp.rmpath(kGlobalTPMConfigPath + device);
+        return;
+    }
+
+    auto makeFile = [](const QString &fileName, const QByteArray &content) {
+        QFile f(fileName);
+        if (!f.open(QIODevice::Truncate | QIODevice::WriteOnly)) {
+            qWarning() << "cannot cache token!" << fileName;
+            return false;
+        }
+
+        f.write(content);
+        f.flush();
+        f.close();
+        return true;
+    };
+
+    QString devTpmConfigPath = kGlobalTPMConfigPath + device;
+    QDir tpmPath(devTpmConfigPath);
+    if (!tpmPath.exists())
+        tpmPath.mkpath(devTpmConfigPath);
+
+    QJsonObject obj = QJsonObject::fromVariantMap(token);
+    QJsonDocument doc(obj);
+    QByteArray iv = obj.value("iv").toString().toLocal8Bit();
+    QByteArray keyPriv = obj.value("kek-priv").toString().toLocal8Bit();
+    QByteArray keyPub = obj.value("kek-pub").toString().toLocal8Bit();
+    QByteArray cipher = obj.value("enc").toString().toLocal8Bit();
+    iv = QByteArray::fromBase64(iv);
+    keyPriv = QByteArray::fromBase64(keyPriv);
+    keyPub = QByteArray::fromBase64(keyPub);
+    cipher = QByteArray::fromBase64(cipher);
+
+    bool ret = true;
+    ret &= makeFile(devTpmConfigPath + "/token.json", doc.toJson());
+    ret &= makeFile(devTpmConfigPath + "/iv.bin", iv);
+    ret &= makeFile(devTpmConfigPath + "/key.priv", keyPriv);
+    ret &= makeFile(devTpmConfigPath + "/key.pub", keyPub);
+    ret &= makeFile(devTpmConfigPath + "/cipher.out", cipher);
+
+    QSettings algo(devTpmConfigPath + "/algo.ini", QSettings::IniFormat);
+    algo.setValue("primary_hash_algo", obj.value("primary-hash-alg").toString());
+    algo.setValue("primary_key_algo", obj.value("primary-key-alg").toString());
+
+    if (!ret)
+        tpmPath.rmpath(devTpmConfigPath);
 }

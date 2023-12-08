@@ -45,7 +45,7 @@ enum EncryptJobError {
 };
 
 inline constexpr int kPasswordSize { 14 };
-inline const QString kTPMKeyPath(QDir::homePath() + "/.TPMKey");
+inline const QString kGlobalTPMConfigPath("/tmp/dfm-encrypt");
 inline constexpr char kTPMHashAlgo[] { "sha256" };
 inline constexpr char kTPMKeyAlgo[] { "aes" };
 inline constexpr char kTCMHashAlgo[] { "sm3_256" };

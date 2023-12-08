@@ -5,6 +5,7 @@
 #include "diskencryptdbus.h"
 #include "diskencryptdbus_adaptor.h"
 #include "encrypt/encryptworker.h"
+#include "encrypt/diskencrypt.h"
 #include "notification/notifications.h"
 
 #include <dfm-framework/dpf.h>
@@ -26,7 +27,6 @@ static constexpr char kActionDecrypt[] { "com.deepin.filemanager.daemon.DiskEncr
 static constexpr char kActionChgPwd[] { "com.deepin.filemanager.daemon.DiskEncrypt.ChangePassphrase" };
 static constexpr char kObjPath[] { "/com/deepin/filemanager/daemon/DiskEncrypt" };
 static constexpr char kEncConfigPath[] { "/boot/usec-crypt/encrypt.json" };
-static constexpr char kDeviceEncryptTypeConfig[] {"/etc/deepin/dde-file-manager/dev_enc_type.ini"};
 
 DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
     : QObject(parent),
@@ -86,7 +86,8 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
         } else {
             qInfo() << "start reencrypt device" << device;
             startReencrypt(device,
-                           params.value(encrypt_param_keys::kKeyPassphrase).toString());
+                           params.value(encrypt_param_keys::kKeyPassphrase).toString(),
+                           params.value(encrypt_param_keys::kKeyTPMToken).toString());
         }
 
         worker->deleteLater();
@@ -152,6 +153,13 @@ QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
     return jobID;
 }
 
+QString DiskEncryptDBus::QueryTPMToken(const QString &device)
+{
+    QString token;
+    disk_encrypt_funcs::bcGetToken(device, &token);
+    return token;
+}
+
 void DiskEncryptDBus::onEncryptDBusRegistered(const QString &service)
 {
     qInfo() << service << "registered";
@@ -207,7 +215,7 @@ bool DiskEncryptDBus::checkAuth(const QString &actID)
             .toBool();
 }
 
-void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphrase)
+void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphrase, const QString &token)
 {
     ReencryptWorker *worker = new ReencryptWorker(dev, passphrase, this);
     connect(worker, &ReencryptWorker::deviceReencryptResult,
@@ -217,8 +225,19 @@ void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphra
         qDebug() << "reencrypt finished"
                  << static_cast<int>(ret);
         worker->deleteLater();
+        setToken(dev, token);
     });
     worker->start();
+}
+
+void DiskEncryptDBus::setToken(const QString &dev, const QString &token)
+{
+    if (token.isEmpty())
+        return;
+
+    int ret = disk_encrypt_funcs::bcSetToken(dev, token.toStdString().c_str());
+    if (ret != 0)
+        qWarning() << "set token failed for device" << dev;
 }
 
 void DiskEncryptDBus::triggerReencrypt()
@@ -258,23 +277,13 @@ void DiskEncryptDBus::diskCheck()
     QMap<QString, QString> dev2uuid, uuid2dev;
     getDeviceMapper(&dev2uuid, &uuid2dev);
 
-    QSettings config(kDeviceEncryptTypeConfig, QSettings::IniFormat);
-    QStringList encrypted = config.allKeys();
-    QStringList decrypted;
-    for (const auto &dev: encrypted) {
-        QString devDesc = dev;
-        devDesc = devDesc.replace("device", "/dev");
-        if (dev2uuid.contains(devDesc)) {
-            decrypted.append(devDesc);
-            config.remove(dev);
-        }
-    }
-    if (decrypted.isEmpty())
-        return;
+    // QStringList decrypted;
+    // if (decrypted.isEmpty())
+    //     return;
 
-    qDebug() << "these devices are not encrypted anymore:" << decrypted;
+    // qDebug() << "these devices are not encrypted anymore:" << decrypted;
 
-    updateCrypttab(decrypted);
+    // updateCrypttab(decrypted);
     updateInitrd();
 }
 

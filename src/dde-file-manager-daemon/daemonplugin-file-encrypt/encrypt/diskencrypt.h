@@ -34,8 +34,10 @@ enum EncryptError {
 
 namespace disk_encrypt_funcs {
 EncryptError bcInitHeaderFile(const EncryptParams &params, QString &headerPath);
+int bcGetToken(const QString &device, QString *tokenJson);
 QString bcDoSetupHeader(const EncryptParams &params);
 int bcInitHeaderDevice(const QString &device, const QString &passphrase, const QString &headerPath);
+int bcSetToken(const QString &device, const QString &token);
 int bcResumeReencrypt(const QString &device, const QString &passphrase);
 int bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase);
 int bcChangePassphraseByRecKey(const QString &device, const QString &oldPassphrase, const QString &newPassphrase);
