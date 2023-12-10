@@ -1,3 +1,9 @@
+dde-file-manager-extensions (1.1.5) unstable; urgency=medium
+
+  * save tpm info in header token 
+
+ -- xushitong <xushitong@uniontech.com>  Sun, 10 Dec 2023 17:05:44 +0800
+
 dde-file-manager-extensions (1.1.4) unstable; urgency=medium
 
   * fstab device encryption support 
