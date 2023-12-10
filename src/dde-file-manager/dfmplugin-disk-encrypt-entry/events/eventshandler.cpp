@@ -63,7 +63,7 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &, int 
 {
     QApplication::restoreOverrideCursor();
 
-    if (code != EncryptJobError::kNoError) {
+    if (code != kSuccess) {
         showPreEncryptError(dev, code);
         return;
     }
@@ -100,7 +100,7 @@ void EventsHandler::onDecryptResult(const QString &dev, const QString &, int cod
         decryptDialogs.remove(dev);
     }
 
-    if (code == kRebootRequired)
+    if (code == -kRebootRequired)
         showRebootOnDecrypted(dev);
     else
         showDecryptError(dev, code);
@@ -211,13 +211,13 @@ void EventsHandler::showPreEncryptError(const QString &dev, int code)
     QString title;
     QString msg;
     bool showError = false;
-    switch (code) {
-    case (EncryptJobError::kNoError):
+    switch (-code) {
+    case (kSuccess):
         title = tr("Preencrypt done");
         msg = tr("Device %1 has been preencrypt, please reboot to finish encryption.")
                       .arg(dev);
         break;
-    case EncryptJobError::kUserCancelled:
+    case kUserCancelled:
         title = tr("Encrypt disk");
         msg = tr("User cancelled operation");
         break;
@@ -238,22 +238,27 @@ void EventsHandler::showDecryptError(const QString &dev, int code)
 {
     QString title;
     QString msg;
-    bool showFailed = false;
-    switch (code) {
-    case (EncryptJobError::kNoError):
+    bool showFailed = true;
+    switch (-code) {
+    case (kSuccess):
         title = tr("Decrypt done");
         msg = tr("Device %1 has been decrypted").arg(dev);
+        showFailed = false;
         break;
-    case EncryptJobError::kUserCancelled:
+    case kUserCancelled:
         title = tr("Decrypt disk");
         msg = tr("User cancelled operation");
+        showFailed = false;
+        break;
+    case kErrorWrongPassphrase:
+        title = tr("Decrypt disk");
+        msg = tr("Wrong passpharse or PIN");
         break;
     default:
         title = tr("Decrypt failed");
         msg = tr("Device %1 Decrypt failed, please see log for more information.(%2)")
                       .arg(dev)
                       .arg(code);
-        showFailed = true;
         break;
     }
 
@@ -263,18 +268,22 @@ void EventsHandler::showDecryptError(const QString &dev, int code)
 
 void EventsHandler::showChgPwdError(const QString &dev, int code)
 {
-
     QString title;
     QString msg;
     bool showError = false;
-    switch (code) {
-    case (EncryptJobError::kNoError):
+    switch (-code) {
+    case (kSuccess):
         title = tr("Change passphrase done");
         msg = tr("%1's passphrase has been changed").arg(dev);
         break;
-    case EncryptJobError::kUserCancelled:
+    case kUserCancelled:
         title = tr("Change passphrase");
         msg = tr("User cancelled operation");
+        break;
+    case kErrorChangePassphraseFailed:
+        title = tr("Change passphrase failed");
+        msg = tr("Wrong passpharse or PIN");
+        showError = true;
         break;
     default:
         title = tr("Change passphrase failed");

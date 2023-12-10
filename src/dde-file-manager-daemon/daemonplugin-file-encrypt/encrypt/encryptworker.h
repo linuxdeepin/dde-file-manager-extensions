@@ -12,23 +12,6 @@
 FILE_ENCRYPT_BEGIN_NS
 #define TOKEN_FILE_PATH QString("/tmp/%1_tpm_token.json")
 
-enum class EncryptJobError {
-    kNoError = 0,
-    kHasPendingEncryptJob = -1,
-    kCannotCreateEncryptJob = -2,
-    kInvalidEncryptParams = -3,
-    kCannotInitEncryptHeaderFile = -4,
-    kCannotInitEncryptHeaderDevice = -5,
-    kReencryptFailed = -6,
-    kDecryptFailed = -7,
-    kFstabOpenFailed = -8,
-    kUserCancelled = -9,
-    kChgPassphraseFailed = -10,
-    kFileOpenFailed = -11,
-    kRebootRequired = -12,
-    kSetTokenFailed,
-};
-
 class Worker : public QThread
 {
     Q_OBJECT
@@ -36,21 +19,21 @@ public:
     explicit Worker(const QString &jobID, QObject *parent = nullptr)
         : QThread(parent), jobID(jobID) { }
 
-    inline EncryptJobError exitError()
+    inline int exitError()
     {
         QMutexLocker locker(&mtx);
         return exitCode;
     }
 
 protected:
-    inline void setExitCode(EncryptJobError code)
+    inline void setExitCode(int code)
     {
         QMutexLocker locker(&mtx);
         exitCode = code;
     }
 
 protected:
-    EncryptJobError exitCode { EncryptJobError::kNoError };
+    int exitCode { kSuccess };
     QString jobID;
     QMutex mtx;
 };
@@ -65,8 +48,8 @@ public:
 
 protected:
     void run() override;
-    EncryptJobError writeEncryptParams();
-    EncryptJobError setFstabTimeout();
+    int writeEncryptParams();
+    int setFstabTimeout();
 
 private:
     QVariantMap params;
@@ -104,7 +87,7 @@ public:
 
 protected:
     void run() override;
-    EncryptJobError writeDecryptParams();
+    int writeDecryptParams();
 
 private:
     QVariantMap params;

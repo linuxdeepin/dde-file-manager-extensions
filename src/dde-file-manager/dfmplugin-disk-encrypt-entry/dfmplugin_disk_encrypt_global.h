@@ -5,6 +5,8 @@
 #ifndef DFMPLUGIN_DISK_ENCRYPT_GLOBAL_H
 #define DFMPLUGIN_DISK_ENCRYPT_GLOBAL_H
 
+#include "../../dde-file-manager-daemon/daemonplugin-file-encrypt/globaltypesdefine.h"
+
 #include <QtCore/qglobal.h>
 #include <QDir>
 #include <QString>
@@ -27,22 +29,6 @@ inline constexpr char kDaemonBusIface[] { "com.deepin.filemanager.daemon.DiskEnc
 
 inline constexpr char kMenuPluginName[] { "dfmplugin_menu" };
 inline constexpr char kComputerMenuSceneName[] { "ComputerMenu" };
-
-enum EncryptJobError {
-    kNoError = 0,
-    kHasPendingEncryptJob = -1,
-    kCannotCreateEncryptJob = -2,
-    kInvalidEncryptParams = -3,
-    kCannotInitEncryptHeaderFile = -4,
-    kCannotInitEncryptHeaderDevice = -5,
-    kReencryptFailed = -6,
-    kDecryptFailed = -7,
-    kFstabOpenFailed = -8,
-    kUserCancelled = -9,
-    kChgPassphraseFailed = -10,
-    kFileOpenFailed = -11,
-    kRebootRequired = -12,
-};
 
 inline constexpr int kPasswordSize { 14 };
 inline const QString kGlobalTPMConfigPath("/tmp/dfm-encrypt");

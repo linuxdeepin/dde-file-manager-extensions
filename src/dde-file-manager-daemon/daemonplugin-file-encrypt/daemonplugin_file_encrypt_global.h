@@ -5,6 +5,8 @@
 #ifndef DAEMONPLUGIN_FILE_ENCRYPT_GLOBAL_H
 #define DAEMONPLUGIN_FILE_ENCRYPT_GLOBAL_H
 
+#include "globaltypesdefine.h"
+
 #include <QtCore/qglobal.h>
 #include <QString>
 #include <QDebug>

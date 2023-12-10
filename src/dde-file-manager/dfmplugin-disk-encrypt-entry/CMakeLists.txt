@@ -20,6 +20,7 @@ find_package(dfm-io REQUIRED)
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+    "${CMAKE_SOURCE_DIR}/../../dde-file-manager-daemon/daemonplugin-file-encrypt/globaltypesdefine.h"
 )
 
 add_library(${PROJECT_NAME} SHARED
