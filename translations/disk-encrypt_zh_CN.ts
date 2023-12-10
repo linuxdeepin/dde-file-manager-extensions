@@ -50,6 +50,8 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="65"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="137"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="175"/>
         <source>%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.</source>
         <translation>%1至少8位，至少同时包含大写字母、小写字母、数字及符号中的3种。</translation>
     </message>
@@ -84,12 +86,6 @@
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="112"/>
         <source>Recovery key is not valid!</source>
         <translation>恢复密钥不合法</translation>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="137"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="175"/>
-        <source>%1 at least 8 bits with A-Z, a-z, 0-9 and symbols</source>
-        <translation>%1至少8位，包含A-Z, a-z, 0-9和符号</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="142"/>
@@ -221,7 +217,7 @@
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="461"/>
         <source>Wrong passphrase</source>
-        <translation>密钥错误</translation>
+        <translation>口令错误</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="479"/>
@@ -502,28 +498,28 @@
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="276"/>
         <source>Change passphrase done</source>
-        <translation>密钥修改完成</translation>
+        <translation>口令修改完成</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="277"/>
         <source>%1&apos;s passphrase has been changed</source>
-        <translation>%1的密钥已经修改</translation>
+        <translation>%1的口令已经修改</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="280"/>
         <source>Change passphrase</source>
-        <translation>修改密钥</translation>
+        <translation>修改口令</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="284"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="289"/>
         <source>Change passphrase failed</source>
-        <translation>修改密钥失败</translation>
+        <translation>修改口令失败</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="290"/>
         <source>Device %1 change passphrase failed, please see log for more information.(%2)</source>
-        <translation>设备%1修改密钥失败，请查看日志以获取更多信息。（%2）</translation>
+        <translation>设备%1修改口令失败，请查看日志以获取更多信息。（%2）</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="317"/>
@@ -548,12 +544,12 @@
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="164"/>
         <source>Wrong PIN</source>
-        <translation>PIN错误</translation>
+        <translation>PIN码错误</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="166"/>
         <source>Wrong passphrase</source>
-        <translation>密钥错误</translation>
+        <translation>口令错误</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="168"/>
@@ -592,7 +588,7 @@
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="85"/>
         <source>Unlock by passphrase</source>
-        <translation>使用密钥解锁</translation>
+        <translation>使用口令解锁</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="86"/>
@@ -607,7 +603,7 @@
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="94"/>
         <source>Please input passphrase to unlock device</source>
-        <translation>请输入密钥来解锁设备</translation>
+        <translation>请输入口令来解锁设备</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="97"/>

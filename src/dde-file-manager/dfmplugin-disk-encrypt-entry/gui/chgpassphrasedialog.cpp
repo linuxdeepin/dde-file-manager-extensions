@@ -172,7 +172,7 @@ void ChgPassphraseDialog::onRecSwitchClicked()
         oldPass->setEchoMode(QLineEdit::Password);
         oldPass->setEchoButtonIsVisible(true);
         recSwitch->setText(tr("Validate with recovery key"));
-        oldPass->setPlaceholderText(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(encType));
+        oldPass->setPlaceholderText(tr("%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.").arg(encType));
     }
 }
 
