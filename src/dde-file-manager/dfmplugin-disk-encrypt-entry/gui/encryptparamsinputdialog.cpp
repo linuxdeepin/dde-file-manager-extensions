@@ -258,6 +258,11 @@ bool EncryptParamsInputDialog::validateExportPath(const QString &path, QString *
     }
 
     QString dev = QStorageInfo(path).device();
+    if (dev == device) {
+        setMsg(tr("Please export to an external device such as a non-encrypted partition or USB flash drive."));
+        return false;
+    }
+
     using namespace dfmmount;
     auto monitor = DDeviceManager::instance()->getRegisteredMonitor(DeviceType::kBlockDevice).objectCast<DBlockMonitor>();
     Q_ASSERT(monitor);
