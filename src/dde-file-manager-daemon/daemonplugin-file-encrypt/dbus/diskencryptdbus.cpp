@@ -274,17 +274,8 @@ void DiskEncryptDBus::triggerReencrypt()
 
 void DiskEncryptDBus::diskCheck()
 {
-    QMap<QString, QString> dev2uuid, uuid2dev;
-    getDeviceMapper(&dev2uuid, &uuid2dev);
-
-    // QStringList decrypted;
-    // if (decrypted.isEmpty())
-    //     return;
-
-    // qDebug() << "these devices are not encrypted anymore:" << decrypted;
-
-    // updateCrypttab(decrypted);
-    updateInitrd();
+    if (updateCrypttab())
+        updateInitrd();
 }
 
 void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev)
@@ -312,30 +303,50 @@ void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QSt
     }
 }
 
-void DiskEncryptDBus::updateCrypttab(const QStringList &decryptedDevs)
+bool DiskEncryptDBus::updateCrypttab()
 {
     QFile crypttab("/etc/crypttab");
     if (!crypttab.open(QIODevice::ReadWrite)) {
         qWarning() << "cannot open crypttab for rw";
-        return;
+        return false;
     }
     auto content = crypttab.readAll();
     crypttab.close();
     QByteArrayList lines = content.split('\n');
     for (int i = lines.count() - 1; i >= 0; --i) {
         QString line = lines.at(i);
+        if (line.startsWith("#")) continue;
+
         auto items = line.split(QRegularExpression(R"( |\t)"), QString::SkipEmptyParts);
         if (items.count() < 2) continue;
-        if (decryptedDevs.contains(items.at(1)))
+        if (!isEncrypted(items.at(1)))
             lines.removeAt(i);
     }
     content = lines.join('\n');
     if (!crypttab.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "cannot open cryppttab for update";
-        return;
+        return false;
     }
+
+    qInfo() << "crypttab is updated";
     crypttab.write(content);
     crypttab.close();
+    return true;
+}
+
+bool DiskEncryptDBus::isEncrypted(const QString &device)
+{
+    QMap<QString, QString> dev2uuid, uuid2dev;
+    getDeviceMapper(&dev2uuid, &uuid2dev);
+
+    QString dev = device;
+    if (dev.startsWith("UUID"))
+        dev = uuid2dev.value(dev);
+
+    auto devPtr = block_device_utils::bcCreateBlkDev(dev);
+    if (devPtr && devPtr->isEncrypted())
+        return true;
+    return false;
 }
 
 void DiskEncryptDBus::updateInitrd()
