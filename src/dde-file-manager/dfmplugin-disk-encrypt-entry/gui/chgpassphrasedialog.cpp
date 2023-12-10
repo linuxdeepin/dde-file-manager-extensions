@@ -62,7 +62,7 @@ void ChgPassphraseDialog::initUI()
     newPass1 = new Dtk::Widget::DPasswordEdit(this);
     newPass2 = new Dtk::Widget::DPasswordEdit(this);
 
-    QString placeHolder = tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyTypeStr);
+    QString placeHolder = tr("%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.").arg(keyTypeStr);
     oldPass->setPlaceholderText(placeHolder);
     newPass1->setPlaceholderText(placeHolder);
     newPass2->setPlaceholderText(tr("Please enter %1 again").arg(keyTypeStr));
@@ -134,7 +134,7 @@ bool ChgPassphraseDialog::validatePasswd()
     });
 
     if (factor < 3 || pwd1.length() < 8) {
-        newPass1->showAlertMessage(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyTypeStr));
+        newPass1->showAlertMessage(tr("%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.").arg(keyTypeStr));
         return false;
     }
 

@@ -120,14 +120,14 @@ QWidget *EncryptParamsInputDialog::createPasswordPage()
     lay->addRow(keyHint2, encKeyEdit2);
 
     pinOnlyHint = new QLabel(tr("User access to the partition is automatically "
-                                "unlocked without password checking."));
+                                "unlocked without passphrase checking."));
     pinOnlyHint->setWordWrap(true);
     lay->addRow("", pinOnlyHint);
     auto font = pinOnlyHint->font();
     font.setPixelSize(12);
     pinOnlyHint->setFont(font);
 
-    encType->addItems({ tr("Unlocked by password"),
+    encType->addItems({ tr("Unlocked by passphrase"),
                         tr("Use PIN code to unlock on this computer (recommended)"),
                         tr("Automatic unlocking on this computer") });
 
@@ -350,15 +350,15 @@ void EncryptParamsInputDialog::onEncTypeChanged(int type)
 {
     QString filed1 = tr("Set %1");
     QString filed2 = tr("Repeat %1");
-    QString placeholder1 = tr("%1 at least 8 digits with A-Z, a-z, 0-9 and symbols");
+    QString placeholder1 = tr("%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.");
     QString placeholder2 = tr("Please enter the %1 again");
 
     if (type == kPasswordOnly) {
         setPasswordInputVisible(true);
-        keyHint1->setText(filed1.arg(tr("password")));
-        keyHint2->setText(filed2.arg(tr("password")));
-        encKeyEdit1->setPlaceholderText(placeholder1.arg(tr("Password")));
-        encKeyEdit2->setPlaceholderText(placeholder2.arg(tr("password")));
+        keyHint1->setText(filed1.arg(tr("passphrase")));
+        keyHint2->setText(filed2.arg(tr("passphrase")));
+        encKeyEdit1->setPlaceholderText(placeholder1.arg(tr("Passphrase")));
+        encKeyEdit2->setPlaceholderText(placeholder2.arg(tr("Passphrase")));
     } else if (type == kTPMAndPIN) {
         setPasswordInputVisible(true);
         keyHint1->setText(filed1.arg(tr("PIN")));

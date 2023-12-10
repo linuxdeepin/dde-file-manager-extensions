@@ -49,6 +49,11 @@
         <translation>修改%1</translation>
     </message>
     <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="65"/>
+        <source>%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.</source>
+        <translation>%1至少8位，至少同时包含大写字母、小写字母、数字及符号中的3种。</translation>
+    </message>
+    <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="68"/>
         <source>Please enter %1 again</source>
         <translation>请再次输入%1</translation>
@@ -81,7 +86,6 @@
         <translation>恢复密钥不合法</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="65"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="137"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="175"/>
         <source>%1 at least 8 bits with A-Z, a-z, 0-9 and symbols</source>
@@ -216,8 +220,8 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="461"/>
-        <source>Wrong password</source>
-        <translation>密码错误</translation>
+        <source>Wrong passphrase</source>
+        <translation>密钥错误</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="479"/>
@@ -254,18 +258,18 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="122"/>
-        <source>User access to the partition is automatically unlocked without password checking.</source>
-        <translation>用户访问该分区将自动解锁</translation>
+        <source>User access to the partition is automatically unlocked without passphrase checking.</source>
+        <translation>用户访问分区时自动解锁，无须校验口令。</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="130"/>
-        <source>Unlocked by password</source>
+        <source>Unlocked by passphrase</source>
         <translation>使用口令解锁</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="131"/>
         <source>Use PIN code to unlock on this computer (recommended)</source>
-        <translation>使用PIN码来解锁此设备（建议）</translation>
+        <translation>使用PIN码来解锁此设备（推荐）</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="132"/>
@@ -289,6 +293,8 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="207"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="360"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="361"/>
         <source>Passphrase</source>
         <translation>口令</translation>
     </message>
@@ -370,25 +376,19 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="353"/>
-        <source>%1 at least 8 digits with A-Z, a-z, 0-9 and symbols</source>
-        <translation>%1至少8位，包含A-Z, a-z, 0-9 和符号</translation>
+        <source>%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.</source>
+        <translation>%1至少8位，至少同时包含大写字母、小写字母、数字及符号中的3种。</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="358"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="359"/>
+        <source>passphrase</source>
+        <translation>口令</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="354"/>
         <source>Please enter the %1 again</source>
         <translation>请再次输入%1</translation>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="358"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="359"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="361"/>
-        <source>password</source>
-        <translation>密码</translation>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="360"/>
-        <source>Password</source>
-        <translation>密码</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="364"/>
