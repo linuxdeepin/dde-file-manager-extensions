@@ -36,23 +36,23 @@ void PrencryptWorker::run()
 {
     if (params.value(encrypt_param_keys::kKeyInitParamsOnly, false).toBool()) {
         auto code = writeEncryptParams();
-        setExitCode(code);
+        setExitCode(-code);
         setFstabTimeout();
         return;
     }
 
     auto encParams = disk_encrypt_utils::bcConvertParams(params);
     if (!disk_encrypt_utils::bcValidateParams(encParams)) {
-        setExitCode(EncryptJobError::kInvalidEncryptParams);
+        setExitCode(-kErrorParamsInvalid);
         qDebug() << "invalid params" << params;
         return;
     }
 
     QString localHeaderFile;
-    EncryptError err = disk_encrypt_funcs::bcInitHeaderFile(encParams,
+    int err = disk_encrypt_funcs::bcInitHeaderFile(encParams,
                                                             localHeaderFile);
-    if (err != EncryptError::kNoError || localHeaderFile.isEmpty()) {
-        setExitCode(EncryptJobError::kCannotInitEncryptHeaderFile);
+    if (err != kSuccess || localHeaderFile.isEmpty()) {
+        setExitCode(-kErrorCreateHeader);
         qDebug() << "cannot generate local header"
                  << params;
         return;
@@ -62,7 +62,7 @@ void PrencryptWorker::run()
                                                      encParams.passphrase,
                                                      localHeaderFile);
     if (ret != 0) {
-        setExitCode(EncryptJobError::kCannotInitEncryptHeaderDevice);
+        setExitCode(-kErrorApplyHeader);
         qDebug() << "cannot init device encrypt"
                  << params;
         return;
@@ -80,7 +80,7 @@ void PrencryptWorker::run()
     }
 }
 
-EncryptJobError PrencryptWorker::writeEncryptParams()
+int PrencryptWorker::writeEncryptParams()
 {
     const static QMap<int, QString> encMode {
         { 0, "pin" },
@@ -118,21 +118,21 @@ EncryptJobError PrencryptWorker::writeEncryptParams()
 
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "cannot open file for write!";
-        return EncryptJobError::kCannotCreateEncryptJob;
+        return kErrorOpenFileFailed;
     }
 
     f.write(doc.toJson());
     f.flush();
     f.close();
-    return EncryptJobError::kNoError;
+    return kSuccess;
 }
 
-EncryptJobError PrencryptWorker::setFstabTimeout()
+int PrencryptWorker::setFstabTimeout()
 {
     static const QString kFstabPath { "/etc/fstab" };
     QFile fstab(kFstabPath);
     if (!fstab.open(QIODevice::ReadOnly))
-        return EncryptJobError::kFstabOpenFailed;
+        return kErrorOpenFstabFailed;
 
     QByteArray fstabContents = fstab.readAll();
     fstab.close();
@@ -165,7 +165,7 @@ EncryptJobError PrencryptWorker::setFstabTimeout()
         }
 
         if (!fstab.open(QIODevice::Truncate | QIODevice::ReadWrite))
-            return EncryptJobError::kFstabOpenFailed;
+            return kErrorOpenFstabFailed;
 
         fstab.write(newContents);
         fstab.flush();
@@ -177,7 +177,7 @@ EncryptJobError PrencryptWorker::setFstabTimeout()
                  << newContents;
     }
 
-    return EncryptJobError::kNoError;
+    return kSuccess;
 }
 
 ReencryptWorker::ReencryptWorker(const QString &dev,
@@ -209,7 +209,7 @@ void DecryptWorker::run()
 {
     bool initOnly = params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool();
     if (initOnly) {
-        setExitCode(writeDecryptParams());
+        setExitCode(-writeDecryptParams());
         return;
     }
 
@@ -217,7 +217,7 @@ void DecryptWorker::run()
     const QString &passphrase = params.value(encrypt_param_keys::kKeyPassphrase).toString();
     int ret = disk_encrypt_funcs::bcDecryptDevice(device, passphrase);
     if (ret < 0) {
-        setExitCode(EncryptJobError::kDecryptFailed);
+        setExitCode(ret);
         qDebug() << "decrypt devcei failed"
                  << device
                  << ret;
@@ -225,7 +225,7 @@ void DecryptWorker::run()
     }
 }
 
-EncryptJobError DecryptWorker::writeDecryptParams()
+int DecryptWorker::writeDecryptParams()
 {
     QJsonObject obj;
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
@@ -241,12 +241,12 @@ EncryptJobError DecryptWorker::writeDecryptParams()
         qInfo() << "the decrypt task will be replaced";
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "cannot open decrypt file for writing";
-        return EncryptJobError::kFileOpenFailed;
+        return kErrorOpenFileFailed;
     }
 
     f.write(doc.toJson());
     f.close();
-    return EncryptJobError::kRebootRequired;
+    return kRebootRequired;
 }
 
 ChgPassWorker::ChgPassWorker(const QString &jobID, const QVariantMap &params, QObject *parent)
@@ -274,5 +274,5 @@ void ChgPassWorker::run()
             disk_encrypt_funcs::bcChangePassphrase(dev, newPass, oldPass);
     }
 
-    setExitCode(ret < 0 ? EncryptJobError::kChgPassphraseFailed : EncryptJobError::kNoError);
+    setExitCode(ret);
 }

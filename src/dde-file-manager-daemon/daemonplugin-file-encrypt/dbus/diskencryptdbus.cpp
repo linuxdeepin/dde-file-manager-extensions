@@ -62,7 +62,7 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
     if (!checkAuth(kActionEncrypt)) {
         Q_EMIT PrepareEncryptDiskResult(params.value(encrypt_param_keys::kKeyDevice).toString(),
                                         "",
-                                        static_cast<int>(EncryptJobError::kUserCancelled));
+                                        kUserCancelled);
         return "";
     }
 
@@ -71,15 +71,15 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
                                                   params,
                                                   this);
     connect(worker, &QThread::finished, this, [=] {
-        EncryptJobError ret = worker->exitError();
+        int ret = worker->exitError();
         QString device = params.value(encrypt_param_keys::kKeyDevice).toString();
 
         qDebug() << "pre encrypt finished"
                  << device
-                 << static_cast<int>(ret);
+                 << ret;
 
         if (params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool()
-            || ret != EncryptJobError::kNoError) {
+            || ret != kSuccess) {
             Q_EMIT this->PrepareEncryptDiskResult(device,
                                                   jobID,
                                                   static_cast<int>(ret));
@@ -102,7 +102,7 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
 {
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     if (!checkAuth(kActionDecrypt)) {
-        Q_EMIT DecryptDiskResult(dev, "", static_cast<int>(EncryptJobError::kUserCancelled));
+        Q_EMIT DecryptDiskResult(dev, "", kUserCancelled);
         return "";
     }
 
@@ -117,11 +117,11 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
 
     DecryptWorker *worker = new DecryptWorker(jobID, params, this);
     connect(worker, &QThread::finished, this, [=] {
-        EncryptJobError ret = worker->exitError();
+        int ret = worker->exitError();
         qDebug() << "decrypt device finished:"
                  << dev
-                 << static_cast<int>(ret);
-        Q_EMIT DecryptDiskResult(dev, jobID, static_cast<int>(ret));
+                 << ret;
+        Q_EMIT DecryptDiskResult(dev, jobID, ret);
         worker->deleteLater();
     });
     worker->start();
@@ -134,19 +134,19 @@ QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
     if (!checkAuth(kActionChgPwd)) {
         Q_EMIT ChangePassphressResult(dev,
                                       "",
-                                      static_cast<int>(EncryptJobError::kUserCancelled));
+                                      kUserCancelled);
         return "";
     }
 
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
     ChgPassWorker *worker = new ChgPassWorker(jobID, params, this);
     connect(worker, &QThread::finished, this, [=] {
-        EncryptJobError ret = worker->exitError();
+        int ret = worker->exitError();
         QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
         qDebug() << "change password finished:"
                  << dev
-                 << static_cast<int>(ret);
-        Q_EMIT ChangePassphressResult(dev, jobID, static_cast<int>(ret));
+                 << ret;
+        Q_EMIT ChangePassphressResult(dev, jobID, ret);
         worker->deleteLater();
     });
     worker->start();
@@ -221,9 +221,9 @@ void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphra
     connect(worker, &ReencryptWorker::deviceReencryptResult,
             this, &DiskEncryptDBus::EncryptDiskResult);
     connect(worker, &QThread::finished, this, [=] {
-        EncryptJobError ret = worker->exitError();
+        int ret = worker->exitError();
         qDebug() << "reencrypt finished"
-                 << static_cast<int>(ret);
+                 << ret;
         worker->deleteLater();
         setToken(dev, token);
     });
