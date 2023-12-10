@@ -49,6 +49,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="65"/>
+        <source>%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="68"/>
         <source>Please enter %1 again</source>
         <translation type="unfinished"></translation>
@@ -81,7 +86,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="65"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="137"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="175"/>
         <source>%1 at least 8 bits with A-Z, a-z, 0-9 and symbols</source>
@@ -216,7 +220,7 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="461"/>
-        <source>Wrong password</source>
+        <source>Wrong passphrase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -254,12 +258,12 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="122"/>
-        <source>User access to the partition is automatically unlocked without password checking.</source>
+        <source>User access to the partition is automatically unlocked without passphrase checking.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="130"/>
-        <source>Unlocked by password</source>
+        <source>Unlocked by passphrase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -289,6 +293,8 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="207"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="360"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="361"/>
         <source>Passphrase</source>
         <translation type="unfinished"></translation>
     </message>
@@ -370,24 +376,18 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="353"/>
-        <source>%1 at least 8 digits with A-Z, a-z, 0-9 and symbols</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="354"/>
-        <source>Please enter the %1 again</source>
+        <source>%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="358"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="359"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="361"/>
-        <source>password</source>
+        <source>passphrase</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="360"/>
-        <source>Password</source>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="354"/>
+        <source>Please enter the %1 again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -458,7 +458,7 @@ void DiskEncryptMenuScene::onUnlocked(bool ok, dfmmount::OperationErrorInfo info
     if (!ok && info.code != dfmmount::DeviceError::kUDisksErrorNotAuthorizedDismissed) {
         qWarning() << "unlock device failed!" << info.message;
         dialog_utils::showDialog(tr("Unlock device failed"),
-                                 tr("Wrong password"),
+                                 tr("Wrong passphrase"),
                                  dialog_utils::kError);
         return;
     }
