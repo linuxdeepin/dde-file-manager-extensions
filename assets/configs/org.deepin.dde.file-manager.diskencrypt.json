@@ -14,7 +14,7 @@
             "visibility":"public"
         },
         "encryptAlgorithm" : {
-            "value": "sm4-xts-plain64",
+            "value": "sm4",
             "serial":0,
             "flags":["global"],
             "name":"Encrypt algorithm",
