@@ -92,12 +92,10 @@ struct crypt_params_reencrypt *resumeParams()
 }
 void parseCipher(const QString &fullCipher, QString *cipher, QString *mode, int *len)
 {
-    Q_ASSERT(cipher && mode);
-    *cipher = fullCipher.mid(0, fullCipher.indexOf("-"));
-    int idxSplit = fullCipher.indexOf("-");
-    *mode = (idxSplit > 0)
-            ? fullCipher.mid(idxSplit + 1)
-            : "xts-plain64";
+    Q_ASSERT(cipher && mode && len);
+    *cipher = fullCipher;
+    *mode = "xts-plain64";
+    *len = 256;
 }
 
 EncryptParams disk_encrypt_utils::bcConvertParams(const QVariantMap &params)
@@ -266,7 +264,7 @@ int disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params, QString *he
     CHECK_INT(ret, "cannot set offset " + params.device, -kErrorSetOffset);
 
     QString cipher, mode;
-    int keyLen = 256;
+    int keyLen;
     parseCipher(params.cipher, &cipher, &mode, &keyLen);
     qDebug() << "encrypt with cipher:" << cipher << mode << keyLen;
 

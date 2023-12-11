@@ -95,7 +95,7 @@ int PrencryptWorker::writeEncryptParams()
     obj.insert("device", dev); // use uuid
     obj.insert("device_path", dev);
     obj.insert("volume", dmDev);
-    obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString());
+    obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString() + "-xts-plain64");
     obj.insert("key-size", "256");
     obj.insert("mode", encMode.value(params.value(encrypt_param_keys::kKeyEncMode).toInt()));
 
