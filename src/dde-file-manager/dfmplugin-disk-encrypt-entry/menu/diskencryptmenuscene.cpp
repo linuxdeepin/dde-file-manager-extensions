@@ -85,6 +85,12 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     if (device.isEmpty())
         return false;
 
+    auto preferDev = selectedItemInfo.value("PreferredDevice", "").toString();
+    if (preferDev.startsWith("/dev/mapper/")) {
+        qInfo() << "mapper device is not supported to be encrypted yet." << device << preferDev;
+        return false;
+    }
+
     const QString &idType = selectedItemInfo.value("IdType").toString();
     const QStringList &supportedFS { "ext4", "ext3", "ext2" };
     if (idType == "crypto_LUKS") {
@@ -336,7 +342,7 @@ void DiskEncryptMenuScene::doDecryptDevice(const DeviceEncryptParam &param)
             { kKeyDevice, param.devDesc },
             { kKeyPassphrase, param.key },
             { kKeyInitParamsOnly, param.initOnly },
-            { kKeyUUID , param.uuid }
+            { kKeyUUID, param.uuid }
         };
         QDBusReply<QString> reply = iface.call("DecryptDisk", params);
         qDebug() << "preencrypt device jobid:" << reply.value();
@@ -366,7 +372,7 @@ void DiskEncryptMenuScene::doChangePassphrase(const DeviceEncryptParam &param)
         oldTokenObj.insert("kek-priv", newTokenObj.value("kek-priv"));
         oldTokenObj.insert("kek-pub", newTokenObj.value("kek-pub"));
         oldTokenObj.insert("iv", newTokenObj.value("iv"));
-        oldTokenObj.insert("keyslots", QJsonArray()); // TODO: use the old keyslots makes the invoke failed.
+        oldTokenObj.insert("keyslots", QJsonArray());   // TODO: use the old keyslots makes the invoke failed.
         newTokenDoc.setObject(oldTokenObj);
         token = newTokenDoc.toJson(QJsonDocument::Compact);
     }
@@ -381,7 +387,7 @@ void DiskEncryptMenuScene::doChangePassphrase(const DeviceEncryptParam &param)
             { kKeyPassphrase, param.newKey },
             { kKeyOldPassphrase, param.key },
             { kKeyValidateWithRecKey, param.validateByRecKey },
-            { kKeyTPMToken, token}
+            { kKeyTPMToken, token }
         };
         QDBusReply<QString> reply = iface.call("ChangeEncryptPassphress", params);
         qDebug() << "modify device passphrase jobid:" << reply.value();
