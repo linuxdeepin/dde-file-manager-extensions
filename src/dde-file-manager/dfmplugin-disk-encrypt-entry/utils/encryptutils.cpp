@@ -184,8 +184,8 @@ QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QSt
     const QString primaryKeyAlgo = tpmSets.value(kConfigKeyPriKeyAlgo).toString();
     QVariantMap map {
         { "PropertyKey_EncryptType", (pin.isEmpty() ? kUseTpmAndPcr : kUseTpmAndPrcAndPin) },
-        { "PropertyKey_SessionHashAlgo", sessionHashAlgo },
-        { "PropertyKey_SessionKeyAlgo", sessionKeyAlgo },
+        { "PropertyKey_SessionHashAlgo", (sessionHashAlgo.isEmpty() ? "sha256" : sessionHashAlgo) },    // TODO:gongheng need help by liangbo
+        { "PropertyKey_SessionKeyAlgo", (sessionKeyAlgo.isEmpty() ? "aes" : sessionKeyAlgo) },
         { "PropertyKey_PrimaryHashAlgo", primaryHashAlgo },
         { "PropertyKey_PrimaryKeyAlgo", primaryKeyAlgo },
         { "PropertyKey_DirPath", dirPath }
