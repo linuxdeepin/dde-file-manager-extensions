@@ -131,7 +131,7 @@ QWidget *EncryptParamsInputDialog::createPasswordPage()
                         tr("Use PIN code to unlock on this computer (recommended)"),
                         tr("Automatic unlocking on this computer") });
 
-    if (!tpm_utils::hasTPM()) {
+    if (tpm_utils::checkTPM() != 0) {
         encType->setItemData(kTPMAndPIN, QVariant(0), Qt::UserRole - 1);
         encType->setItemData(kTPMOnly, QVariant(0), Qt::UserRole - 1);
 
@@ -396,8 +396,8 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
         if (btnNext) btnNext->setEnabled(true);
     });
 
-    QString hashAlgo, keyAlgo;
-    if (!tpmAlgoChoice(&hashAlgo, &keyAlgo)) {
+    QString sessionHashAlgo, sessionKeyAlgo, primaryHashAlgo, primaryKeyAlgo, minorHashAlgo, minorKeyAlgo;
+    if (!tpm_passphrase_utils::getAlgorithm(&sessionHashAlgo, &sessionKeyAlgo, &primaryHashAlgo, &primaryKeyAlgo, &minorHashAlgo, &minorKeyAlgo)) {
         qCritical() << "TPM algo choice failed!";
         return false;
     }
@@ -430,31 +430,4 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
 
     tpmPassword = watcher.result();
     return true;
-}
-
-bool EncryptParamsInputDialog::tpmAlgoChoice(QString *hashAlgo, QString *keyAlgo)
-{
-    bool re1 { false };
-    bool re2 { false };
-    tpm_utils::isSupportAlgoByTPM(kTPMHashAlgo, &re1);
-    tpm_utils::isSupportAlgoByTPM(kTPMKeyAlgo, &re2);
-
-    if (re1 && re2) {
-        (*hashAlgo) = kTPMHashAlgo;
-        (*keyAlgo) = kTPMKeyAlgo;
-        return true;
-    }
-
-    re1 = false;
-    re2 = false;
-    tpm_utils::isSupportAlgoByTPM(kTCMHashAlgo, &re1);
-    tpm_utils::isSupportAlgoByTPM(kTCMKeyAlgo, &re2);
-
-    if (re1 && re2) {
-        (*hashAlgo) = kTCMHashAlgo;
-        (*keyAlgo) = kTCMKeyAlgo;
-        return true;
-    }
-
-    return false;
 }

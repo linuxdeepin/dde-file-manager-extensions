@@ -65,7 +65,6 @@ protected Q_SLOTS:
 
 private:
     bool encryptByTpm(const QString &deviceName);
-    bool tpmAlgoChoice(QString *hashAlgo, QString *keyAlgo);
 
 private:
     DTK_WIDGET_NAMESPACE::DComboBox *encType { nullptr };

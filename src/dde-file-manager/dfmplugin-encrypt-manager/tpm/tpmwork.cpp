@@ -12,10 +12,13 @@
 typedef enum {
   kCTpmAndPcr,
   kCTpmAndPin,
+  kCTpmAndPcrAndPin
 } TpmProType;
 
 typedef struct {
     TpmProType type;
+    char *sessionHashAlgo;
+    char *sessionKeyAlgo;
     char *primaryHashAlgo;
     char *primaryKeyAlgo;
     char *minorHashAlgo;
@@ -31,6 +34,8 @@ typedef struct {
 
 typedef struct {
     TpmProType type;
+    char *sessionHashAlgo;
+    char *sessionKeyAlgo;
     char *primaryHashAlgo;
     char *primaryKeyAlgo;
     char *dirPath;
@@ -212,66 +217,66 @@ bool TPMWork::decrypt(const QString &keyPin, const QString &dirPath, QString *ps
     return false;
 }
 
-bool TPMWork::checkTPMAvailbableByTools()
+int TPMWork::checkTPMAvailbableByTools()
 {
     if (!tpmLib->isLoaded())
-        return false;
+        return -1;
 
-    typedef bool (*p_utpm2_check_tpm_by_tools)(void);
+    typedef int (*p_utpm2_check_tpm_by_tools)(void);
     p_utpm2_check_tpm_by_tools utpm2_check_tpm_by_tools = (p_utpm2_check_tpm_by_tools) tpmLib->resolve("utpm2_check_tpm_by_tools");
     if (!utpm2_check_tpm_by_tools) {
-        qCritical() << "Vault: resolve utpm2_check_tpm_by_tools failed!";
-        return false;
+        qCritical() << "resolve utpm2_check_tpm_by_tools failed!";
+        return -1;
     }
 
     return utpm2_check_tpm_by_tools();
 }
 
-bool TPMWork::getRandomByTools(int size, QString *output)
+int TPMWork::getRandomByTools(int size, QString *output)
 {
     if (!tpmLib->isLoaded())
-        return false;
+        return -1;
 
-    typedef bool (*p_utpm2_get_random_by_tools)(int size, char *buf);
+    typedef int (*p_utpm2_get_random_by_tools)(int size, char *buf);
     p_utpm2_get_random_by_tools utpm2_get_random_by_tools = (p_utpm2_get_random_by_tools) tpmLib->resolve("utpm2_get_random_by_tools");
     if (!utpm2_get_random_by_tools) {
-        qCritical() << "Vault: resolve utpm2_get_random_by_tools failed!";
-        return false;
+        qCritical() << "resolve utpm2_get_random_by_tools failed!";
+        return -1;
     }
 
     char buf[129] = { 0 };
-    bool re = utpm2_get_random_by_tools(size, buf);
+    int re = utpm2_get_random_by_tools(size, buf);
     *output = QString::fromLatin1(buf);
     return re;
 }
 
-bool TPMWork::isSupportAlgoByTools(const QString &algoName, bool *support)
+int TPMWork::isSupportAlgoByTools(const QString &algoName, bool *support)
 {
     if (!tpmLib->isLoaded())
-        return false;
+        return -1;
 
-    typedef bool (*p_utpm2_check_alg_by_tools)(const char *algo_name,  bool *support);
+    typedef int (*p_utpm2_check_alg_by_tools)(const char *algo_name,  bool *support);
     p_utpm2_check_alg_by_tools utpm2_check_alg_by_tools = (p_utpm2_check_alg_by_tools) tpmLib->resolve("utpm2_check_alg_by_tools");
     if (!utpm2_check_alg_by_tools) {
-        qCritical() << "Vault: resolve utpm2_check_alg_by_tools failed!";
-        return false;
+        qCritical() << "resolve utpm2_check_alg_by_tools failed!";
+        return -1;
     }
 
     QByteArray algo = algoName.toUtf8();
-    bool re = utpm2_check_alg_by_tools(algo.data(), support);
+    int re = utpm2_check_alg_by_tools(algo.data(), support);
     return re;
 }
 
-bool TPMWork::encryptByTools(const EncryptParams &params)
+int TPMWork::encryptByTools(const EncryptParams &params)
 {
     if (!tpmLib->isLoaded())
-        return false;
+        return -1;
 
-    typedef bool (*utpm2_encrypt_by_tools)(const Utpm2EncryptParamsByTools *par);
+    typedef int (*utpm2_encrypt_by_tools)(const Utpm2EncryptParamsByTools *par);
     utpm2_encrypt_by_tools func = (utpm2_encrypt_by_tools)tpmLib->resolve("utpm2_encrypt_by_tools");
     if (!func) {
-        qCritical() << "Vault: resolve utpm2_encrypt_by_tools failed!";
-        return false;
+        qCritical() << "resolve utpm2_encrypt_by_tools failed!";
+        return -1;
     }
 
     Utpm2EncryptParamsByTools pa;
@@ -279,9 +284,15 @@ bool TPMWork::encryptByTools(const EncryptParams &params)
         pa.type = kCTpmAndPcr;
     } else if (params.type == kTpmAndPin) {
         pa.type = kCTpmAndPin;
+    } else if (params.type == kTpmAndPcrAndPin) {
+        pa.type = kCTpmAndPcrAndPin;
     } else {
-        return false;
+        return -1;
     }
+    QByteArray arrSessionHashAlgo = params.sessionHashAlgo.toUtf8();
+    pa.sessionHashAlgo = arrSessionHashAlgo.data();
+    QByteArray arrSessionKeyAlgo = params.sessionKeyAlgo.toUtf8();
+    pa.sessionKeyAlgo = arrSessionKeyAlgo.data();
     QByteArray arrPriHashAlgo = params.primaryHashAlgo.toUtf8();
     pa.primaryHashAlgo = arrPriHashAlgo.data();
     QByteArray arrPriKeyAlgo = params.primaryKeyAlgo.toUtf8();
@@ -290,6 +301,7 @@ bool TPMWork::encryptByTools(const EncryptParams &params)
     pa.minorHashAlgo = arrMinHashAlgo.data();
     QByteArray arrMinKeyAlgo = params.minorKeyAlgo.toUtf8();
     pa.minorKeyAlgo = arrMinKeyAlgo.data();
+
     QByteArray arrDirPath = params.dirPath.toUtf8();
     pa.dirPath = arrDirPath.data();
     QByteArray arrPlain = params.plain.toUtf8();
@@ -303,24 +315,24 @@ bool TPMWork::encryptByTools(const EncryptParams &params)
     QByteArray arrPcrBank = params.pcr_bank.toUtf8();
     pa.pcr_bank = arrPcrBank.data();
 
-    if (!func(&pa)) {
-        qCritical() << "Vault: utpm2_encrypt_by_tools return false!";
-        return false;
+    int re = func(&pa);
+    if (re != 0) {
+        qCritical() << "utpm2_encrypt_by_tools return false!";
     }
 
-    return true;
+    return re;
 }
 
-bool TPMWork::decryptByTools(const DecryptParams &params, QString *pwd)
+int TPMWork::decryptByTools(const DecryptParams &params, QString *pwd)
 {
     if (!tpmLib->isLoaded())
-        return false;
+        return -1;
 
-    typedef bool (*utpm2_decrypt_by_tools)(const Utpm2DecryptParamsByTools *par, char *pwd, int *len);
+    typedef int (*utpm2_decrypt_by_tools)(const Utpm2DecryptParamsByTools *par, char *pwd, int *len);
     utpm2_decrypt_by_tools fun = (utpm2_decrypt_by_tools) tpmLib->resolve("utpm2_decrypt_by_tools");
     if (!fun) {
-        qCritical() << "Vault: resolve utpm2_encry_decrypt failed!";
-        return false;
+        qCritical() << "resolve utpm2_encry_decrypt failed!";
+        return -1;
     }
 
     Utpm2DecryptParamsByTools pa;
@@ -328,9 +340,15 @@ bool TPMWork::decryptByTools(const DecryptParams &params, QString *pwd)
         pa.type = kCTpmAndPcr;
     } else if (params.type == kTpmAndPin) {
         pa.type = kCTpmAndPin;
+    } else if (params.type == kTpmAndPcrAndPin) {
+        pa.type = kCTpmAndPcrAndPin;
     } else {
-        return false;
+        return -1;
     }
+    QByteArray arrSessionHashAlgo = params.sessionHashAlgo.toUtf8();
+    pa.sessionHashAlgo = arrSessionHashAlgo.data();
+    QByteArray arrSessionKeyAlgo = params.sessionKeyAlgo.toUtf8();
+    pa.sessionKeyAlgo = arrSessionKeyAlgo.data();
     QByteArray arrPriHashAlgo = params.primaryHashAlgo.toUtf8();
     pa.primaryHashAlgo = arrPriHashAlgo.data();
     QByteArray arrPriKeyAlgo = params.primaryKeyAlgo.toUtf8();
@@ -348,13 +366,11 @@ bool TPMWork::decryptByTools(const DecryptParams &params, QString *pwd)
 
     char password[128] = { 0 };
     int length = sizeof(password) - 1;
-
-    if (!fun(&pa, password, &length)) {
-        qCritical() << "Vault: utpm2_encry_decrypt return failed!";
-        return false;
-
+    int re = fun(&pa, password, &length);
+    if (re != 0) {
+        qCritical() << "utpm2_encry_decrypt return failed!";
     }
     (*pwd) = QString::fromLatin1(password);
 
-    return true;
+    return re;
 }

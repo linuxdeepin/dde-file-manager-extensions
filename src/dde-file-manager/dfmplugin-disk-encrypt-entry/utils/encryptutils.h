@@ -17,15 +17,17 @@ typedef QSharedPointer<dfmmount::DBlockDevice> BlockDev;
 namespace dfmplugin_diskenc {
 
 namespace tpm_utils {
-bool hasTPM();
-bool getRandomByTPM(int size, QString *output);
-bool isSupportAlgoByTPM(const QString &algoName, bool *support);
-bool encryptByTPM(const QVariantMap &map);
-bool decryptByTPM(const QVariantMap &map, QString *psw);
+int checkTPM();
+int getRandomByTPM(int size, QString *output);
+int isSupportAlgoByTPM(const QString &algoName, bool *support);
+int encryptByTPM(const QVariantMap &map);
+int decryptByTPM(const QVariantMap &map, QString *psw);
 }   // namespace tpm_utils
 
 namespace tpm_passphrase_utils {
-bool getAlgorithm(QString &hash, QString &key);
+bool getAlgorithm(QString *sessionHashAlgo, QString *sessionKeyAlgo,
+                  QString *primaryHashAlgo, QString *primaryKeyAlgo,
+                  QString *minorHashAlgo, QString *minorKeyAlgo);
 QString genPassphraseFromTPM(const QString &dev, const QString &pin);
 QString getPassphraseFromTPM(const QString &dev, const QString &pin);
 }

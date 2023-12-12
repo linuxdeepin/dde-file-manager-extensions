@@ -29,11 +29,11 @@ public:
                  const QString &dirPath);
     bool decrypt(const QString &keyPin, const QString &dirPath, QString *psw);
 
-    bool checkTPMAvailbableByTools();
-    bool getRandomByTools(int size, QString *output);
-    bool isSupportAlgoByTools(const QString &algoName, bool *support);
-    bool encryptByTools(const EncryptParams &params);
-    bool decryptByTools(const DecryptParams &params, QString *pwd);
+    int checkTPMAvailbableByTools();
+    int getRandomByTools(int size, QString *output);
+    int isSupportAlgoByTools(const QString &algoName, bool *support);
+    int encryptByTools(const EncryptParams &params);
+    int decryptByTools(const DecryptParams &params, QString *pwd);
 
 private:
     bool initTpm2(const QString &hashAlgo, const QString &keyAlgo,

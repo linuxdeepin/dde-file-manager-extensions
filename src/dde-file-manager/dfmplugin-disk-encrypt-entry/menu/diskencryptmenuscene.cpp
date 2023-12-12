@@ -391,19 +391,21 @@ void DiskEncryptMenuScene::doChangePassphrase(const DeviceEncryptParam &param)
 
 QString DiskEncryptMenuScene::generateTPMConfig()
 {
-    QString keyAlgo, hashAlgo;
-    if (!tpm_passphrase_utils::getAlgorithm(hashAlgo, keyAlgo)) {
+    QString sessionHashAlgo, sessionKeyAlgo, primaryHashAlgo, primaryKeyAlgo, minorHashAlgo, minorKeyAlgo;
+    if (!tpm_passphrase_utils::getAlgorithm(&sessionHashAlgo, &sessionKeyAlgo, &primaryHashAlgo, &primaryKeyAlgo, &minorHashAlgo, &minorKeyAlgo)) {
         qWarning() << "cannot choose algorithm for tpm";
-        hashAlgo = "sha256";
-        keyAlgo = "ecc";
+        primaryHashAlgo = "sha256";
+        primaryKeyAlgo = "ecc";
     }
 
     QJsonObject tpmParams;
     tpmParams = { { "keyslot", "1" },
-                 { "primary-key-alg", keyAlgo },
-                 { "primary-hash-alg", hashAlgo },
-                 { "pcr", "7" },
-                 { "pcr-bank", hashAlgo } };
+                  { "session-key-alg", sessionKeyAlgo },
+                  { "session-hash-alg", sessionHashAlgo },
+                  { "primary-key-alg", primaryKeyAlgo },
+                  { "primary-hash-alg", primaryHashAlgo },
+                  { "pcr", "7" },
+                  { "pcr-bank", primaryHashAlgo } };
     return QJsonDocument(tpmParams).toJson();
 }
 
