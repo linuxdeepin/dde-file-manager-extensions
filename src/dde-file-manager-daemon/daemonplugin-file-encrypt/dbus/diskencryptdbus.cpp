@@ -50,7 +50,7 @@ DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
 
     triggerReencrypt();
 
-    QtConcurrent::run([this]{ diskCheck(); });
+    QtConcurrent::run([this] { diskCheck(); });
 }
 
 DiskEncryptDBus::~DiskEncryptDBus()
@@ -266,8 +266,8 @@ void DiskEncryptDBus::triggerReencrypt()
     }
 
     qInfo() << "about to start encrypting" << clearDev;
-    QTimer::singleShot(1000, qApp, []{
-        QtConcurrent::run([]{ updateInitrd(); });
+    QTimer::singleShot(1000, qApp, [] {
+        QtConcurrent::run([] { updateInitrd(); });
     });
     devHandler.close();
 }
@@ -282,12 +282,11 @@ void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QSt
 {
     Q_ASSERT(dev2uuid && uuid2dev);
     using namespace dfmmount;
-    auto monitor = DDeviceManager::instance()->getRegisteredMonitor(DeviceType::kBlockDevice)
-                       .objectCast<DBlockMonitor>();
+    auto monitor = DDeviceManager::instance()->getRegisteredMonitor(DeviceType::kBlockDevice).objectCast<DBlockMonitor>();
     Q_ASSERT(monitor);
 
     const QStringList &objPaths = monitor->getDevices();
-    for (const auto &objPath: objPaths) {
+    for (const auto &objPath : objPaths) {
         auto blkPtr = monitor->createDeviceById(objPath).objectCast<DBlockDevice>();
         if (!blkPtr) continue;
         QString uuid = blkPtr->getProperty(dfmmount::Property::kBlockIDUUID).toString();
@@ -312,17 +311,27 @@ bool DiskEncryptDBus::updateCrypttab()
     }
     auto content = crypttab.readAll();
     crypttab.close();
+
+    bool cryptUpdated = false;
     QByteArrayList lines = content.split('\n');
     for (int i = lines.count() - 1; i >= 0; --i) {
         QString line = lines.at(i);
         if (line.startsWith("#")) continue;
 
         auto items = line.split(QRegularExpression(R"( |\t)"), QString::SkipEmptyParts);
-        if (items.count() < 2) continue;
-        if (!isEncrypted(items.at(1)))
+        if (items.count() < 2) {
             lines.removeAt(i);
+            continue;
+        }
+
+        if (!isEncrypted(items.at(1))) {
+            lines.removeAt(i);
+            cryptUpdated = true;
+            qInfo() << items.at(1) << "not encrypted anymore" << line << "are removed.";
+        }
     }
     content = lines.join('\n');
+    content.append("\n");
     if (!crypttab.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "cannot open cryppttab for update";
         return false;
@@ -331,7 +340,8 @@ bool DiskEncryptDBus::updateCrypttab()
     qInfo() << "crypttab is updated";
     crypttab.write(content);
     crypttab.close();
-    return true;
+
+    return cryptUpdated;
 }
 
 bool DiskEncryptDBus::isEncrypted(const QString &device)
