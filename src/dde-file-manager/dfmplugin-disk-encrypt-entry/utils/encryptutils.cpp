@@ -68,27 +68,27 @@ bool fstab_utils::isFstabItem(const QString &mpt)
     return fstabed;
 }
 
-bool tpm_utils::hasTPM()
+int tpm_utils::checkTPM()
 {
     return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailablePro").toBool();
 }
 
-bool tpm_utils::getRandomByTPM(int size, QString *output)
+int tpm_utils::getRandomByTPM(int size, QString *output)
 {
     return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPMPro", size, output).toBool();
 }
 
-bool tpm_utils::isSupportAlgoByTPM(const QString &algoName, bool *support)
+int tpm_utils::isSupportAlgoByTPM(const QString &algoName, bool *support)
 {
     return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgoPro", algoName, support).toBool();
 }
 
-bool tpm_utils::encryptByTPM(const QVariantMap &map)
+int tpm_utils::encryptByTPM(const QVariantMap &map)
 {
     return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPMPro", map).toBool();
 }
 
-bool tpm_utils::decryptByTPM(const QVariantMap &map, QString *psw)
+int tpm_utils::decryptByTPM(const QVariantMap &map, QString *psw)
 {
     return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_DecryptByTPMPro", map, psw).toBool();
 }
@@ -119,7 +119,7 @@ int device_utils::encKeyType(const QString &dev)
 QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QString &pin)
 {
     QString passphrase;
-    if (!tpm_utils::getRandomByTPM(kPasswordSize, &passphrase)
+    if ((tpm_utils::getRandomByTPM(kPasswordSize, &passphrase) != 0)
         || passphrase.isEmpty()) {
         qCritical() << "TPM get random number failed!";
         return "";
@@ -130,37 +130,43 @@ QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QSt
     if (!dir.exists())
         dir.mkpath(dirPath);
 
-    QString hashAlgo, keyAlgo;
-    if (!getAlgorithm(hashAlgo, keyAlgo)) {
+    QString sessionHashAlgo, sessionKeyAlgo, primaryHashAlgo, primaryKeyAlgo, minorHashAlgo, minorKeyAlgo;
+    if (!getAlgorithm(&sessionHashAlgo, &sessionKeyAlgo, &primaryHashAlgo, &primaryKeyAlgo, &minorHashAlgo, &minorKeyAlgo)) {
         qCritical() << "TPM algo choice failed!";
         return "";
     }
 
     QVariantMap map {
-        { "PropertyKey_PrimaryHashAlgo", hashAlgo },
-        { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
-        { "PropertyKey_MinorHashAlgo", hashAlgo },
-        { "PropertyKey_MinorKeyAlgo", keyAlgo },
+        { "PropertyKey_SessionHashAlgo", sessionHashAlgo },
+        { "PropertyKey_SessionKeyAlgo", sessionKeyAlgo },
+        { "PropertyKey_PrimaryHashAlgo", primaryHashAlgo },
+        { "PropertyKey_PrimaryKeyAlgo", primaryKeyAlgo },
+        { "PropertyKey_MinorHashAlgo", minorHashAlgo },
+        { "PropertyKey_MinorKeyAlgo", minorKeyAlgo },
         { "PropertyKey_DirPath", dirPath },
         { "PropertyKey_Plain", passphrase },
     };
     if (pin.isEmpty()) {
         map.insert("PropertyKey_EncryptType", kUseTpmAndPcr);
         map.insert("PropertyKey_Pcr", "7");
-        map.insert("PropertyKey_PcrBank", hashAlgo);
+        map.insert("PropertyKey_PcrBank", primaryHashAlgo);
     } else {
-        map.insert("PropertyKey_EncryptType", kUseTpmAndPin);
+        map.insert("PropertyKey_EncryptType", kUseTpmAndPrcAndPin);
+        map.insert("PropertyKey_Pcr", "7");
+        map.insert("PropertyKey_PcrBank", primaryHashAlgo);
         map.insert("PropertyKey_PinCode", pin);
     }
 
-    if (!tpm_utils::encryptByTPM(map)) {
+    if (tpm_utils::encryptByTPM(map) != 0) {
         qCritical() << "save to TPM failed!!!";
         return "";
     }
 
     QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
-    settings.setValue(kConfigKeyPriHashAlgo, QVariant(hashAlgo));
-    settings.setValue(kConfigKeyPriKeyAlgo, QVariant(keyAlgo));
+    settings.setValue(kConfigKeySessionHashAlgo, QVariant(sessionHashAlgo));
+    settings.setValue(kConfigKeyPriKeyAlgo, QVariant(sessionKeyAlgo));
+    settings.setValue(kConfigKeyPriHashAlgo, QVariant(primaryHashAlgo));
+    settings.setValue(kConfigKeyPriKeyAlgo, QVariant(primaryKeyAlgo));
 
     qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   create TPM pwd for device:"
             << dev
@@ -172,25 +178,31 @@ QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QSt
 {
     const QString dirPath = kGlobalTPMConfigPath + dev;
     QSettings tpmSets(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
-    const QString hashAlgo = tpmSets.value(kConfigKeyPriHashAlgo).toString();
-    const QString keyAlgo = tpmSets.value(kConfigKeyPriKeyAlgo).toString();
+    const QString sessionHashAlgo = tpmSets.value(kConfigKeySessionHashAlgo).toString();
+    const QString sessionKeyAlgo = tpmSets.value(kConfigKeySessionKeyAlgo).toString();
+    const QString primaryHashAlgo = tpmSets.value(kConfigKeyPriHashAlgo).toString();
+    const QString primaryKeyAlgo = tpmSets.value(kConfigKeyPriKeyAlgo).toString();
     QVariantMap map {
-        { "PropertyKey_EncryptType", pin.isEmpty() ? kUseTpmAndPcr : kUseTpmAndPin },
-        { "PropertyKey_PrimaryHashAlgo", hashAlgo },
-        { "PropertyKey_PrimaryKeyAlgo", keyAlgo },
+        { "PropertyKey_EncryptType", (pin.isEmpty() ? kUseTpmAndPcr : kUseTpmAndPrcAndPin) },
+        { "PropertyKey_SessionHashAlgo", sessionHashAlgo },
+        { "PropertyKey_SessionKeyAlgo", sessionKeyAlgo },
+        { "PropertyKey_PrimaryHashAlgo", primaryHashAlgo },
+        { "PropertyKey_PrimaryKeyAlgo", primaryKeyAlgo },
         { "PropertyKey_DirPath", dirPath }
     };
 
     if (pin.isEmpty()) {
         map.insert("PropertyKey_Pcr", "7");
-        map.insert("PropertyKey_PcrBank", hashAlgo);
+        map.insert("PropertyKey_PcrBank", primaryHashAlgo);
     } else {
+        map.insert("PropertyKey_Pcr", "7");
+        map.insert("PropertyKey_PcrBank", primaryHashAlgo);
         map.insert("PropertyKey_PinCode", pin);
     }
 
     QString passphrase;
-    bool ok = tpm_utils::decryptByTPM(map, &passphrase);
-    if (!ok) {
+    int ok = tpm_utils::decryptByTPM(map, &passphrase);
+    if (ok != 0) {
         qWarning() << "cannot acquire passphrase from TPM for device"
                    << dev;
     }
@@ -202,27 +214,53 @@ QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QSt
     return passphrase;
 }
 
-bool tpm_passphrase_utils::getAlgorithm(QString &hash, QString &key)
+bool tpm_passphrase_utils::getAlgorithm(QString *sessionHashAlgo, QString *sessionKeyAlgo,
+                                        QString *primaryHashAlgo, QString *primaryKeyAlgo,
+                                        QString *minorHashAlgo, QString *minorKeyAlgo)
 {
     bool re1 { false };
     bool re2 { false };
-    tpm_utils::isSupportAlgoByTPM(kTPMHashAlgo, &re1);
-    tpm_utils::isSupportAlgoByTPM(kTPMKeyAlgo, &re2);
+    bool re3 { false };
+    bool re4 { false };
+    bool re5 { false };
+    bool re6 { false };
+    tpm_utils::isSupportAlgoByTPM(kTPMSessionHashAlgo, &re1);
+    tpm_utils::isSupportAlgoByTPM(kTPMSessionKeyAlgo, &re2);
+    tpm_utils::isSupportAlgoByTPM(kTPMPrimaryHashAlgo, &re3);
+    tpm_utils::isSupportAlgoByTPM(kTPMPrimaryKeyAlgo, &re4);
+    tpm_utils::isSupportAlgoByTPM(kTPMMinorHashAlgo, &re5);
+    tpm_utils::isSupportAlgoByTPM(kTPMMinorKeyAlgo, &re6);
 
-    if (re1 && re2) {
-        hash = kTPMHashAlgo;
-        key = kTPMKeyAlgo;
+    if (re1 && re2 && re3 && re4 && re5 && re6) {
+        (*sessionHashAlgo) = kTPMSessionHashAlgo;
+        (*sessionKeyAlgo) = kTPMSessionKeyAlgo;
+        (*primaryHashAlgo) = kTPMPrimaryHashAlgo;
+        (*primaryKeyAlgo) = kTPMPrimaryKeyAlgo;
+        (*minorHashAlgo) = kTPMMinorHashAlgo;
+        (*minorKeyAlgo) = kTPMMinorKeyAlgo;
         return true;
     }
 
     re1 = false;
     re2 = false;
-    tpm_utils::isSupportAlgoByTPM(kTCMHashAlgo, &re1);
-    tpm_utils::isSupportAlgoByTPM(kTCMKeyAlgo, &re2);
+    re3 = false;
+    re4 = false;
+    re5 = false;
+    re6 = false;
+    tpm_utils::isSupportAlgoByTPM(kTCMSessionHashAlgo, &re1);
+    tpm_utils::isSupportAlgoByTPM(kTCMSessionKeyAlgo, &re2);
+    tpm_utils::isSupportAlgoByTPM(kTCMPrimaryHashAlgo, &re3);
+    tpm_utils::isSupportAlgoByTPM(kTCMPrimaryKeyAlgo, &re4);
+    tpm_utils::isSupportAlgoByTPM(kTCMMinorHashAlgo, &re5);
+    tpm_utils::isSupportAlgoByTPM(kTCMMinorKeyAlgo, &re6);
 
-    if (re1 && re2) {
-        hash = kTCMHashAlgo;
-        key = kTCMKeyAlgo;
+    if (re1 && re2 && re3 && re4 && re5 && re6) {
+        (*sessionHashAlgo) = kTCMSessionHashAlgo;
+        (*sessionKeyAlgo) = kTCMSessionKeyAlgo;
+        (*primaryHashAlgo) = kTCMPrimaryHashAlgo;
+        (*primaryKeyAlgo) = kTCMPrimaryKeyAlgo;
+        (*minorHashAlgo) = kTCMMinorHashAlgo;
+        (*minorKeyAlgo) = kTCMMinorKeyAlgo;
         return true;
     }
 
@@ -322,6 +360,8 @@ void device_utils::cacheToken(const QString &device, const QVariantMap &token)
     ret &= makeFile(devTpmConfigPath + "/cipher.out", cipher);
 
     QSettings algo(devTpmConfigPath + "/algo.ini", QSettings::IniFormat);
+    algo.setValue("session_hash_algo", obj.value("session-hash-alg").toString());
+    algo.setValue("session_key_algo", obj.value("session-key-alg").toString());
     algo.setValue("primary_hash_algo", obj.value("primary-hash-alg").toString());
     algo.setValue("primary_key_algo", obj.value("primary-key-alg").toString());
 
