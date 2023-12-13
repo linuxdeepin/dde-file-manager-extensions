@@ -313,7 +313,7 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
     } else if (currPage == kConfirmPage) {
         qDebug() << "confirm encrypt device: " << device << encType->currentIndex();
         if (encType->currentIndex() == kTPMAndPIN || encType->currentIndex() == kTPMOnly) {
-            if (!encryptByTpm(device)) {
+            if (!fstabItem && !encryptByTpm(device)) {
                 qWarning() << "encrypt by TPM failed!";
                 return;
             }
