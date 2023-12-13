@@ -70,27 +70,27 @@ bool fstab_utils::isFstabItem(const QString &mpt)
 
 int tpm_utils::checkTPM()
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailablePro").toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_TPMIsAvailablePro").toInt();
 }
 
 int tpm_utils::getRandomByTPM(int size, QString *output)
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPMPro", size, output).toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_GetRandomByTPMPro", size, output).toInt();
 }
 
 int tpm_utils::isSupportAlgoByTPM(const QString &algoName, bool *support)
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgoPro", algoName, support).toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgoPro", algoName, support).toInt();
 }
 
 int tpm_utils::encryptByTPM(const QVariantMap &map)
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPMPro", map).toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_EncryptByTPMPro", map).toInt();
 }
 
 int tpm_utils::decryptByTPM(const QVariantMap &map, QString *psw)
 {
-    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_DecryptByTPMPro", map, psw).toBool();
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_DecryptByTPMPro", map, psw).toInt();
 }
 
 int device_utils::encKeyType(const QString &dev)
