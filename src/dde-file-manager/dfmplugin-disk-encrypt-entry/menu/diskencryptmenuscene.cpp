@@ -86,7 +86,7 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
         return false;
 
     auto preferDev = selectedItemInfo.value("PreferredDevice", "").toString();
-    if (preferDev.startsWith("/dev/mapper/")) {
+    if (preferDev.startsWith("/dev/mapper/") || device.startsWith("/dev/dm-")) {
         qInfo() << "mapper device is not supported to be encrypted yet." << device << preferDev;
         return false;
     }
