@@ -116,13 +116,14 @@ int device_utils::encKeyType(const QString &dev)
     return 0;
 }
 
-QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QString &pin)
+int tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QString &pin, QString *passphrase)
 {
-    QString passphrase;
-    if ((tpm_utils::getRandomByTPM(kPasswordSize, &passphrase) != 0)
-        || passphrase.isEmpty()) {
+    Q_ASSERT(passphrase);
+
+    if ((tpm_utils::getRandomByTPM(kPasswordSize, passphrase) != 0)
+        || passphrase->isEmpty()) {
         qCritical() << "TPM get random number failed!";
-        return "";
+        return kTPMNoRandomNumber;
     }
 
     const QString dirPath = kGlobalTPMConfigPath + dev;
@@ -133,7 +134,7 @@ QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QSt
     QString sessionHashAlgo, sessionKeyAlgo, primaryHashAlgo, primaryKeyAlgo, minorHashAlgo, minorKeyAlgo;
     if (!getAlgorithm(&sessionHashAlgo, &sessionKeyAlgo, &primaryHashAlgo, &primaryKeyAlgo, &minorHashAlgo, &minorKeyAlgo)) {
         qCritical() << "TPM algo choice failed!";
-        return "";
+        return kTPMMissingAlog;
     }
 
     QVariantMap map {
@@ -144,7 +145,7 @@ QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QSt
         { "PropertyKey_MinorHashAlgo", minorHashAlgo },
         { "PropertyKey_MinorKeyAlgo", minorKeyAlgo },
         { "PropertyKey_DirPath", dirPath },
-        { "PropertyKey_Plain", passphrase },
+        { "PropertyKey_Plain", *passphrase },
     };
     if (pin.isEmpty()) {
         map.insert("PropertyKey_EncryptType", kUseTpmAndPcr);
@@ -157,9 +158,10 @@ QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QSt
         map.insert("PropertyKey_PinCode", pin);
     }
 
-    if (tpm_utils::encryptByTPM(map) != 0) {
+    int err = tpm_utils::encryptByTPM(map);
+    if (err != 0) {
         qCritical() << "save to TPM failed!!!";
-        return "";
+        return TPMError(err);
     }
 
     QSettings settings(dirPath + QDir::separator() + "algo.ini", QSettings::IniFormat);
@@ -170,8 +172,8 @@ QString tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QSt
 
     qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   create TPM pwd for device:"
             << dev
-            << passphrase;
-    return passphrase;
+            << *passphrase;
+    return kTPMNoError;
 }
 
 QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QString &pin)
@@ -184,7 +186,7 @@ QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QSt
     const QString primaryKeyAlgo = tpmSets.value(kConfigKeyPriKeyAlgo).toString();
     QVariantMap map {
         { "PropertyKey_EncryptType", (pin.isEmpty() ? kUseTpmAndPcr : kUseTpmAndPrcAndPin) },
-        { "PropertyKey_SessionHashAlgo", (sessionHashAlgo.isEmpty() ? "sha256" : sessionHashAlgo) },    // TODO:gongheng need help by liangbo
+        { "PropertyKey_SessionHashAlgo", (sessionHashAlgo.isEmpty() ? "sha256" : sessionHashAlgo) },   // TODO:gongheng need help by liangbo
         { "PropertyKey_SessionKeyAlgo", (sessionKeyAlgo.isEmpty() ? "aes" : sessionKeyAlgo) },
         { "PropertyKey_PrimaryHashAlgo", primaryHashAlgo },
         { "PropertyKey_PrimaryKeyAlgo", primaryKeyAlgo },
@@ -367,4 +369,27 @@ void device_utils::cacheToken(const QString &device, const QVariantMap &token)
 
     if (!ret)
         tpmPath.rmpath(devTpmConfigPath);
+}
+
+void dialog_utils::showTPMError(const QString &title, tpm_passphrase_utils::TPMError err)
+{
+    QString msg;
+    switch (err) {
+    case tpm_passphrase_utils::kTPMNoRandomNumber:
+        msg = QObject::tr("Cannot generate random number by TPM");
+        break;
+    case tpm_passphrase_utils::kTPMMissingAlog:
+        msg = QObject::tr("No available encrypt algorithm.");
+        break;
+    case tpm_passphrase_utils::kTPMEncryptFailed:
+        msg = QObject::tr("TPM encrypt failed.");
+        break;
+    case tpm_passphrase_utils::kTPMLocked:
+        msg = QObject::tr("TPM is locked.");
+        break;
+    default:
+        break;
+    }
+    if (!msg.isEmpty())
+        showDialog(title, msg, kError);
 }

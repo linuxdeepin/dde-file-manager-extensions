@@ -25,10 +25,19 @@ int decryptByTPM(const QVariantMap &map, QString *psw);
 }   // namespace tpm_utils
 
 namespace tpm_passphrase_utils {
+
+enum TPMError {
+    kTPMNoError,
+    kTPMEncryptFailed,
+    kTPMLocked,
+    kTPMNoRandomNumber,
+    kTPMMissingAlog,
+};
+
 bool getAlgorithm(QString *sessionHashAlgo, QString *sessionKeyAlgo,
                   QString *primaryHashAlgo, QString *primaryKeyAlgo,
                   QString *minorHashAlgo, QString *minorKeyAlgo);
-QString genPassphraseFromTPM(const QString &dev, const QString &pin);
+int genPassphraseFromTPM(const QString &dev, const QString &pin, QString *passphrase);
 QString getPassphraseFromTPM(const QString &dev, const QString &pin);
 }
 
@@ -58,6 +67,7 @@ enum DialogType {
     kError,
 };
 void showDialog(const QString &title, const QString &msg, DialogType type);
+void showTPMError(const QString &title, tpm_passphrase_utils::TPMError err);
 }
 
 }   // namespace dfmplugin_diskenc
