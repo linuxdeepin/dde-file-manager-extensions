@@ -101,11 +101,12 @@ void parseCipher(const QString &fullCipher, QString *cipher, QString *mode, int 
 EncryptParams disk_encrypt_utils::bcConvertParams(const QVariantMap &params)
 {
     auto toString = [&params](const QString &key) { return params.value(key).toString(); };
-    return { .device = toString(encrypt_param_keys::kKeyDevice),
-             .passphrase = toString(encrypt_param_keys::kKeyPassphrase),   // decode()
-             .cipher = toString(encrypt_param_keys::kKeyCipher),
-             .recoveryPath = toString(encrypt_param_keys::kKeyRecoveryExportPath),
-             .tpmToken = toString(encrypt_param_keys::kKeyTPMToken),
+    return {
+        .device = toString(encrypt_param_keys::kKeyDevice),
+        .passphrase = toString(encrypt_param_keys::kKeyPassphrase),   // decode()
+        .cipher = toString(encrypt_param_keys::kKeyCipher),
+        .recoveryPath = toString(encrypt_param_keys::kKeyRecoveryExportPath),
+        .tpmToken = toString(encrypt_param_keys::kKeyTPMToken),
     };
 }
 
@@ -211,7 +212,7 @@ QString disk_encrypt_utils::bcGenRecKey()
 }
 
 int disk_encrypt_funcs::bcInitHeaderFile(const EncryptParams &params,
-                                                  QString &headerPath)
+                                         QString &headerPath)
 {
     if (!disk_encrypt_utils::bcValidateParams(params))
         return -kErrorParamsInvalid;
@@ -521,7 +522,7 @@ int disk_encrypt_funcs::bcDecryptProgress(uint64_t size, uint64_t offset, void *
     return 0;
 }
 
-int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase)
+int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase, int *keyslot)
 {
     struct crypt_device *cdev { nullptr };
     dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
@@ -540,10 +541,12 @@ int disk_encrypt_funcs::bcChangePassphrase(const QString &device, const QString 
                                              newPassphrase.toStdString().c_str(),
                                              newPassphrase.length());
     CHECK_INT(ret, "change passphrase failed " + device, -kErrorChangePassphraseFailed);
+    Q_ASSERT(keyslot);
+    *keyslot = ret;
     return kSuccess;
 }
 
-int disk_encrypt_funcs::bcChangePassphraseByRecKey(const QString &device, const QString &recoveryKey, const QString &newPassphrase)
+int disk_encrypt_funcs::bcChangePassphraseByRecKey(const QString &device, const QString &recoveryKey, const QString &newPassphrase, int *keyslot)
 {
     struct crypt_device *cdev { nullptr };
     dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
@@ -563,9 +566,10 @@ int disk_encrypt_funcs::bcChangePassphraseByRecKey(const QString &device, const 
                                           newPassphrase.toStdString().c_str(),
                                           newPassphrase.length());
     CHECK_INT(ret, "change passphrase by rec key failed " + device, -kErrorAddKeyslot);
+    Q_ASSERT(keyslot);
+    *keyslot = ret;
     return kSuccess;
 }
-
 
 int disk_encrypt_funcs::bcGetToken(const QString &device, QString *tokenJson)
 {
@@ -683,4 +687,3 @@ bool block_device_utils::bcIsMounted(const QString &device)
     }
     return !blkDev->mountPoints().isEmpty();
 }
-

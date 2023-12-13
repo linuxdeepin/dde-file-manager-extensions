@@ -6,6 +6,7 @@
 
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QFile>
 #include <QDir>
 #include <QRegularExpression>
@@ -262,17 +263,25 @@ void ChgPassWorker::run()
     QString oldPass = params.value(encrypt_param_keys::kKeyOldPassphrase).toString();
     QString newPass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
 
+    int newSlot = 0;
     int ret = 0;
     if (params.value(encrypt_param_keys::kKeyValidateWithRecKey, false).toBool())
-        ret = disk_encrypt_funcs::bcChangePassphraseByRecKey(dev, oldPass, newPass);
+        ret = disk_encrypt_funcs::bcChangePassphraseByRecKey(dev, oldPass, newPass, &newSlot);
     else
-        ret = disk_encrypt_funcs::bcChangePassphrase(dev, oldPass, newPass);
+        ret = disk_encrypt_funcs::bcChangePassphrase(dev, oldPass, newPass, &newSlot);
 
     QString token = params.value(encrypt_param_keys::kKeyTPMToken).toString();
     if (!token.isEmpty() && ret == 0) {
+        // The value in keyslots represents the keyslot location where the passphrase is located
+        QJsonDocument doc = QJsonDocument::fromJson(token.toLocal8Bit());
+        QJsonObject obj = doc.object();
+        obj.insert("keyslots", QJsonArray::fromStringList({ QString::number(newSlot) }));
+        doc.setObject(obj);
+        token = doc.toJson(QJsonDocument::Compact);
+
         ret = disk_encrypt_funcs::bcSetToken(dev, token);
         if (ret != 0)   // update token failed, need to rollback the change.
-            disk_encrypt_funcs::bcChangePassphrase(dev, newPass, oldPass);
+            disk_encrypt_funcs::bcChangePassphrase(dev, newPass, oldPass, &newSlot);
     }
 
     setExitCode(ret);
