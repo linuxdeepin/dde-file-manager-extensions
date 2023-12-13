@@ -407,13 +407,16 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
             : "";
 
     QEventLoop loop;
-    QFutureWatcher<QString> watcher;
-    QFuture<QString> future = QtConcurrent::run([=] {
-        return tpm_passphrase_utils::genPassphraseFromTPM(deviceName, pin);
+    QFutureWatcher<QPair<int, QString>> watcher;
+    QFuture<QPair<int, QString>> future = QtConcurrent::run([=] {
+        QString passphrase;
+        int err = tpm_passphrase_utils::genPassphraseFromTPM(deviceName, pin, &passphrase);
+        return QPair<int, QString>(err, passphrase);
     });
-    connect(&watcher, &QFutureWatcher<bool>::finished,
+    connect(&watcher, &QFutureWatcher<QPair<int, QString>>::finished,
             this, [&watcher, &loop] {
-                loop.exit(watcher.result().isEmpty() ? -1 : 0);
+                int tpmErr = watcher.result().first;
+                loop.exit(tpmErr == tpm_passphrase_utils::kTPMNoError ? 0 : -1);
             });
     watcher.setFuture(future);
 
@@ -423,11 +426,15 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
     spinner.start();
     spinner.show();
 
-    if (loop.exec() != 0) {
+    int exitCode = loop.exec();
+    QPair<int, QString> result = watcher.result();
+    if (exitCode != 0) {
         qCritical() << "TPM encrypt failed!";
+        dialog_utils::showTPMError(tr("Encrypt failed"),
+                                   static_cast<tpm_passphrase_utils::TPMError>(result.first));
         return false;
     }
 
-    tpmPassword = watcher.result();
+    tpmPassword = result.second;
     return true;
 }

@@ -272,7 +272,13 @@ void DiskEncryptMenuScene::changePassphrase(DeviceEncryptParam param)
                 return;
             }
         }
-        newKey = tpm_passphrase_utils::genPassphraseFromTPM(dev, newKey);
+        QString newPassphrase;
+        int ret = tpm_passphrase_utils::genPassphraseFromTPM(dev, newKey, &newPassphrase);
+        if (ret != tpm_passphrase_utils::kTPMNoError) {
+            dialog_utils::showTPMError(tr("Change passphrase failed"), static_cast<tpm_passphrase_utils::TPMError>(ret));
+            return;
+        }
+        newKey = newPassphrase;
     }
     param.validateByRecKey = dlg.validateByRecKey();
     param.key = oldKey;
@@ -372,7 +378,6 @@ void DiskEncryptMenuScene::doChangePassphrase(const DeviceEncryptParam &param)
         oldTokenObj.insert("kek-priv", newTokenObj.value("kek-priv"));
         oldTokenObj.insert("kek-pub", newTokenObj.value("kek-pub"));
         oldTokenObj.insert("iv", newTokenObj.value("iv"));
-        oldTokenObj.insert("keyslots", QJsonArray::fromStringList({"1"})); // TODO: use the old keyslots makes the invoke failed.
         newTokenDoc.setObject(oldTokenObj);
         token = newTokenDoc.toJson(QJsonDocument::Compact);
     }

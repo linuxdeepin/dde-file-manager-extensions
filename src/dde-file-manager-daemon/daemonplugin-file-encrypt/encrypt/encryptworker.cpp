@@ -94,7 +94,7 @@ int PrencryptWorker::writeEncryptParams()
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
-    obj.insert("device", uuid);
+    obj.insert("device", dev);
     obj.insert("device-path", dev);
     obj.insert("volume", dmDev);
     obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString() + "-xts-plain64");
@@ -233,7 +233,7 @@ int DecryptWorker::writeDecryptParams()
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     obj.insert("device-path", dev);
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
-    obj.insert("device", uuid);
+    obj.insert("device", dev);
     QJsonDocument doc(obj);
 
     createUsecPathIfNotExist();
