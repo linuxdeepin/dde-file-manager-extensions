@@ -14,9 +14,10 @@
 FILE_ENCRYPT_USE_NS
 
 #define DEV_KEY QString("device/%1")
-static constexpr char kBootUsecPath []{"/boot/usec-crypt"};
+static constexpr char kBootUsecPath[] { "/boot/usec-crypt" };
 
-void createUsecPathIfNotExist() {
+void createUsecPathIfNotExist()
+{
     QDir d(kBootUsecPath);
     if (!d.exists()) {
         bool ok = d.mkpath(kBootUsecPath);
@@ -50,7 +51,7 @@ void PrencryptWorker::run()
 
     QString localHeaderFile;
     int err = disk_encrypt_funcs::bcInitHeaderFile(encParams,
-                                                            localHeaderFile);
+                                                   localHeaderFile);
     if (err != kSuccess || localHeaderFile.isEmpty()) {
         setExitCode(-kErrorCreateHeader);
         qDebug() << "cannot generate local header"
@@ -92,8 +93,8 @@ int PrencryptWorker::writeEncryptParams()
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
-    obj.insert("device", dev); // use uuid
-    obj.insert("device_path", dev);
+    obj.insert("device", uuid);
+    obj.insert("device-path", dev);
     obj.insert("volume", dmDev);
     obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString() + "-xts-plain64");
     obj.insert("key-size", "256");
@@ -229,9 +230,9 @@ int DecryptWorker::writeDecryptParams()
 {
     QJsonObject obj;
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
-    obj.insert("device_path", dev);
+    obj.insert("device-path", dev);
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
-    obj.insert("device", dev); // TODO use uuid
+    obj.insert("device", uuid);
     QJsonDocument doc(obj);
 
     createUsecPathIfNotExist();
@@ -270,7 +271,7 @@ void ChgPassWorker::run()
     QString token = params.value(encrypt_param_keys::kKeyTPMToken).toString();
     if (!token.isEmpty() && ret == 0) {
         ret = disk_encrypt_funcs::bcSetToken(dev, token);
-        if (ret != 0) // update token failed, need to rollback the change.
+        if (ret != 0)   // update token failed, need to rollback the change.
             disk_encrypt_funcs::bcChangePassphrase(dev, newPass, oldPass);
     }
 

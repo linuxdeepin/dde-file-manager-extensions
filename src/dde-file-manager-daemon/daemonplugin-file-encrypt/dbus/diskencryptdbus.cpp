@@ -382,8 +382,9 @@ bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev)
 
     QJsonDocument doc = QJsonDocument::fromJson(encConfig.readAll());
     encConfig.close();
+
     QJsonObject config = doc.object();
-    QJsonValue devVal = config.value("device_path");
+    QJsonValue devVal = config.value("device-path");
     QJsonValue volVal = config.value("volume");
     if (devVal.isUndefined() || volVal.isUndefined()) {
         qWarning() << "invalid encrypt config! device or volume is empty!";
