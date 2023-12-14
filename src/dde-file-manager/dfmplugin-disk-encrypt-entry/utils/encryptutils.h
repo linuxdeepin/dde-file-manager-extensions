@@ -39,16 +39,21 @@ bool getAlgorithm(QString *sessionHashAlgo, QString *sessionKeyAlgo,
                   QString *minorHashAlgo, QString *minorKeyAlgo);
 int genPassphraseFromTPM(const QString &dev, const QString &pin, QString *passphrase);
 QString getPassphraseFromTPM(const QString &dev, const QString &pin);
-}
+void cacheToken(const QString &device, const QVariantMap &token);
+
+}   // namespace tpm_passphrase_utils
 
 namespace config_utils {
 bool exportKeyEnabled();
 QString cipherType();
 }   // namespace config_utils
 
-namespace recovery_key_utils {
+namespace passphrase_utils {
 QString formatRecoveryKey(const QString &raw);
-}
+
+QString pubKey();
+int encryptPassphrase(const QString &input, QString *output);
+}   // namespace passphrase_utils
 
 namespace fstab_utils {
 bool isFstabItem(const QString &mpt);
@@ -56,7 +61,6 @@ bool isFstabItem(const QString &mpt);
 
 namespace device_utils {
 int encKeyType(const QString &dev);
-void cacheToken(const QString &device, const QVariantMap &token);
 BlockDev createBlockDevice(const QString &devObjPath);
 }   // namespace device_utils
 
@@ -68,7 +72,7 @@ enum DialogType {
 };
 void showDialog(const QString &title, const QString &msg, DialogType type);
 void showTPMError(const QString &title, tpm_passphrase_utils::TPMError err);
-}
+}   // namespace dialog_utils
 
 }   // namespace dfmplugin_diskenc
 

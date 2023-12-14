@@ -313,6 +313,13 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
         tpmToken = generateTPMToken(param.devDesc, param.type == kTPMAndPIN);
     }
 
+    QString encPassphrase;
+    int ret = passphrase_utils::encryptPassphrase(param.key, &encPassphrase);
+    if (ret != 0) {
+        qWarning() << "cannot encrypt passphrase!";
+        return;
+    }
+
     QDBusInterface iface(kDaemonBusName,
                          kDaemonBusPath,
                          kDaemonBusIface,
@@ -322,7 +329,7 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
             { kKeyDevice, param.devDesc },
             { kKeyUUID, param.uuid },
             { kKeyCipher, config_utils::cipherType() },
-            { kKeyPassphrase, param.key },
+            { kKeyPassphrase, encPassphrase },
             { kKeyInitParamsOnly, param.initOnly },
             { kKeyRecoveryExportPath, param.exportPath },
             { kKeyEncMode, static_cast<int>(param.type) }
@@ -338,6 +345,13 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
 
 void DiskEncryptMenuScene::doDecryptDevice(const DeviceEncryptParam &param)
 {
+    QString encPassphrase;
+    int ret = passphrase_utils::encryptPassphrase(param.key, &encPassphrase);
+    if (ret != 0) {
+        qWarning() << "cannot encrypt passphrase!";
+        return;
+    }
+
     // if tpm selected, use tpm to generate the key
     QDBusInterface iface(kDaemonBusName,
                          kDaemonBusPath,
@@ -346,7 +360,7 @@ void DiskEncryptMenuScene::doDecryptDevice(const DeviceEncryptParam &param)
     if (iface.isValid()) {
         QVariantMap params {
             { kKeyDevice, param.devDesc },
-            { kKeyPassphrase, param.key },
+            { kKeyPassphrase, encPassphrase },
             { kKeyInitParamsOnly, param.initOnly },
             { kKeyUUID, param.uuid }
         };
@@ -382,6 +396,18 @@ void DiskEncryptMenuScene::doChangePassphrase(const DeviceEncryptParam &param)
         token = newTokenDoc.toJson(QJsonDocument::Compact);
     }
 
+    QString encOld, encNew;
+    int ret = passphrase_utils::encryptPassphrase(param.key, &encOld);
+    if (ret != 0) {
+        qWarning() << "cannot encrypt passphrase!";
+        return;
+    }
+    ret = passphrase_utils::encryptPassphrase(param.newKey, &encNew);
+    if (ret != 0) {
+        qWarning() << "cannot encrypt passphrase!";
+        return;
+    }
+
     QDBusInterface iface(kDaemonBusName,
                          kDaemonBusPath,
                          kDaemonBusIface,
@@ -389,8 +415,8 @@ void DiskEncryptMenuScene::doChangePassphrase(const DeviceEncryptParam &param)
     if (iface.isValid()) {
         QVariantMap params {
             { kKeyDevice, param.devDesc },
-            { kKeyPassphrase, param.newKey },
-            { kKeyOldPassphrase, param.key },
+            { kKeyPassphrase, encNew },
+            { kKeyOldPassphrase, encOld },
             { kKeyValidateWithRecKey, param.validateByRecKey },
             { kKeyTPMToken, token }
         };

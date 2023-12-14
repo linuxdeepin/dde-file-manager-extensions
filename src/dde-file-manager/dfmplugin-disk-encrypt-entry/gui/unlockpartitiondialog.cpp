@@ -63,7 +63,7 @@ void UnlockPartitionDialog::initConnect()
         QString newText = txt;
         QSignalBlocker blocker(sender());
         if (currType == kRec) {
-            newText = recovery_key_utils::formatRecoveryKey(newText);
+            newText = passphrase_utils::formatRecoveryKey(newText);
             passwordLineEdit->setText(newText);
         }
         auto unlockBtn = getButton(1);
