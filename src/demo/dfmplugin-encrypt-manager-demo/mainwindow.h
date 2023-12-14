@@ -23,7 +23,6 @@ private:
     QLineEdit *editInput { Q_NULLPTR };
     QTextBrowser *textBrowser { Q_NULLPTR };
     QPushButton *btnCheckTpm { Q_NULLPTR };
-    QPushButton *btnCheckTcm { Q_NULLPTR };
     QPushButton *btnGetRandom { Q_NULLPTR };
     QPushButton *btnCheckAlgo { Q_NULLPTR };
     QPushButton *btnEncrypt { Q_NULLPTR };
@@ -31,6 +30,9 @@ private:
 
     QPushButton *btnEncryptTwo { Q_NULLPTR };
     QPushButton *btnDecryptTwo { Q_NULLPTR };
+
+    QPushButton *btnEncryptThree { Q_NULLPTR };
+    QPushButton *btnDecryptThree { Q_NULLPTR };
 };
 
 #endif   // MAINWINDOW_H

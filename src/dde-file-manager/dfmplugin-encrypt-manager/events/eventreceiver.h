@@ -26,11 +26,11 @@ public Q_SLOTS:
                       const QString &dirPath);
     bool decryptByTpm(const QString &keyPin, const QString &dirPath, QString *pwd);
 
-    bool tpmIsAvailableProcess();
-    bool getRandomByTpmProcess(int size, QString *output);
-    bool isTpmSupportAlgoProcess(const QString &algoName, bool *support);
-    bool encryptByTpmProcess(const QVariantMap &encryptParams);
-    bool decryptByTpmProcess(const QVariantMap &decryptParams, QString *pwd);
+    int tpmIsAvailableProcess();
+    int getRandomByTpmProcess(int size, QString *output);
+    int isTpmSupportAlgoProcess(const QString &algoName, bool *support);
+    int encryptByTpmProcess(const QVariantMap &encryptParams);
+    int decryptByTpmProcess(const QVariantMap &decryptParams, QString *pwd);
 
 private:
     explicit EventReceiver(QObject *parent = nullptr);

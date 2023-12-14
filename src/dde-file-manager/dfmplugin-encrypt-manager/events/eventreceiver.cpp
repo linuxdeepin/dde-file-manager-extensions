@@ -68,56 +68,64 @@ bool EventReceiver::decryptByTpm(const QString &keyPin, const QString &dirPath, 
     return tpm.decrypt(keyPin, dirPath, pwd);
 }
 
-bool EventReceiver::tpmIsAvailableProcess()
+int EventReceiver::tpmIsAvailableProcess()
 {
     TPMWork tpm;
     return tpm.checkTPMAvailbableByTools();
 }
 
-bool EventReceiver::getRandomByTpmProcess(int size, QString *output)
+int EventReceiver::getRandomByTpmProcess(int size, QString *output)
 {
     TPMWork tpm;
     return tpm.getRandomByTools(size, output);
 }
 
-bool EventReceiver::isTpmSupportAlgoProcess(const QString &algoName, bool *support)
+int EventReceiver::isTpmSupportAlgoProcess(const QString &algoName, bool *support)
 {
     TPMWork tpm;
     return tpm.isSupportAlgoByTools(algoName, support);
 }
 
-bool EventReceiver::encryptByTpmProcess(const QVariantMap &encryptParams)
+int EventReceiver::encryptByTpmProcess(const QVariantMap &encryptParams)
 {
     if (!encryptParams.contains(PropertyKey::kEncryptType))
-        return false;
+        return -1;
 
     int type = encryptParams.value(PropertyKey::kEncryptType).toInt();
-    if (type != 1 && type != 2)
-        return false;
+    if (type != 1 && type != 2 && type != 3)
+        return -1;
 
-    if (!encryptParams.contains(PropertyKey::kPrimaryHashAlgo)
+    if (!encryptParams.contains(PropertyKey::kSessionHashAlgo)
+            || !encryptParams.contains(PropertyKey::kSessionKeyAlgo)
+            || !encryptParams.contains(PropertyKey::kPrimaryHashAlgo)
             || !encryptParams.contains(PropertyKey::kPrimaryKeyAlgo)
             || !encryptParams.contains(PropertyKey::kMinorHashAlgo)
             || !encryptParams.contains(PropertyKey::kMinorKeyAlgo)
             || !encryptParams.contains(PropertyKey::kDirPath)
             || !encryptParams.contains(PropertyKey::kPlain)) {
-        return false;
+        return -1;
     }
 
     if (type == 1) {
         if (!encryptParams.contains(PropertyKey::kPcr)
                 || !encryptParams.contains(PropertyKey::kPcrBank)) {
-            return false;
+            return -1;
         }
-    }
-
-    if (type == 2) {
+    } else if (type == 2) {
         if (!encryptParams.contains(PropertyKey::kPinCode)) {
-            return false;
+            return -1;
+        }
+    } else if (type == 3) {
+        if (!encryptParams.contains(PropertyKey::kPcr)
+                || !encryptParams.contains(PropertyKey::kPcrBank)
+                || !encryptParams.contains(PropertyKey::kPinCode)) {
+            return -1;
         }
     }
 
     EncryptParams params;
+    params.sessionHashAlgo = encryptParams.value(PropertyKey::kSessionHashAlgo).toString();
+    params.sessionKeyAlgo = encryptParams.value(PropertyKey::kSessionKeyAlgo).toString();
     params.primaryHashAlgo = encryptParams.value(PropertyKey::kPrimaryHashAlgo).toString();
     params.primaryKeyAlgo = encryptParams.value(PropertyKey::kPrimaryKeyAlgo).toString();
     params.minorHashAlgo = encryptParams.value(PropertyKey::kMinorHashAlgo).toString();
@@ -131,24 +139,28 @@ bool EventReceiver::encryptByTpmProcess(const QVariantMap &encryptParams)
     } else if (type == 2) {
         params.type = kTpmAndPin;
         params.pinCode = encryptParams.value(PropertyKey::kPinCode).toString();
-    } else {
-        return false;
+    } else if (type == 3) {
+        params.type = kTpmAndPcrAndPin;
+        params.pcr = encryptParams.value(PropertyKey::kPcr).toString();
+        params.pcr_bank = encryptParams.value(PropertyKey::kPcrBank).toString();
+        params.pinCode = encryptParams.value(PropertyKey::kPinCode).toString();
     }
-
     TPMWork tpm;
     return tpm.encryptByTools(params);
 }
 
-bool EventReceiver::decryptByTpmProcess(const QVariantMap &decryptParams, QString *pwd)
+int EventReceiver::decryptByTpmProcess(const QVariantMap &decryptParams, QString *pwd)
 {
     if (!decryptParams.contains(PropertyKey::kEncryptType))
-        return false;
+        return -1;
 
     int type = decryptParams.value(PropertyKey::kEncryptType).toInt();
-    if (type != 1 && type != 2)
-        return false;
+    if (type != 1 && type != 2 && type != 3)
+        return -1;
 
-    if (!decryptParams.contains(PropertyKey::kPrimaryHashAlgo)
+    if (!decryptParams.contains(PropertyKey::kSessionHashAlgo)
+            || !decryptParams.contains(PropertyKey::kSessionKeyAlgo)
+            || !decryptParams.contains(PropertyKey::kPrimaryHashAlgo)
             || !decryptParams.contains(PropertyKey::kPrimaryKeyAlgo)
             || !decryptParams.contains(PropertyKey::kDirPath)) {
         return false;
@@ -159,15 +171,21 @@ bool EventReceiver::decryptByTpmProcess(const QVariantMap &decryptParams, QStrin
                 || !decryptParams.contains(PropertyKey::kPcrBank)) {
             return false;
         }
-    }
-
-    if (type == 2) {
+    } else if (type == 2) {
         if (!decryptParams.contains(PropertyKey::kPinCode)) {
+            return false;
+        }
+    } else if (type == 3) {
+        if (!decryptParams.contains(PropertyKey::kPcr)
+                || !decryptParams.contains(PropertyKey::kPcrBank)
+                || !decryptParams.contains(PropertyKey::kPinCode)) {
             return false;
         }
     }
 
     DecryptParams params;
+    params.sessionHashAlgo = decryptParams.value(PropertyKey::kSessionHashAlgo).toString();
+    params.sessionKeyAlgo = decryptParams.value(PropertyKey::kSessionKeyAlgo).toString();
     params.primaryHashAlgo = decryptParams.value(PropertyKey::kPrimaryHashAlgo).toString();
     params.primaryKeyAlgo = decryptParams.value(PropertyKey::kPrimaryKeyAlgo).toString();
     params.dirPath = decryptParams.value(PropertyKey::kDirPath).toString();
@@ -178,8 +196,11 @@ bool EventReceiver::decryptByTpmProcess(const QVariantMap &decryptParams, QStrin
     } else if (type == 2) {
         params.type = kTpmAndPin;
         params.pinCode = decryptParams.value(PropertyKey::kPinCode).toString();
-    } else {
-        return false;
+    } else if (type == 3) {
+        params.type = kTpmAndPcrAndPin;
+        params.pcr = decryptParams.value(PropertyKey::kPcr).toString();
+        params.pcr_bank = decryptParams.value(PropertyKey::kPcrBank).toString();
+        params.pinCode = decryptParams.value(PropertyKey::kPinCode).toString();
     }
 
     TPMWork tpm;

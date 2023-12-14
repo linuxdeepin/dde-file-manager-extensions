@@ -13,15 +13,19 @@
 #include <QString>
 
 namespace dfmplugin_encrypt_manager {
+
 enum TPMType {
     kUnknow = 0,
     kTpmAndPcr,
-    kTpmAndPin
+    kTpmAndPin,
+    kTpmAndPcrAndPin
 };
 
 struct EncryptParams
 {
     TPMType type;
+    QString sessionHashAlgo;
+    QString sessionKeyAlgo;
     QString primaryHashAlgo;
     QString primaryKeyAlgo;
     QString minorHashAlgo;
@@ -38,6 +42,8 @@ struct EncryptParams
 struct DecryptParams
 {
     TPMType type;
+    QString sessionHashAlgo;
+    QString sessionKeyAlgo;
     QString primaryHashAlgo;
     QString primaryKeyAlgo;
     QString dirPath;
@@ -50,6 +56,8 @@ struct DecryptParams
 
 namespace PropertyKey {
 inline constexpr char kEncryptType[] { "PropertyKey_EncryptType" };
+inline constexpr char kSessionHashAlgo[] { "PropertyKey_SessionHashAlgo" };
+inline constexpr char kSessionKeyAlgo[] { "PropertyKey_SessionKeyAlgo" };
 inline constexpr char kPrimaryHashAlgo[] { "PropertyKey_PrimaryHashAlgo" };
 inline constexpr char kPrimaryKeyAlgo[] { "PropertyKey_PrimaryKeyAlgo" };
 inline constexpr char kMinorHashAlgo[] { "PropertyKey_MinorHashAlgo" };
