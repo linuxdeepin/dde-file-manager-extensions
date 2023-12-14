@@ -61,7 +61,7 @@ void DecryptParamsInputDialog::onKeyChanged(const QString &key)
     if (!usingRecKey())
         return;
     QSignalBlocker blocker(sender());
-    auto formatted = recovery_key_utils::formatRecoveryKey(key);
+    auto formatted = passphrase_utils::formatRecoveryKey(key);
     editor->setText(formatted);
 }
 
