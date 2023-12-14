@@ -193,14 +193,27 @@ QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QSt
         { "PropertyKey_DirPath", dirPath }
     };
 
-    if (pin.isEmpty()) {
-        map.insert("PropertyKey_Pcr", "7");
-        map.insert("PropertyKey_PcrBank", primaryHashAlgo);
-    } else {
-        map.insert("PropertyKey_Pcr", "7");
-        map.insert("PropertyKey_PcrBank", primaryHashAlgo);
-        map.insert("PropertyKey_PinCode", pin);
+    QString tokenDocPath = dirPath + QDir::separator() + "token.json";
+    QFile file(tokenDocPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qCritical() << "Failed to open token.json!";
+        return "";
     }
+    QJsonDocument tokenDoc = QJsonDocument::fromJson(file.readAll());
+    file.close();
+
+    QJsonObject obj = tokenDoc.object();
+    if (!obj.contains("pcr") || !obj.contains("pcr-bank")) {
+        qCritical() << "Failed to get pcr or pcr-bank from token.json!";
+        return "";
+    }
+    const QString pcr = obj.value("pcr").toString();
+    const QString pcr_bank = obj.value("pcr-bank").toString();
+    if (!pin.isEmpty())
+        map.insert("PropertyKey_PinCode", pin);
+    map.insert("PropertyKey_Pcr", pcr);
+    map.insert("PropertyKey_PcrBank", pcr_bank);
+
 
     QString passphrase;
     int ok = tpm_utils::decryptByTPM(map, &passphrase);
