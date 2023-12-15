@@ -289,12 +289,10 @@ void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QSt
     for (const auto &objPath : objPaths) {
         auto blkPtr = monitor->createDeviceById(objPath).objectCast<DBlockDevice>();
         if (!blkPtr) continue;
+
         QString uuid = blkPtr->getProperty(dfmmount::Property::kBlockIDUUID).toString();
         if (uuid.isEmpty()) continue;
-        bool isLuks = blkPtr->getProperty(dfmmount::Property::kBlockIDType).toString().startsWith("luks_");
-        if (isLuks) continue;
-        bool isClear = blkPtr->getProperty(dfmmount::Property::kEncryptedCleartextDevice).toString().length() > 1;
-        if (isClear) continue;
+
         QString dev = blkPtr->device();
         uuid = QString("UUID=") + uuid;
         dev2uuid->insert(dev, uuid);
@@ -324,10 +322,10 @@ bool DiskEncryptDBus::updateCrypttab()
             continue;
         }
 
-        if (!isEncrypted(items.at(1))) {
+        if (isEncrypted(items.at(1)) == 0) {
             lines.removeAt(i);
             cryptUpdated = true;
-            qInfo() << items.at(1) << "not encrypted anymore" << line << "are removed.";
+            qInfo() << items.at(1) << "not encrypted anymore" << line << "is removed.";
         }
     }
     content = lines.join('\n');
@@ -337,14 +335,14 @@ bool DiskEncryptDBus::updateCrypttab()
         return false;
     }
 
-    qInfo() << "crypttab is updated";
+    qInfo() << "crypttab is updated: " << cryptUpdated;
     crypttab.write(content);
     crypttab.close();
 
     return cryptUpdated;
 }
 
-bool DiskEncryptDBus::isEncrypted(const QString &device)
+int DiskEncryptDBus::isEncrypted(const QString &device)
 {
     QMap<QString, QString> dev2uuid, uuid2dev;
     getDeviceMapper(&dev2uuid, &uuid2dev);
@@ -352,11 +350,18 @@ bool DiskEncryptDBus::isEncrypted(const QString &device)
     QString dev = device;
     if (dev.startsWith("UUID"))
         dev = uuid2dev.value(dev);
+    if (dev.isEmpty()) {
+        qDebug() << "cannot find device description. ignore." << device;
+        return -1;
+    }
 
     auto devPtr = block_device_utils::bcCreateBlkDev(dev);
-    if (devPtr && devPtr->isEncrypted())
-        return true;
-    return false;
+    if (!devPtr) {
+        qDebug() << "cannot construct device pointer by " << dev;
+        return -2;
+    }
+
+    return devPtr->isEncrypted() ? 1 : 0;
 }
 
 void DiskEncryptDBus::updateInitrd()
