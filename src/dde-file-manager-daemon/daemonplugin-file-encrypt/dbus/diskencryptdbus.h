@@ -49,7 +49,7 @@ private:
     void diskCheck();
     static void getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev);
     static bool updateCrypttab();
-    static bool isEncrypted(const QString &device);
+    static int isEncrypted(const QString &device);
     static void updateInitrd();
 
     bool readEncryptDevice(QString *backingDev, QString *clearDev);
