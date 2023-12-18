@@ -27,3 +27,14 @@ Depends:
  libtss2-tcti-pcap0
 Description: Device encrypt plugin for dde-file-manager
  A plugin for dde-file-manager to encrypt disks.
+
+
+Package: dfmplugin-cooperation
+Architecture: any
+Multi-Arch: same
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ dde-cooperation-transfer
+Description: Deepin file manager deliver file with cooperation
+ A plugin for dde-file-manager to delivery file via cooperation.
