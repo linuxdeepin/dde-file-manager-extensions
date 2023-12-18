@@ -37,8 +37,7 @@ PrencryptWorker::PrencryptWorker(const QString &jobID,
 void PrencryptWorker::run()
 {
     if (params.value(encrypt_param_keys::kKeyInitParamsOnly, false).toBool()) {
-        auto code = writeEncryptParams();
-        setExitCode(-code);
+        setExitCode(writeEncryptParams());
         setFstabTimeout();
         return;
     }
@@ -94,7 +93,7 @@ int PrencryptWorker::writeEncryptParams()
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
-    obj.insert("device", dev);
+    obj.insert("device", uuid);
     obj.insert("device-path", dev);
     obj.insert("volume", dmDev);
     obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString() + "-xts-plain64");
@@ -120,13 +119,13 @@ int PrencryptWorker::writeEncryptParams()
 
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "cannot open file for write!";
-        return kErrorOpenFileFailed;
+        return -kErrorOpenFileFailed;
     }
 
     f.write(doc.toJson());
     f.flush();
     f.close();
-    return kSuccess;
+    return -kSuccess;
 }
 
 int PrencryptWorker::setFstabTimeout()
@@ -211,7 +210,7 @@ void DecryptWorker::run()
 {
     bool initOnly = params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool();
     if (initOnly) {
-        setExitCode(-writeDecryptParams());
+        setExitCode(writeDecryptParams());
         return;
     }
 
@@ -233,7 +232,7 @@ int DecryptWorker::writeDecryptParams()
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     obj.insert("device-path", dev);
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
-    obj.insert("device", dev);
+    obj.insert("device", uuid);
     QJsonDocument doc(obj);
 
     createUsecPathIfNotExist();
@@ -243,12 +242,12 @@ int DecryptWorker::writeDecryptParams()
         qInfo() << "the decrypt task will be replaced";
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "cannot open decrypt file for writing";
-        return kErrorOpenFileFailed;
+        return -kErrorOpenFileFailed;
     }
 
     f.write(doc.toJson());
     f.close();
-    return kRebootRequired;
+    return -kRebootRequired;
 }
 
 ChgPassWorker::ChgPassWorker(const QString &jobID, const QVariantMap &params, QObject *parent)

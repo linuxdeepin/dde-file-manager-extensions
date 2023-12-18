@@ -62,7 +62,7 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
     if (!checkAuth(kActionEncrypt)) {
         Q_EMIT PrepareEncryptDiskResult(params.value(encrypt_param_keys::kKeyDevice).toString(),
                                         "",
-                                        kUserCancelled);
+                                        -kUserCancelled);
         return "";
     }
 
@@ -102,7 +102,7 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
 {
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     if (!checkAuth(kActionDecrypt)) {
-        Q_EMIT DecryptDiskResult(dev, "", kUserCancelled);
+        Q_EMIT DecryptDiskResult(dev, "", -kUserCancelled);
         return "";
     }
 
@@ -134,7 +134,7 @@ QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
     if (!checkAuth(kActionChgPwd)) {
         Q_EMIT ChangePassphressResult(dev,
                                       "",
-                                      kUserCancelled);
+                                      -kUserCancelled);
         return "";
     }
 
@@ -361,8 +361,9 @@ bool DiskEncryptDBus::isEncrypted(const QString &device)
 
 void DiskEncryptDBus::updateInitrd()
 {
+    qDebug() << "start update initramfs..." << QDateTime::currentDateTime();
     int ret = system("update-initramfs -u");
-    qDebug() << "initramfs updated: " << ret;
+    qDebug() << "initramfs updated: " << ret << QDateTime::currentDateTime();
 }
 
 bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev)
