@@ -17,7 +17,7 @@ class Worker : public QThread
     Q_OBJECT
 public:
     explicit Worker(const QString &jobID, QObject *parent = nullptr)
-        : QThread(parent), jobID(jobID) { }
+        : QThread(parent), jobID(jobID) {}
 
     inline int exitError()
     {
@@ -45,6 +45,8 @@ public:
     explicit PrencryptWorker(const QString &jobID,
                              const QVariantMap &params,
                              QObject *parent);
+    int cipherPos() const { return keyslotCipher; }
+    int recKeyPos() const { return keyslotRecKey; }
 
 protected:
     void run() override;
@@ -53,6 +55,8 @@ protected:
 
 private:
     QVariantMap params;
+    int keyslotCipher { -1 };
+    int keyslotRecKey { -1 };
 };
 
 class ReencryptWorker : public Worker

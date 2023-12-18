@@ -212,7 +212,7 @@ QString disk_encrypt_utils::bcGenRecKey()
 }
 
 int disk_encrypt_funcs::bcInitHeaderFile(const EncryptParams &params,
-                                         QString &headerPath)
+                                         QString &headerPath, int *keyslotCipher, int *keyslotRecKey)
 {
     if (!disk_encrypt_utils::bcValidateParams(params))
         return -kErrorParamsInvalid;
@@ -230,13 +230,13 @@ int disk_encrypt_funcs::bcInitHeaderFile(const EncryptParams &params,
         return -kErrorDeviceMounted;
     }
 
-    int err = bcDoSetupHeader(params, &headerPath);
+    int err = bcDoSetupHeader(params, &headerPath, keyslotCipher, keyslotRecKey);
     return err;
 }
 
-int disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params, QString *headerPath)
+int disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params, QString *headerPath, int *keyslotCipher, int *keyslotRecKey)
 {
-    Q_ASSERT(headerPath);
+    Q_ASSERT(headerPath && keyslotCipher && keyslotRecKey);
 
     QString localPath;
     int ret = 0;
@@ -294,6 +294,7 @@ int disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params, QString *he
                                           params.passphrase.toStdString().c_str(),
                                           params.passphrase.length());
     CHECK_INT(ret, "add key failed " + params.device, -kErrorAddKeyslot);
+    *keyslotCipher = ret;
 
     QString recKey = disk_encrypt_utils::bcExpRecFile(params);
     if (!recKey.isEmpty()) {
@@ -308,6 +309,7 @@ int disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params, QString *he
                        << params.device
                        << ret;
         }
+        *keyslotRecKey = ret;
     }
 
     ret = crypt_reencrypt_init_by_passphrase(cdev,

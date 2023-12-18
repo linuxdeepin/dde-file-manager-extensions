@@ -85,9 +85,13 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
                                                   static_cast<int>(ret));
         } else {
             qInfo() << "start reencrypt device" << device;
+            int ksCipher = worker->cipherPos();
+            int ksRec = worker->recKeyPos();
             startReencrypt(device,
                            params.value(encrypt_param_keys::kKeyPassphrase).toString(),
-                           params.value(encrypt_param_keys::kKeyTPMToken).toString());
+                           params.value(encrypt_param_keys::kKeyTPMToken).toString(),
+                           ksCipher,
+                           ksRec);
         }
 
         worker->deleteLater();
@@ -215,7 +219,7 @@ bool DiskEncryptDBus::checkAuth(const QString &actID)
             .toBool();
 }
 
-void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphrase, const QString &token)
+void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphrase, const QString &token, int /*cipherPos*/, int recPos)
 {
     ReencryptWorker *worker = new ReencryptWorker(dev, passphrase, this);
     connect(worker, &ReencryptWorker::deviceReencryptResult,
@@ -226,6 +230,11 @@ void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphra
                  << ret;
         worker->deleteLater();
         setToken(dev, token);
+
+        if (recPos >= 0) {
+            QString tokenJson = QString("{ 'type': 'usec-recoverykey', 'keyslots': ['%1'] }").arg(recPos);
+            setToken(dev, tokenJson);
+        }
     });
     worker->start();
 }
