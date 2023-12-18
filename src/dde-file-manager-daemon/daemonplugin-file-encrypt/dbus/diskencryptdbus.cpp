@@ -6,6 +6,7 @@
 #include "diskencryptdbus_adaptor.h"
 #include "encrypt/encryptworker.h"
 #include "encrypt/diskencrypt.h"
+#include "encrypt/pwdencrypt.h"
 #include "notification/notifications.h"
 
 #include <dfm-framework/dpf.h>
@@ -66,19 +67,21 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
         return "";
     }
 
+    QVariantMap decryptedParams = decryptInputs(params);
+
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
     PrencryptWorker *worker = new PrencryptWorker(jobID,
-                                                  params,
+                                                  decryptedParams,
                                                   this);
     connect(worker, &QThread::finished, this, [=] {
         int ret = worker->exitError();
-        QString device = params.value(encrypt_param_keys::kKeyDevice).toString();
+        QString device = decryptedParams.value(encrypt_param_keys::kKeyDevice).toString();
 
         qDebug() << "pre encrypt finished"
                  << device
                  << ret;
 
-        if (params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool()
+        if (decryptedParams.value(encrypt_param_keys::kKeyInitParamsOnly).toBool()
             || ret != kSuccess) {
             Q_EMIT this->PrepareEncryptDiskResult(device,
                                                   jobID,
@@ -86,8 +89,8 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
         } else {
             qInfo() << "start reencrypt device" << device;
             startReencrypt(device,
-                           params.value(encrypt_param_keys::kKeyPassphrase).toString(),
-                           params.value(encrypt_param_keys::kKeyTPMToken).toString());
+                           decryptedParams.value(encrypt_param_keys::kKeyPassphrase).toString(),
+                           decryptedParams.value(encrypt_param_keys::kKeyTPMToken).toString());
         }
 
         worker->deleteLater();
@@ -107,15 +110,16 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
     }
 
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
+    QVariantMap decryptedParams = decryptInputs(params);
 
-    QString pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+    QString pass = decryptedParams.value(encrypt_param_keys::kKeyPassphrase).toString();
     if (dev.isEmpty()
-        || (pass.isEmpty() && !params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool())) {
+        || (pass.isEmpty() && !decryptedParams.value(encrypt_param_keys::kKeyInitParamsOnly).toBool())) {
         qDebug() << "cannot decrypt, params are not valid";
         return "";
     }
 
-    DecryptWorker *worker = new DecryptWorker(jobID, params, this);
+    DecryptWorker *worker = new DecryptWorker(jobID, decryptedParams, this);
     connect(worker, &QThread::finished, this, [=] {
         int ret = worker->exitError();
         qDebug() << "decrypt device finished:"
@@ -138,11 +142,13 @@ QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
         return "";
     }
 
+    QVariantMap decryptedParams = decryptInputs(params);
+
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
-    ChgPassWorker *worker = new ChgPassWorker(jobID, params, this);
+    ChgPassWorker *worker = new ChgPassWorker(jobID, decryptedParams, this);
     connect(worker, &QThread::finished, this, [=] {
         int ret = worker->exitError();
-        QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
+        QString dev = decryptedParams.value(encrypt_param_keys::kKeyDevice).toString();
         qDebug() << "change password finished:"
                  << dev
                  << ret;
@@ -158,6 +164,11 @@ QString DiskEncryptDBus::QueryTPMToken(const QString &device)
     QString token;
     disk_encrypt_funcs::bcGetToken(device, &token);
     return token;
+}
+
+QString DiskEncryptDBus::GetPublicKey()
+{
+    return PwdEncrypt::instance()->getPubKey().toLocal8Bit().toBase64();
 }
 
 void DiskEncryptDBus::onEncryptDBusRegistered(const QString &service)
@@ -368,6 +379,30 @@ void DiskEncryptDBus::updateInitrd()
 {
     int ret = system("update-initramfs -u");
     qDebug() << "initramfs updated: " << ret;
+}
+
+QVariantMap DiskEncryptDBus::decryptInputs(const QVariantMap &inputs)
+{
+    QVariantMap decrypted = inputs;
+
+    QString passphrase = inputs.value(encrypt_param_keys::kKeyPassphrase).toString();
+    QString oldPassphrase = inputs.value(encrypt_param_keys::kKeyOldPassphrase).toString();
+    if (!passphrase.isEmpty()) {
+        int ret = PwdEncrypt::instance()->decrypt(passphrase, &passphrase);
+        if (ret == 0)
+            decrypted.insert(encrypt_param_keys::kKeyPassphrase, passphrase);
+        else
+            qWarning() << "cannot decrypt source passphrase";
+    }
+    if (!oldPassphrase.isEmpty()) {
+        int ret = PwdEncrypt::instance()->decrypt(oldPassphrase, &oldPassphrase);
+        if (ret == 0)
+            decrypted.insert(encrypt_param_keys::kKeyOldPassphrase, oldPassphrase);
+        else
+            qWarning() << "cannot decrypt source passphrase";
+    }
+
+    return decrypted;
 }
 
 bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev)

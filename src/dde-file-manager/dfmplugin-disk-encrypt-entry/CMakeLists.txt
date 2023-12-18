@@ -10,12 +10,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets Concurrent)
-
 find_package(Dtk COMPONENTS Widget Core REQUIRED)
 find_package(dfm-framework REQUIRED)
 find_package(dfm-base REQUIRED)
 find_package(dfm-mount REQUIRED)
 find_package(dfm-io REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_search_module(OpenSSL REQUIRED openssl)
 
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
@@ -37,6 +38,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${dfm-base_LIBRARIES}
     ${dfm-mount_LIBRARIES}
     ${dfm-io_LIBRARIES}
+    ${OpenSSL_LIBRARIES}
 )
 
 target_include_directories(${PROJECT_NAME}

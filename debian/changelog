@@ -1,3 +1,9 @@
+dde-file-manager-extensions (1.1.6) unstable; urgency=medium
+
+  * use openssl to encrypt passphrase when invoke dbus method. 
+
+ -- xushitong <xushitong@uniontech.com>  Thu, 14 Dec 2023 14:51:44 +0800
+
 dde-file-manager-extensions (1.1.5) unstable; urgency=medium
 
   * save tpm info in header token 

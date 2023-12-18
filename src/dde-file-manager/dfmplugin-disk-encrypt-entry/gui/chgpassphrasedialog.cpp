@@ -180,6 +180,6 @@ void ChgPassphraseDialog::onOldKeyChanged(const QString &inputs)
 {
     if (usingRecKey) {
         QSignalBlocker blocker(sender());
-        oldPass->setText(recovery_key_utils::formatRecoveryKey(inputs));
+        oldPass->setText(passphrase_utils::formatRecoveryKey(inputs));
     }
 }

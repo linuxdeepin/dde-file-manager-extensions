@@ -14,6 +14,7 @@ find_package(dfm-framework REQUIRED)
 find_package(dfm-mount REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(CryptSetup REQUIRED libcryptsetup)
+pkg_check_modules(OpenSSL REQUIRED openssl)
 
 # generate dbus xml and adaptor
 execute_process(COMMAND qdbuscpp2xml
@@ -44,6 +45,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Concurrent
     Qt5::DBus
     ${CryptSetup_LIBRARIES}
+    ${OpenSSL_LIBRARIES}
     ${dfm-framework_LIBRARIES}
     ${dfm-mount_LIBRARIES}
 )

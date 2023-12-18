@@ -26,6 +26,7 @@ public Q_SLOTS:
     QString DecryptDisk(const QVariantMap &params);
     QString ChangeEncryptPassphress(const QVariantMap &params);
     QString QueryTPMToken(const QString &device);
+    QString GetPublicKey();
 
 Q_SIGNALS:
     void PrepareEncryptDiskResult(const QString &device, const QString &jobID, int errCode);
@@ -51,6 +52,7 @@ private:
     static bool updateCrypttab();
     static int isEncrypted(const QString &device);
     static void updateInitrd();
+    static QVariantMap decryptInputs(const QVariantMap &inputs);
 
     bool readEncryptDevice(QString *backingDev, QString *clearDev);
 
