@@ -113,6 +113,14 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
         return false;
     }
 
+    if (devMpt == "/") {
+        QStorageInfo boot("/boot");
+        if (boot.device() == device) {
+            qInfo() << "/boot does not have a separate partition, disable root partition encryption";
+            return false;
+        }
+    }
+
     selectionMounted = !devMpt.isEmpty();
     param.devDesc = device;
     param.initOnly = fstab_utils::isFstabItem(devMpt);
