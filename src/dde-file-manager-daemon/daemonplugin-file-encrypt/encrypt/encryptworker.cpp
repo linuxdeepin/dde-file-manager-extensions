@@ -51,7 +51,9 @@ void PrencryptWorker::run()
 
     QString localHeaderFile;
     int err = disk_encrypt_funcs::bcInitHeaderFile(encParams,
-                                                   localHeaderFile);
+                                                   localHeaderFile,
+                                                   &keyslotCipher,
+                                                   &keyslotRecKey);
     if (err != kSuccess || localHeaderFile.isEmpty()) {
         setExitCode(-kErrorCreateHeader);
         qDebug() << "cannot generate local header"

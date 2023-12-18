@@ -43,7 +43,7 @@ private Q_SLOTS:
 
 private:
     bool checkAuth(const QString &actID);
-    void startReencrypt(const QString &dev, const QString &passphrase, const QString &token);
+    void startReencrypt(const QString &dev, const QString &passphrase, const QString &token, int cipherPos, int recPos);
     void setToken(const QString &dev, const QString &token);
     void triggerReencrypt();
     void diskCheck();

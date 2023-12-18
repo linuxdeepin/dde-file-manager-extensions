@@ -24,7 +24,7 @@ enum EncryptStatus {
 };   // enum EncryptStatus
 
 namespace disk_encrypt_funcs {
-int bcInitHeaderFile(const EncryptParams &params, QString &headerPath);
+int bcInitHeaderFile(const EncryptParams &params, QString &headerPath, int *keyslotCipher, int *keyslotRecKey);
 int bcGetToken(const QString &device, QString *tokenJson);
 int bcInitHeaderDevice(const QString &device, const QString &passphrase, const QString &headerPath);
 int bcSetToken(const QString &device, const QString &token);
@@ -33,7 +33,7 @@ int bcChangePassphrase(const QString &device, const QString &oldPassphrase, cons
 int bcChangePassphraseByRecKey(const QString &device, const QString &oldPassphrase, const QString &newPassphrase, int *keyslot);
 int bcDecryptDevice(const QString &device, const QString &passphrase);
 int bcBackupCryptHeader(const QString &device, QString &headerPath);
-int bcDoSetupHeader(const EncryptParams &params, QString *headerPath);
+int bcDoSetupHeader(const EncryptParams &params, QString *headerPath, int *keyslotCipher, int *keyslotRecKey);
 int bcPrepareHeaderFile(const QString &device, QString *headerPath);
 
 int bcEncryptProgress(uint64_t size, uint64_t offset, void *usrptr);
