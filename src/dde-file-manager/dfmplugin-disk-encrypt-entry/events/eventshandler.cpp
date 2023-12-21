@@ -22,6 +22,7 @@ Q_DECLARE_METATYPE(QString *)
 Q_DECLARE_METATYPE(bool *)
 
 using namespace dfmplugin_diskenc;
+using namespace disk_encrypt;
 DWIDGET_USE_NAMESPACE;
 
 EventsHandler *EventsHandler::instance()
@@ -40,12 +41,12 @@ void EventsHandler::bindDaemonSignals()
                                              this,
                                              slot);
     };
-    conn("PrepareEncryptDiskResult", SLOT(onPreencryptResult(const QString &, const QString &, int)));
-    conn("EncryptDiskResult", SLOT(onEncryptResult(const QString &, int)));
-    conn("EncryptProgress", SLOT(onEncryptProgress(const QString &, double)));
-    conn("DecryptDiskResult", SLOT(onDecryptResult(const QString &, const QString &, int)));
-    conn("DecryptProgress", SLOT(onDecryptProgress(const QString &, double)));
-    conn("ChangePassphressResult", SLOT(onChgPassphraseResult(const QString &, const QString &, int)));
+    conn("PrepareEncryptDiskResult", SLOT(onPreencryptResult(const QString &, const QString &, const QString &, int)));
+    conn("EncryptDiskResult", SLOT(onEncryptResult(const QString &, const QString &, int)));
+    conn("EncryptProgress", SLOT(onEncryptProgress(const QString &, const QString &, double)));
+    conn("DecryptDiskResult", SLOT(onDecryptResult(const QString &, const QString &, const QString &, int)));
+    conn("DecryptProgress", SLOT(onDecryptProgress(const QString &, const QString &, double)));
+    conn("ChangePassphressResult", SLOT(onChgPassphraseResult(const QString &, const QString &, const QString &, int)));
 }
 
 void EventsHandler::hookEvents()
@@ -59,20 +60,20 @@ bool EventsHandler::hasEnDecryptJob()
     return !(encryptDialogs.isEmpty() && decryptDialogs.isEmpty());
 }
 
-void EventsHandler::onPreencryptResult(const QString &dev, const QString &, int code)
+void EventsHandler::onPreencryptResult(const QString &dev, const QString &devName, const QString &, int code)
 {
     QApplication::restoreOverrideCursor();
 
     if (code != kSuccess) {
-        showPreEncryptError(dev, code);
+        showPreEncryptError(dev, devName, code);
         return;
     }
 
     qInfo() << "reboot is required..." << dev;
-    showRebootOnPreencrypted(dev);
+    showRebootOnPreencrypted(dev, devName);
 }
 
-void EventsHandler::onEncryptResult(const QString &dev, int code)
+void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, int code)
 {
     QApplication::restoreOverrideCursor();
     if (encryptDialogs.contains(dev)) {
@@ -80,19 +81,21 @@ void EventsHandler::onEncryptResult(const QString &dev, int code)
         encryptDialogs.remove(dev);
     }
 
+    QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
+
     QString title = tr("Encrypt done");
-    QString msg = tr("Device %1 has been encrypted").arg(dev);
+    QString msg = tr("Device %1 has been encrypted").arg(device);
     if (code != 0) {
         title = tr("Encrypt failed");
         msg = tr("Device %1 encrypt failed, please see log for more information.(%2)")
-                      .arg(dev)
+                      .arg(device)
                       .arg(code);
     }
 
     dialog_utils::showDialog(title, msg, code != 0 ? dialog_utils::kError : dialog_utils::kInfo);
 }
 
-void EventsHandler::onDecryptResult(const QString &dev, const QString &, int code)
+void EventsHandler::onDecryptResult(const QString &dev, const QString &devName, const QString &, int code)
 {
     QApplication::restoreOverrideCursor();
     if (decryptDialogs.contains(dev)) {
@@ -101,22 +104,24 @@ void EventsHandler::onDecryptResult(const QString &dev, const QString &, int cod
     }
 
     if (code == -kRebootRequired)
-        showRebootOnDecrypted(dev);
+        showRebootOnDecrypted(dev, devName);
     else
-        showDecryptError(dev, code);
+        showDecryptError(dev, devName, code);
 }
 
-void EventsHandler::onChgPassphraseResult(const QString &dev, const QString &, int code)
+void EventsHandler::onChgPassphraseResult(const QString &dev, const QString &devName, const QString &, int code)
 {
     QApplication::restoreOverrideCursor();
-    showChgPwdError(dev, code);
+    showChgPwdError(dev, devName, code);
 }
 
-void EventsHandler::onEncryptProgress(const QString &dev, double progress)
+void EventsHandler::onEncryptProgress(const QString &dev, const QString &devName, double progress)
 {
     if (!encryptDialogs.contains(dev)) {
+        QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
+
         QApplication::restoreOverrideCursor();
-        auto dlg = new EncryptProcessDialog(tr("Encrypting...%1").arg(dev));
+        auto dlg = new EncryptProcessDialog(tr("Encrypting...%1").arg(device));
         connect(dlg, &EncryptProcessDialog::destroyed,
                 this, [this, dev] { encryptDialogs.remove(dev); });
         encryptDialogs.insert(dev, dlg);
@@ -126,11 +131,13 @@ void EventsHandler::onEncryptProgress(const QString &dev, double progress)
     dlg->show();
 }
 
-void EventsHandler::onDecryptProgress(const QString &dev, double progress)
+void EventsHandler::onDecryptProgress(const QString &dev, const QString &devName, double progress)
 {
     if (!decryptDialogs.contains(dev)) {
+        QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
+
         QApplication::restoreOverrideCursor();
-        decryptDialogs.insert(dev, new EncryptProcessDialog(tr("Decrypting...%1").arg(dev)));
+        decryptDialogs.insert(dev, new EncryptProcessDialog(tr("Decrypting...%1").arg(device)));
     }
 
     auto dlg = decryptDialogs.value(dev);
@@ -206,16 +213,18 @@ QString EventsHandler::acquirePassphraseByTPM(const QString &dev, bool &)
     return tpm_passphrase_utils::getPassphraseFromTPM(dev, "");
 }
 
-void EventsHandler::showPreEncryptError(const QString &dev, int code)
+void EventsHandler::showPreEncryptError(const QString &dev, const QString &devName, int code)
 {
     QString title;
     QString msg;
+    QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
+
     bool showError = false;
     switch (-code) {
     case (kSuccess):
         title = tr("Preencrypt done");
         msg = tr("Device %1 has been preencrypt, please reboot to finish encryption.")
-                      .arg(dev);
+                      .arg(device);
         break;
     case kUserCancelled:
         title = tr("Encrypt disk");
@@ -224,7 +233,7 @@ void EventsHandler::showPreEncryptError(const QString &dev, int code)
     default:
         title = tr("Preencrypt failed");
         msg = tr("Device %1 preencrypt failed, please see log for more information.(%2)")
-                      .arg(dev)
+                      .arg(device)
                       .arg(code);
         showError = true;
         break;
@@ -234,15 +243,17 @@ void EventsHandler::showPreEncryptError(const QString &dev, int code)
                              showError ? dialog_utils::kError : dialog_utils::kInfo);
 }
 
-void EventsHandler::showDecryptError(const QString &dev, int code)
+void EventsHandler::showDecryptError(const QString &dev, const QString &devName, int code)
 {
     QString title;
     QString msg;
+    QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
+
     bool showFailed = true;
     switch (-code) {
     case (kSuccess):
         title = tr("Decrypt done");
-        msg = tr("Device %1 has been decrypted").arg(dev);
+        msg = tr("Device %1 has been decrypted").arg(device);
         showFailed = false;
         break;
     case kUserCancelled:
@@ -257,7 +268,7 @@ void EventsHandler::showDecryptError(const QString &dev, int code)
     default:
         title = tr("Decrypt failed");
         msg = tr("Device %1 Decrypt failed, please see log for more information.(%2)")
-                      .arg(dev)
+                      .arg(device)
                       .arg(code);
         break;
     }
@@ -266,15 +277,16 @@ void EventsHandler::showDecryptError(const QString &dev, int code)
                              showFailed ? dialog_utils::kError : dialog_utils::kInfo);
 }
 
-void EventsHandler::showChgPwdError(const QString &dev, int code)
+void EventsHandler::showChgPwdError(const QString &dev, const QString &devName, int code)
 {
     QString title;
     QString msg;
+    QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
     bool showError = false;
     switch (-code) {
     case (kSuccess):
         title = tr("Change passphrase done");
-        msg = tr("%1's passphrase has been changed").arg(dev);
+        msg = tr("%1's passphrase has been changed").arg(device);
         break;
     case kUserCancelled:
         title = tr("Change passphrase");
@@ -288,7 +300,7 @@ void EventsHandler::showChgPwdError(const QString &dev, int code)
     default:
         title = tr("Change passphrase failed");
         msg = tr("Device %1 change passphrase failed, please see log for more information.(%2)")
-                      .arg(dev)
+                      .arg(device)
                       .arg(code);
         showError = true;
         break;
@@ -298,25 +310,29 @@ void EventsHandler::showChgPwdError(const QString &dev, int code)
                              showError ? dialog_utils::kError : dialog_utils::kInfo);
 }
 
-void EventsHandler::showRebootOnPreencrypted(const QString &device)
+void EventsHandler::showRebootOnPreencrypted(const QString &device, const QString &devName)
 {
+    QString dev = QString("%1(%2)").arg(devName).arg(device.mid(5));
+
     DDialog dlg;
     dlg.setIcon(QIcon::fromTheme("dialog-information"));
     dlg.setTitle(tr("Preencrypt done"));
     dlg.setMessage(tr("Device %1 has been preencrypt, please reboot to finish encryption.")
-                           .arg(device));
+                           .arg(dev));
     dlg.addButtons({ tr("Reboot later"), tr("Reboot now") });
     if (dlg.exec() == 1)
         requestReboot();
 }
 
-void EventsHandler::showRebootOnDecrypted(const QString &device)
+void EventsHandler::showRebootOnDecrypted(const QString &device, const QString &devName)
 {
+    QString dev = QString("%1(%2)").arg(devName).arg(device.mid(5));
+
     DDialog dlg;
     dlg.setIcon(QIcon::fromTheme("dialog-information"));
     dlg.setTitle(tr("Decrypt device"));
     dlg.setMessage(tr("Please reboot to decrypt device %1.")
-                       .arg(device));
+                           .arg(dev));
     dlg.addButtons({ tr("Reboot later"), tr("Reboot now") });
     if (dlg.exec() == 1)
         requestReboot();

@@ -28,12 +28,12 @@ public Q_SLOTS:
     QString QueryTPMToken(const QString &device);
 
 Q_SIGNALS:
-    void PrepareEncryptDiskResult(const QString &device, const QString &jobID, int errCode);
-    void EncryptDiskResult(const QString &device, int errCode);
-    void DecryptDiskResult(const QString &device, const QString &jobID, int errCode);
-    void ChangePassphressResult(const QString &device, const QString &jobID, int errCode);
-    void EncryptProgress(const QString &device, double progress);
-    void DecryptProgress(const QString &device, double progress);
+    void PrepareEncryptDiskResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
+    void EncryptDiskResult(const QString &device, const QString &devName, int errCode);
+    void DecryptDiskResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
+    void ChangePassphressResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
+    void EncryptProgress(const QString &device, const QString &devName, double progress);
+    void DecryptProgress(const QString &device, const QString &devName, double progress);
 
 private Q_SLOTS:
     void onEncryptDBusRegistered(const QString &service);
@@ -52,11 +52,12 @@ private:
     static int isEncrypted(const QString &device);
     static void updateInitrd();
 
-    bool readEncryptDevice(QString *backingDev, QString *clearDev);
+    bool readEncryptDevice(QString *backingDev, QString *clearDev, QString *devName);
 
 private:
     QSharedPointer<QDBusServiceWatcher> watcher;
     QString currentEncryptingDevice;
+    QString deviceName;
 };
 
 FILE_ENCRYPT_END_NS

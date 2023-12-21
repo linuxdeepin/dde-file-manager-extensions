@@ -20,6 +20,7 @@
 #include <libcryptsetup.h>
 
 FILE_ENCRYPT_USE_NS
+using namespace disk_encrypt;
 
 #define JOB_ID QString("job_%1")
 static constexpr char kActionEncrypt[] { "com.deepin.filemanager.daemon.DiskEncrypt.Encrypt" };
@@ -38,9 +39,15 @@ DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
     dfmmount::DDeviceManager::instance();
 
     connect(SignalEmitter::instance(), &SignalEmitter::updateEncryptProgress,
-            this, &DiskEncryptDBus::EncryptProgress, Qt::QueuedConnection);
+            this, [this](const QString &dev, double progress) {
+                Q_EMIT this->EncryptProgress(dev, deviceName, progress);
+            },
+            Qt::QueuedConnection);
     connect(SignalEmitter::instance(), &SignalEmitter::updateDecryptProgress,
-            this, &DiskEncryptDBus::DecryptProgress, Qt::QueuedConnection);
+            this, [this](const QString &dev, double progress) {
+                Q_EMIT this->DecryptProgress(dev, deviceName, progress);
+            },
+            Qt::QueuedConnection);
 
     watcher.reset(new QDBusServiceWatcher("org.deepin.UsecCrypt", QDBusConnection::systemBus()));
     connect(watcher.data(), &QDBusServiceWatcher::serviceRegistered,
@@ -59,8 +66,10 @@ DiskEncryptDBus::~DiskEncryptDBus()
 
 QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
 {
+    deviceName = params.value(encrypt_param_keys::kKeyDeviceName).toString();
     if (!checkAuth(kActionEncrypt)) {
         Q_EMIT PrepareEncryptDiskResult(params.value(encrypt_param_keys::kKeyDevice).toString(),
+                                        deviceName,
                                         "",
                                         -kUserCancelled);
         return "";
@@ -81,6 +90,7 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
         if (params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool()
             || ret != kSuccess) {
             Q_EMIT this->PrepareEncryptDiskResult(device,
+                                                  deviceName,
                                                   jobID,
                                                   static_cast<int>(ret));
         } else {
@@ -104,9 +114,10 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
 
 QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
 {
+    deviceName = params.value(encrypt_param_keys::kKeyDeviceName).toString();
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     if (!checkAuth(kActionDecrypt)) {
-        Q_EMIT DecryptDiskResult(dev, "", -kUserCancelled);
+        Q_EMIT DecryptDiskResult(dev, deviceName, "", -kUserCancelled);
         return "";
     }
 
@@ -125,7 +136,7 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
         qDebug() << "decrypt device finished:"
                  << dev
                  << ret;
-        Q_EMIT DecryptDiskResult(dev, jobID, ret);
+        Q_EMIT DecryptDiskResult(dev, deviceName, jobID, ret);
         worker->deleteLater();
     });
     worker->start();
@@ -134,9 +145,11 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
 
 QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
 {
+    deviceName = params.value(encrypt_param_keys::kKeyDeviceName).toString();
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     if (!checkAuth(kActionChgPwd)) {
         Q_EMIT ChangePassphressResult(dev,
+                                      deviceName,
                                       "",
                                       -kUserCancelled);
         return "";
@@ -150,7 +163,7 @@ QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
         qDebug() << "change password finished:"
                  << dev
                  << ret;
-        Q_EMIT ChangePassphressResult(dev, jobID, ret);
+        Q_EMIT ChangePassphressResult(dev, deviceName, jobID, ret);
         worker->deleteLater();
     });
     worker->start();
@@ -199,13 +212,13 @@ void DiskEncryptDBus::onEncryptDBusUnregistered(const QString &service)
 
 void DiskEncryptDBus::onFstabDiskEncProgressUpdated(const QString &dev, qint64 offset, qint64 total)
 {
-    Q_EMIT EncryptProgress(currentEncryptingDevice, (1.0 * offset) / total);
+    Q_EMIT EncryptProgress(currentEncryptingDevice, deviceName, (1.0 * offset) / total);
 }
 
 void DiskEncryptDBus::onFstabDiskEncFinished(const QString &dev, int result, const QString &errstr)
 {
     qInfo() << "device has been encrypted: " << dev << result << errstr;
-    Q_EMIT EncryptDiskResult(dev, result != 0 ? -1000 : 0);
+    Q_EMIT EncryptDiskResult(dev, deviceName, result != 0 ? -1000 : 0);
     if (result == 0) {
         qInfo() << "encrypt finished, remove encrypt config";
         ::remove(kEncConfigPath);
@@ -223,7 +236,9 @@ void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphra
 {
     ReencryptWorker *worker = new ReencryptWorker(dev, passphrase, this);
     connect(worker, &ReencryptWorker::deviceReencryptResult,
-            this, &DiskEncryptDBus::EncryptDiskResult);
+            this, [this](const QString &dev, int result) {
+                Q_EMIT this->EncryptDiskResult(dev, deviceName, result);
+            });
     connect(worker, &QThread::finished, this, [=] {
         int ret = worker->exitError();
         qDebug() << "reencrypt finished"
@@ -252,7 +267,7 @@ void DiskEncryptDBus::setToken(const QString &dev, const QString &token)
 void DiskEncryptDBus::triggerReencrypt()
 {
     QString clearDev;
-    if (!readEncryptDevice(&currentEncryptingDevice, &clearDev)) {
+    if (!readEncryptDevice(&currentEncryptingDevice, &clearDev, &deviceName)) {
         qInfo() << "no encrypt config or config is invalid.";
         return;
     }
@@ -380,9 +395,9 @@ void DiskEncryptDBus::updateInitrd()
     qDebug() << "initramfs updated: " << ret << QDateTime::currentDateTime();
 }
 
-bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev)
+bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev, QString *devName)
 {
-    Q_ASSERT(backingDev && clearDev);
+    Q_ASSERT(backingDev && clearDev && devName);
 
     QFile encConfig(kEncConfigPath);
     if (!encConfig.exists()) {
@@ -401,6 +416,7 @@ bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev)
     QJsonObject config = doc.object();
     QJsonValue devVal = config.value("device-path");
     QJsonValue volVal = config.value("volume");
+    QJsonValue nameVal = config.value("device-name");
     if (devVal.isUndefined() || volVal.isUndefined()) {
         qWarning() << "invalid encrypt config! device or volume is empty!";
         return false;
@@ -408,5 +424,6 @@ bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev)
 
     *backingDev = devVal.toString();
     *clearDev = volVal.toString();
+    *devName = nameVal.toString();
     return true;
 }

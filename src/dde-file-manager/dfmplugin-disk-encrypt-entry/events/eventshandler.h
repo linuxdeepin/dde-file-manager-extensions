@@ -20,22 +20,22 @@ public:
     bool onAcquireDevicePwd(const QString &dev, QString *pwd, bool *giveup);
 
 private Q_SLOTS:
-    void onPreencryptResult(const QString &, const QString &, int);
-    void onEncryptResult(const QString &, int);
-    void onEncryptProgress(const QString &, double);
-    void onDecryptResult(const QString &, const QString &, int);
-    void onDecryptProgress(const QString &, double);
-    void onChgPassphraseResult(const QString &, const QString &, int);
+    void onPreencryptResult(const QString &, const QString &, const QString &, int);
+    void onEncryptResult(const QString &, const QString &, int);
+    void onEncryptProgress(const QString &, const QString &, double);
+    void onDecryptResult(const QString &, const QString &, const QString &, int);
+    void onDecryptProgress(const QString &, const QString &, double);
+    void onChgPassphraseResult(const QString &, const QString &, const QString &, int);
 
     QString acquirePassphrase(const QString &dev, bool &cancelled);
     QString acquirePassphraseByPIN(const QString &dev, bool &cancelled);
     QString acquirePassphraseByTPM(const QString &dev, bool &cancelled);
 
-    void showPreEncryptError(const QString &device, int code);
-    void showDecryptError(const QString &device, int code);
-    void showChgPwdError(const QString &device, int code);
-    void showRebootOnPreencrypted(const QString &device);
-    void showRebootOnDecrypted(const QString &device);
+    void showPreEncryptError(const QString &device, const QString &devName, int code);
+    void showDecryptError(const QString &device, const QString &devName, int code);
+    void showChgPwdError(const QString &device, const QString &devName, int code);
+    void showRebootOnPreencrypted(const QString &device, const QString &devName);
+    void showRebootOnDecrypted(const QString &device, const QString &devName);
 
     void requestReboot();
 

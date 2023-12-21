@@ -5,6 +5,8 @@
 #ifndef ENCRYPTPARAMSINPUTDIALOG_H
 #define ENCRYPTPARAMSINPUTDIALOG_H
 
+#include "dfmplugin_disk_encrypt_global.h"
+
 #include <dtkwidget_global.h>
 #include <DDialog>
 
@@ -21,31 +23,12 @@ class QLayout;
 
 namespace dfmplugin_diskenc {
 
-enum SecKeyType {
-    kPasswordOnly,
-    kTPMAndPIN,
-    kTPMOnly,
-};
-
-struct DeviceEncryptParam
-{
-    QString devDesc;
-    QString uuid;
-    SecKeyType type;
-    QString key;
-    QString newKey;
-    QString exportPath;
-    QString deviceDisplayName;
-    bool initOnly;
-    bool validateByRecKey;
-};
-
 class EncryptParamsInputDialog : public DTK_WIDGET_NAMESPACE::DDialog
 {
     Q_OBJECT
 public:
-    explicit EncryptParamsInputDialog(const QString &dev, bool fstabSelected, QWidget *parent = nullptr);
-    DeviceEncryptParam getInputs();
+    explicit EncryptParamsInputDialog(const disk_encrypt::DeviceEncryptParam &params, QWidget *parent = nullptr);
+    disk_encrypt::DeviceEncryptParam getInputs();
 
 protected:
     void initUi();
@@ -79,9 +62,8 @@ private:
 
 private:
     bool expPathValid { false };
-    bool fstabItem { false };
-    QString device;
     QString tpmPassword;
+    disk_encrypt::DeviceEncryptParam params;
 };
 
 }

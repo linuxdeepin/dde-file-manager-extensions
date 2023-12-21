@@ -13,6 +13,7 @@
 #include <QSettings>
 
 FILE_ENCRYPT_USE_NS
+using namespace disk_encrypt;
 
 #define DEV_KEY QString("device/%1")
 static constexpr char kBootUsecPath[] { "/boot/usec-crypt" };
@@ -101,6 +102,7 @@ int PrencryptWorker::writeEncryptParams()
     obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString() + "-xts-plain64");
     obj.insert("key-size", "256");
     obj.insert("mode", encMode.value(params.value(encrypt_param_keys::kKeyEncMode).toInt()));
+    obj.insert("device-name", params.value(encrypt_param_keys::kKeyDeviceName).toString());
 
     QString expPath = params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString();
     if (!expPath.isEmpty()) {
