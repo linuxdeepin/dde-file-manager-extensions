@@ -24,20 +24,6 @@
 
 FILE_ENCRYPT_BEGIN_NS
 
-namespace encrypt_param_keys {
-inline constexpr char kKeyDevice[] { "device" };
-inline constexpr char kKeyUUID[] { "uuid" };
-inline constexpr char kKeyEncMode[] { "mode" };
-inline constexpr char kKeyPassphrase[] { "passphrase" };
-inline constexpr char kKeyOldPassphrase[] { "oldPassphrase" };
-inline constexpr char kKeyCipher[] { "cipher" };
-inline constexpr char kKeyRecoveryExportPath[] { "exportRecKeyTo" };
-inline constexpr char kKeyInitParamsOnly[] { "initParamsOnly" };
-inline constexpr char kKeyTPMConfig[] { "tpmConfig" };
-inline constexpr char kKeyTPMToken[] { "tpmToken" };
-inline constexpr char kKeyValidateWithRecKey[] { "usingRecKey" };
-}   // namespace encrypt_param_keys
-
 struct EncryptParams
 {
     QString device;

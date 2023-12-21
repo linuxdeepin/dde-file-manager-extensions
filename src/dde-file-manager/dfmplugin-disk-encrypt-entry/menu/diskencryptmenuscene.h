@@ -45,14 +45,14 @@ public:
     virtual void updateState(QMenu *parent) override;
 
 protected:
-    static void encryptDevice(const DeviceEncryptParam &param);
-    static void deencryptDevice(const DeviceEncryptParam &param);
-    static void changePassphrase(DeviceEncryptParam param);
+    static void encryptDevice(const disk_encrypt::DeviceEncryptParam &param);
+    static void deencryptDevice(const disk_encrypt::DeviceEncryptParam &param);
+    static void changePassphrase(disk_encrypt::DeviceEncryptParam param);
     static void unlockDevice(const QString &dev);
 
-    static void doEncryptDevice(const DeviceEncryptParam &param);
-    static void doDecryptDevice(const DeviceEncryptParam &param);
-    static void doChangePassphrase(const DeviceEncryptParam &param);
+    static void doEncryptDevice(const disk_encrypt::DeviceEncryptParam &param);
+    static void doDecryptDevice(const disk_encrypt::DeviceEncryptParam &param);
+    static void doChangePassphrase(const disk_encrypt::DeviceEncryptParam &param);
 
     static QString generateTPMConfig();
     static QString generateTPMToken(const QString &device, bool pin);
@@ -61,7 +61,7 @@ protected:
     static void onUnlocked(bool ok, dfmmount::OperationErrorInfo, QString);
     static void onMounted(bool ok, dfmmount::OperationErrorInfo, QString);
 
-    void unmountBefore(const std::function<void(const DeviceEncryptParam &)> &after);
+    void unmountBefore(const std::function<void(const disk_encrypt::DeviceEncryptParam &)> &after);
     enum OpType { kUnmount,
                   kLock };
     static void onUnmountError(OpType t, const QString &dev, const dfmmount::OperationErrorInfo &err);
@@ -73,7 +73,7 @@ private:
     bool selectionMounted { false };
     QVariantHash selectedItemInfo;
 
-    DeviceEncryptParam param;
+    disk_encrypt::DeviceEncryptParam param;
 };
 
 }

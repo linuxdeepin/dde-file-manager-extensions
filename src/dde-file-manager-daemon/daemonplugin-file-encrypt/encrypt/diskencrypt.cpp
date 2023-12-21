@@ -24,6 +24,7 @@
 #include <functional>
 
 FILE_ENCRYPT_USE_NS
+using namespace disk_encrypt;
 
 #define CHECK_INT(checkVal, msg, retVal)   \
     if ((checkVal) < 0) {                  \

@@ -27,6 +27,7 @@
 #include <DSpinner>
 
 using namespace dfmplugin_diskenc;
+using namespace disk_encrypt;
 DWIDGET_USE_NAMESPACE
 
 enum StepPage {
@@ -35,12 +36,10 @@ enum StepPage {
     kConfirmPage,
 };
 
-EncryptParamsInputDialog::EncryptParamsInputDialog(const QString &dev,
-                                                   bool fstabSelected,
+EncryptParamsInputDialog::EncryptParamsInputDialog(const disk_encrypt::DeviceEncryptParam &params,
                                                    QWidget *parent)
     : DTK_WIDGET_NAMESPACE::DDialog(parent),
-      fstabItem(fstabSelected),
-      device(dev)
+      params(params)
 {
     initUi();
     initConn();
@@ -56,10 +55,10 @@ DeviceEncryptParam EncryptParamsInputDialog::getInputs()
         password = encKeyEdit1->text();
     }
 
-    return DeviceEncryptParam { .devDesc = device,
-                                .type = static_cast<SecKeyType>(encType->currentIndex()),
-                                .key = password,
-                                .exportPath = keyExportInput->text() };
+    params.type = static_cast<SecKeyType>(encType->currentIndex());
+    params.key = password;
+    params.exportPath = keyExportInput->text();
+    return params;
 }
 
 void EncryptParamsInputDialog::initUi()
@@ -177,9 +176,10 @@ QWidget *EncryptParamsInputDialog::createConfirmLayout()
     wid->setLayout(lay);
     lay->setMargin(0);
 
+    QString displayName = QString("%1(%2)").arg(params.deviceDisplayName).arg(params.devDesc.mid(5));
     QLabel *hint = new QLabel(tr("After clicking \"Confirm encryption\", "
                                  "enter the user password to finish encrypting the \"%1\" partition.")
-                                      .arg(device),
+                                      .arg(displayName),
                               this);
     hint->setWordWrap(true);
     hint->adjustSize();
@@ -258,7 +258,7 @@ bool EncryptParamsInputDialog::validateExportPath(const QString &path, QString *
     }
 
     QString dev = QStorageInfo(path).device();
-    if (dev == device) {
+    if (dev == params.devDesc) {
         setMsg(tr("Please export to an external device such as a non-encrypted partition or USB flash drive."));
         return false;
     }
@@ -296,7 +296,7 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
 
     int currPage = pagesLay->currentIndex();
     if (currPage == kPasswordInputPage) {
-        if (!validatePassword() && !fstabItem)
+        if (!validatePassword() && !params.initOnly)
             return;
         if (config_utils::exportKeyEnabled()) {
             pagesLay->setCurrentIndex(kExportKeyPage);
@@ -311,9 +311,9 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
             pagesLay->setCurrentIndex(kConfirmPage);
         }
     } else if (currPage == kConfirmPage) {
-        qDebug() << "confirm encrypt device: " << device << encType->currentIndex();
+        qDebug() << "confirm encrypt device: " << params.devDesc << encType->currentIndex();
         if (encType->currentIndex() == kTPMAndPIN || encType->currentIndex() == kTPMOnly) {
-            if (!fstabItem && !encryptByTpm(device)) {
+            if (!params.initOnly && !encryptByTpm(params.devDesc)) {
                 qWarning() << "encrypt by TPM failed!";
                 return;
             }
@@ -371,7 +371,7 @@ void EncryptParamsInputDialog::onEncTypeChanged(int type)
         qWarning() << "wrong encrypt type!" << type;
     }
 
-    if (fstabItem) {
+    if (params.initOnly) {
         setPasswordInputVisible(false);
         pinOnlyHint->setHidden(type != kTPMOnly);
     }

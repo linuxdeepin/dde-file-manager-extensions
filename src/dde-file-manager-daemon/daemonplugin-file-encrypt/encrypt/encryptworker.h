@@ -33,7 +33,7 @@ protected:
     }
 
 protected:
-    int exitCode { kSuccess };
+    int exitCode { disk_encrypt::kSuccess };
     QString jobID;
     QMutex mtx;
 };
