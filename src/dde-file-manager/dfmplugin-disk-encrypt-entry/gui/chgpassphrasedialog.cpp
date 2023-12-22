@@ -62,9 +62,6 @@ void ChgPassphraseDialog::initUI()
     newPass1 = new Dtk::Widget::DPasswordEdit(this);
     newPass2 = new Dtk::Widget::DPasswordEdit(this);
 
-    QString placeHolder = tr("%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.").arg(keyTypeStr);
-    oldPass->setPlaceholderText(placeHolder);
-    newPass1->setPlaceholderText(placeHolder);
     newPass2->setPlaceholderText(tr("Please enter %1 again").arg(keyTypeStr));
 
     lay->addRow(oldKeyHint, oldPass);
@@ -82,6 +79,8 @@ void ChgPassphraseDialog::initUI()
 
     usingRecKey = true;
     onRecSwitchClicked();
+
+    setMinimumWidth(500);
 }
 
 bool ChgPassphraseDialog::validatePasswd()
@@ -134,7 +133,7 @@ bool ChgPassphraseDialog::validatePasswd()
     });
 
     if (factor < 3 || pwd1.length() < 8) {
-        newPass1->showAlertMessage(tr("%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.").arg(keyTypeStr));
+        newPass1->showAlertMessage(tr("At least 8 bits, contains 3 types of A-Z, a-z, 0-9 and symbols"));
         return false;
     }
 
@@ -172,8 +171,9 @@ void ChgPassphraseDialog::onRecSwitchClicked()
         oldPass->setEchoMode(QLineEdit::Password);
         oldPass->setEchoButtonIsVisible(true);
         recSwitch->setText(tr("Validate with recovery key"));
-        oldPass->setPlaceholderText(tr("%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.").arg(encType));
+        oldPass->setPlaceholderText(tr("At least 8 bits, contains 3 types of A-Z, a-z, 0-9 and symbols"));
     }
+    newPass1->setPlaceholderText(tr("At least 8 bits, contains 3 types of A-Z, a-z, 0-9 and symbols"));
 }
 
 void ChgPassphraseDialog::onOldKeyChanged(const QString &inputs)
