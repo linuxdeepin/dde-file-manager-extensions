@@ -291,11 +291,6 @@
         <translation>使用口令解锁</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="130"/>
-        <source>Use PIN code to unlock on this computer (recommended)</source>
-        <translation>使用PIN码来解锁此设备（推荐）</translation>
-    </message>
-    <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="154"/>
         <source>In special cases such as forgetting the password or the encryption hardware is damaged, you can decrypt the encrypted partition with the recovery key, please export it to a non-encrypted partition and keep it in a safe place!</source>
         <translation>在一些特定场景下，例如忘记密码或者加密硬件损坏，你可以通过恢复密钥解锁加密分区，请导出恢复密钥到非加密分区并安全保存！</translation>
@@ -402,6 +397,11 @@
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="354"/>
         <source>Please enter the %1 again</source>
         <translation>请再次输入%1</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="130"/>
+        <source>Use TPM+PIN to unlock on this computer (recommended)</source>
+        <translation>在此计算机上使用TPM+PIN码解锁（推荐）</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="131"/>

@@ -127,7 +127,7 @@ QWidget *EncryptParamsInputDialog::createPasswordPage()
     pinOnlyHint->setFont(font);
 
     encType->addItems({ tr("Unlocked by passphrase"),
-                        tr("Use PIN code to unlock on this computer (recommended)"),
+                        tr("Use TPM+PIN to unlock on this computer (recommended)"),
                         tr("Automatic unlocking on this computer by TPM") });
 
     if (tpm_utils::checkTPM() != 0) {

@@ -291,11 +291,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="130"/>
-        <source>Use PIN code to unlock on this computer (recommended)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="154"/>
         <source>In special cases such as forgetting the password or the encryption hardware is damaged, you can decrypt the encrypted partition with the recovery key, please export it to a non-encrypted partition and keep it in a safe place!</source>
         <translation type="unfinished"></translation>
@@ -401,6 +396,11 @@
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="354"/>
         <source>Please enter the %1 again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="130"/>
+        <source>Use TPM+PIN to unlock on this computer (recommended)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
