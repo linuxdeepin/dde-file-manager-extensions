@@ -128,7 +128,7 @@ QWidget *EncryptParamsInputDialog::createPasswordPage()
 
     encType->addItems({ tr("Unlocked by passphrase"),
                         tr("Use PIN code to unlock on this computer (recommended)"),
-                        tr("Automatic unlocking on this computer") });
+                        tr("Automatic unlocking on this computer by TPM") });
 
     if (tpm_utils::checkTPM() != 0) {
         encType->setItemData(kTPMAndPIN, QVariant(0), Qt::UserRole - 1);
@@ -232,7 +232,7 @@ bool EncryptParamsInputDialog::validatePassword()
     });
 
     if (factor < 3 || pwd1.length() < 8) {
-        encKeyEdit1->showAlertMessage(tr("%1 at least 8 bits with A-Z, a-z, 0-9 and symbols").arg(keyType));
+        encKeyEdit1->showAlertMessage(tr("At least 8 bits, contains 3 types of A-Z, a-z, 0-9 and symbols"));
         return false;
     }
 
@@ -350,20 +350,20 @@ void EncryptParamsInputDialog::onEncTypeChanged(int type)
 {
     QString filed1 = tr("Set %1");
     QString filed2 = tr("Repeat %1");
-    QString placeholder1 = tr("%1 are at least 8 digits long and contain at least 3 of uppercase letters, lowercase letters, numbers and symbols.");
+    QString placeholder1 = tr("At least 8 bits, contains 3 types of A-Z, a-z, 0-9 and symbols");
     QString placeholder2 = tr("Please enter the %1 again");
 
     if (type == kPasswordOnly) {
         setPasswordInputVisible(true);
         keyHint1->setText(filed1.arg(tr("passphrase")));
         keyHint2->setText(filed2.arg(tr("passphrase")));
-        encKeyEdit1->setPlaceholderText(placeholder1.arg(tr("Passphrase")));
+        encKeyEdit1->setPlaceholderText(placeholder1);
         encKeyEdit2->setPlaceholderText(placeholder2.arg(tr("Passphrase")));
     } else if (type == kTPMAndPIN) {
         setPasswordInputVisible(true);
         keyHint1->setText(filed1.arg(tr("PIN")));
         keyHint2->setText(filed2.arg(tr("PIN")));
-        encKeyEdit1->setPlaceholderText(placeholder1.arg(tr("PIN")));
+        encKeyEdit1->setPlaceholderText(placeholder1);
         encKeyEdit2->setPlaceholderText(placeholder2.arg(tr("PIN")));
     } else if (type == kTPMOnly) {
         setPasswordInputVisible(false);
