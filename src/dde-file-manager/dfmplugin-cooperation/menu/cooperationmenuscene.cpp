@@ -72,25 +72,9 @@ bool CooperationMenuScene::create(QMenu *parent)
         return false;
 
     if (!d->isEmptyArea) {
-        auto actions = parent->actions();
-        for (auto act : actions) {
-            if (act->isSeparator())
-                continue;
-
-            auto actId = act->property(ActionPropertyKey::kActionID).toString();
-            if (actId == "share") {
-                auto subMenu = act->menu();
-                if (subMenu) {
-                    auto transAct = subMenu->addAction(d->predicateName.value(kFileTransfer));
-                    d->predicateAction[kFileTransfer] = transAct;
-                    transAct->setProperty(ActionPropertyKey::kActionID, kFileTransfer);
-
-                    if (!act->isVisible())
-                        act->setVisible(true);
-                    break;
-                }
-            }
-        }
+        auto transAct = parent->addAction(d->predicateName.value(kFileTransfer));
+        d->predicateAction[kFileTransfer] = transAct;
+        transAct->setProperty(ActionPropertyKey::kActionID, kFileTransfer);
     }
 
     return AbstractMenuScene::create(parent);
@@ -98,6 +82,28 @@ bool CooperationMenuScene::create(QMenu *parent)
 
 void CooperationMenuScene::updateState(QMenu *parent)
 {
+    if (!d->isEmptyArea) {
+        auto actions = parent->actions();
+        actions.removeOne(d->predicateAction[kFileTransfer]);
+
+        for (auto act : actions) {
+            if (act->isSeparator())
+                continue;
+
+            auto actId = act->property(ActionPropertyKey::kActionID).toString();
+            if (actId == "send-to") {
+                auto subMenu = act->menu();
+                if (subMenu) {
+                    auto subActs = subMenu->actions();
+                    subActs.insert(0, d->predicateAction[kFileTransfer]);
+                    subMenu->addActions(subActs);
+                    act->setVisible(true);
+                    break;
+                }
+            }
+        }
+    }
+
     AbstractMenuScene::updateState(parent);
 }
 

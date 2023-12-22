@@ -10,19 +10,22 @@
 #include <dfm-base/settingdialog/settingjsongenerator.h>
 #include <dfm-base/settingdialog/customsettingitemregister.h>
 
-#include <DApplication>
+#include <QTranslator>
 
 #define COOPERATION_SETTING_GROUP "10_advance.03_cooperation"
 inline constexpr char kCooperationSettingGroup[] { COOPERATION_SETTING_GROUP };
 inline constexpr char kCooperationSettingTransfer[] { "00_file_transfer" };
-inline constexpr char kParentScene[] { "ShareMenu" };
+inline constexpr char kParentScene[] { "ExtendMenu" };
 
-DWIDGET_USE_NAMESPACE
 using namespace dfmbase;
 using namespace dfmplugin_cooperation;
 
 void CooperationPlugin::initialize()
 {
+    auto translator = new QTranslator(this);
+    translator->load(QLocale(), "cooperation-transfer", "_", "/usr/share/dde-file-manager/translations");
+    QCoreApplication::installTranslator(translator);
+
     if (DPF_NAMESPACE::LifeCycle::isAllPluginsStarted())
         bindMenuScene();
     else
@@ -31,11 +34,10 @@ void CooperationPlugin::initialize()
 
 bool CooperationPlugin::start()
 {
-    // 加载翻译和跨端配置
+    // 加载跨端配置
     auto appName = qApp->applicationName();
     qApp->setApplicationName("dde-cooperation");
     ConfigManager::instance();
-    qApp->loadTranslator();
     qApp->setApplicationName(appName);
 
     // 添加文管设置
