@@ -49,3 +49,35 @@ install(TARGETS
     DESTINATION
     ${DFM_PLUGIN_COMMON_EDGE_DIR}
 )
+
+if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+execute_process(
+    COMMAND lupdate
+        ./
+        -ts
+        -no-obsolete
+        ${CMAKE_SOURCE_DIR}/translations/cooperation-transfer.ts
+    COMMAND lupdate
+        ./
+        -ts
+        -no-obsolete
+        ${CMAKE_SOURCE_DIR}/translations/cooperation-transfer_zh_CN.ts
+
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+execute_process(
+    COMMAND lrelease
+        ${CMAKE_SOURCE_DIR}/translations/cooperation-transfer.ts
+    COMMAND lrelease
+        ${CMAKE_SOURCE_DIR}/translations/cooperation-transfer_zh_CN.ts
+
+    WORKING_DIRECTORY
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+endif()
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/translations
+    DESTINATION share/dde-file-manager
+    FILES_MATCHING PATTERN "*.qm")
