@@ -53,6 +53,9 @@ void UnlockPartitionDialog::initUI()
 
     updateUserHint();
     setOnButtonClickedClose(false);
+
+    if (initType == kRec)
+        chgUnlockType->setVisible(false);
 }
 
 void UnlockPartitionDialog::initConnect()
