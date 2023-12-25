@@ -170,9 +170,6 @@ int tpm_passphrase_utils::genPassphraseFromTPM(const QString &dev, const QString
     settings.setValue(kConfigKeyPriHashAlgo, QVariant(primaryHashAlgo));
     settings.setValue(kConfigKeyPriKeyAlgo, QVariant(primaryKeyAlgo));
 
-    qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>>   create TPM pwd for device:"
-            << dev
-            << *passphrase;
     return kTPMNoError;
 }
 
@@ -214,7 +211,6 @@ QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QSt
     map.insert("PropertyKey_Pcr", pcr);
     map.insert("PropertyKey_PcrBank", pcr_bank);
 
-
     QString passphrase;
     int ok = tpm_utils::decryptByTPM(map, &passphrase);
     if (ok != 0) {
@@ -222,10 +218,6 @@ QString tpm_passphrase_utils::getPassphraseFromTPM(const QString &dev, const QSt
                    << dev;
     }
 
-    qInfo() << "DEBUG INFORMATION>>>>>>>>>>>>>>> got passphrase from TPM of device"
-            << dev
-            << pin
-            << passphrase;
     return passphrase;
 }
 
@@ -308,7 +300,7 @@ BlockDev device_utils::createBlockDevice(const QString &devObjPath)
     return monitor->createDeviceById(devObjPath).objectCast<DBlockDevice>();
 }
 
-void dialog_utils::showDialog(const QString &title, const QString &msg, DialogType type)
+int dialog_utils::showDialog(const QString &title, const QString &msg, DialogType type)
 {
     QString icon;
     switch (type) {
@@ -327,7 +319,7 @@ void dialog_utils::showDialog(const QString &title, const QString &msg, DialogTy
     d.setMessage(msg);
     d.setIcon(QIcon::fromTheme(icon));
     d.addButton(qApp->translate("dfmplugin_diskenc::ChgPassphraseDialog", "Confirm"));
-    d.exec();
+    return d.exec();
 }
 
 void device_utils::cacheToken(const QString &device, const QVariantMap &token)

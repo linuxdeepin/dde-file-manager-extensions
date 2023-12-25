@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "eventshandler.h"
 #include "dfmplugin_disk_encrypt_global.h"
-#include "gui/encryptparamsinputdialog.h"
 #include "gui/encryptprocessdialog.h"
 #include "gui/unlockpartitiondialog.h"
 #include "utils/encryptutils.h"
@@ -11,6 +10,7 @@
 #include <dfm-framework/dpf.h>
 
 #include <QApplication>
+#include <QtConcurrent/QtConcurrent>
 #include <QSettings>
 #include <QDBusConnection>
 #include <QDBusInterface>
@@ -151,6 +151,34 @@ bool EventsHandler::onAcquireDevicePwd(const QString &dev, QString *pwd, bool *c
         return false;
 
     int type = device_utils::encKeyType(dev);
+
+    // test tpm
+    if (type == kTPMAndPIN || type == kTPMOnly) {
+        QEventLoop loop;
+        qApp->setOverrideCursor(Qt::WaitCursor);
+        QtConcurrent::run([&] {
+            QString random;
+            if ((tpm_utils::getRandomByTPM(kPasswordSize, &random) != 0)
+                || random.isEmpty()) {
+                qWarning() << "TPM get random number failed!";
+                loop.exit(-1);
+                return;
+            }
+            loop.exit(0);
+        });
+        int ret = loop.exec();
+        qApp->restoreOverrideCursor();
+        if (ret != 0) {
+            ret = dialog_utils::showDialog(tr("Error"), tr("TPM status is abnormal, please use the recovery key to unlock it"),
+                                           dialog_utils::DialogType::kError);
+            if (ret == 0) {
+                // unlock by recovery key.
+                *pwd = acquirePassphraseByRec(dev, *cancelled);
+            }
+            return true;
+        }
+    }
+
     switch (type) {
     case SecKeyType::kTPMAndPIN:
         *pwd = acquirePassphraseByPIN(dev, *cancelled);
@@ -211,6 +239,18 @@ QString EventsHandler::acquirePassphraseByPIN(const QString &dev, bool &cancelle
 QString EventsHandler::acquirePassphraseByTPM(const QString &dev, bool &)
 {
     return tpm_passphrase_utils::getPassphraseFromTPM(dev, "");
+}
+
+QString EventsHandler::acquirePassphraseByRec(const QString &dev, bool &cancelled)
+{
+    UnlockPartitionDialog dlg(UnlockPartitionDialog::kRec);
+    int ret = dlg.exec();
+    if (ret != 1) {
+        cancelled = true;
+        return "";
+    }
+    auto keys = dlg.getUnlockKey();
+    return keys.second;
 }
 
 void EventsHandler::showPreEncryptError(const QString &dev, const QString &devName, int code)

@@ -30,6 +30,7 @@ private Q_SLOTS:
     QString acquirePassphrase(const QString &dev, bool &cancelled);
     QString acquirePassphraseByPIN(const QString &dev, bool &cancelled);
     QString acquirePassphraseByTPM(const QString &dev, bool &cancelled);
+    QString acquirePassphraseByRec(const QString &dev, bool &cancelled);
 
     void showPreEncryptError(const QString &device, const QString &devName, int code);
     void showDecryptError(const QString &device, const QString &devName, int code);

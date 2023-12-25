@@ -66,7 +66,7 @@ enum DialogType {
     kWarning,
     kError,
 };
-void showDialog(const QString &title, const QString &msg, DialogType type);
+int showDialog(const QString &title, const QString &msg, DialogType type);
 void showTPMError(const QString &title, tpm_passphrase_utils::TPMError err);
 }
 
