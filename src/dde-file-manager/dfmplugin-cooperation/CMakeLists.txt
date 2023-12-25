@@ -50,7 +50,6 @@ install(TARGETS
     ${DFM_PLUGIN_COMMON_EDGE_DIR}
 )
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
 execute_process(
     COMMAND lupdate
         ./
@@ -76,7 +75,6 @@ execute_process(
     WORKING_DIRECTORY
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
-endif()
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/translations
     DESTINATION share/dde-file-manager
