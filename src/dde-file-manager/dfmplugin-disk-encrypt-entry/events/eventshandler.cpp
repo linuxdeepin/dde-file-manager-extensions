@@ -153,30 +153,16 @@ bool EventsHandler::onAcquireDevicePwd(const QString &dev, QString *pwd, bool *c
     int type = device_utils::encKeyType(dev);
 
     // test tpm
-    if (type == kTPMAndPIN || type == kTPMOnly) {
-        QEventLoop loop;
-        qApp->setOverrideCursor(Qt::WaitCursor);
-        QtConcurrent::run([&] {
-            QString random;
-            if ((tpm_utils::getRandomByTPM(kPasswordSize, &random) != 0)
-                || random.isEmpty()) {
-                qWarning() << "TPM get random number failed!";
-                loop.exit(-1);
-                return;
-            }
-            loop.exit(0);
-        });
-        int ret = loop.exec();
-        qApp->restoreOverrideCursor();
-        if (ret != 0) {
-            ret = dialog_utils::showDialog(tr("Error"), tr("TPM status is abnormal, please use the recovery key to unlock it"),
+    bool testTPM = (type == kTPMAndPIN || type == kTPMOnly);
+    if (testTPM && tpm_utils::checkTPM() != 0) {
+        qWarning() << "TPM service is not available.";
+        int ret = dialog_utils::showDialog(tr("Error"), tr("TPM status is abnormal, please use the recovery key to unlock it"),
                                            dialog_utils::DialogType::kError);
-            if (ret == 0) {
-                // unlock by recovery key.
-                *pwd = acquirePassphraseByRec(dev, *cancelled);
-            }
-            return true;
-        }
+        // unlock by recovery key.
+        if (ret == 0)
+            *pwd = acquirePassphraseByRec(dev, *cancelled);
+
+        return true;
     }
 
     switch (type) {
