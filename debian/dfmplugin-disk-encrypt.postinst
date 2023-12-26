@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "Enable dde-filemanager-daemon.service"
+systemctl enable dde-filemanager-daemon.service
