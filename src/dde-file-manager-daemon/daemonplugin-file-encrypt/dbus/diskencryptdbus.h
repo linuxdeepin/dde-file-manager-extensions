@@ -45,7 +45,7 @@ private:
     bool checkAuth(const QString &actID);
     void startReencrypt(const QString &dev, const QString &passphrase, const QString &token, int cipherPos, int recPos);
     void setToken(const QString &dev, const QString &token);
-    void triggerReencrypt();
+    bool triggerReencrypt();
     void diskCheck();
     static void getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev);
     static bool updateCrypttab();

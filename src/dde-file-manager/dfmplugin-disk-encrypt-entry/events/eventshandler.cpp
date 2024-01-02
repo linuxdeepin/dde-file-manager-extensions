@@ -33,6 +33,15 @@ EventsHandler *EventsHandler::instance()
 
 void EventsHandler::bindDaemonSignals()
 {
+    // FIXME(xust) split the unlock module into another plugin.
+    // for unlocking devices in file dialog, this plugin is loaded,
+    // which cause when en/decrypt devices, the signal are handled
+    // by both file manager and file dialog, so multiple progress
+    // dialog and finished dialog are shown.
+    // this class is singleton but in different process it's not.
+    if (qApp->applicationName() != "dde-file-manager")
+        return;
+
     auto conn = [this](const char *sig, const char *slot) {
         QDBusConnection::systemBus().connect(kDaemonBusName,
                                              kDaemonBusPath,
