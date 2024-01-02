@@ -56,7 +56,6 @@ DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
             this, &DiskEncryptDBus::onEncryptDBusUnregistered);
 
     triggerReencrypt();
-
     QtConcurrent::run([this] { diskCheck(); });
 }
 
@@ -192,6 +191,10 @@ void DiskEncryptDBus::onEncryptDBusRegistered(const QString &service)
     qInfo() << service << "  signal connected: " << connected << "DiskReencryptProgress";
     connected &= conn("DiskReencryptResult", SLOT(onFstabDiskEncFinished(const QString &, int, const QString &)));
     qInfo() << service << "  signal connected: " << connected << "DiskReencryptResult";
+
+    QTimer::singleShot(1000, qApp, [] {
+        QtConcurrent::run([] { updateInitrd(); });
+    });
 }
 
 void DiskEncryptDBus::onEncryptDBusUnregistered(const QString &service)
@@ -290,9 +293,7 @@ void DiskEncryptDBus::triggerReencrypt()
     }
 
     qInfo() << "about to start encrypting" << clearDev;
-    QTimer::singleShot(1000, qApp, [] {
-        QtConcurrent::run([] { updateInitrd(); });
-    });
+
     devHandler.close();
 }
 
@@ -326,6 +327,7 @@ void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QSt
 
 bool DiskEncryptDBus::updateCrypttab()
 {
+    qInfo() << "==== start checking crypttab...";
     QFile crypttab("/etc/crypttab");
     if (!crypttab.open(QIODevice::ReadWrite)) {
         qWarning() << "cannot open crypttab for rw";
@@ -338,31 +340,36 @@ bool DiskEncryptDBus::updateCrypttab()
     QByteArrayList lines = content.split('\n');
     for (int i = lines.count() - 1; i >= 0; --i) {
         QString line = lines.at(i);
-        if (line.startsWith("#")) continue;
+        if (line.startsWith("#")) {
+            qInfo() << "==== [ignore] comment:" << line;
+            continue;
+        }
 
         auto items = line.split(QRegularExpression(R"( |\t)"), QString::SkipEmptyParts);
         if (items.count() < 2) {
             lines.removeAt(i);
+            qInfo() << "==== [remove] invalid line:" << line;
             continue;
         }
 
         if (isEncrypted(items.at(1)) == 0) {
             lines.removeAt(i);
             cryptUpdated = true;
-            qInfo() << items.at(1) << "not encrypted anymore" << line << "is removed.";
+            qInfo() << "==== [remove] this item is not encrypted:" << line;
         }
     }
-    content = lines.join('\n');
-    content.append("\n");
-    if (!crypttab.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qWarning() << "cannot open cryppttab for update";
-        return false;
+
+    qInfo() << "==== end checking crypttab, crypttab is updated:" << cryptUpdated;
+    if (cryptUpdated) {
+        content = lines.join('\n');
+        content.append("\n");
+        if (!crypttab.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            qWarning() << "cannot open cryppttab for update";
+            return false;
+        }
+        crypttab.write(content);
+        crypttab.close();
     }
-
-    qInfo() << "crypttab is updated: " << cryptUpdated;
-    crypttab.write(content);
-    crypttab.close();
-
     return cryptUpdated;
 }
 
