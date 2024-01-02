@@ -267,34 +267,35 @@ void DiskEncryptDBus::setToken(const QString &dev, const QString &token)
         qWarning() << "set token failed for device" << dev;
 }
 
-void DiskEncryptDBus::triggerReencrypt()
+bool DiskEncryptDBus::triggerReencrypt()
 {
     QString clearDev;
     if (!readEncryptDevice(&currentEncryptingDevice, &clearDev, &deviceName)) {
-        qInfo() << "no encrypt config or config is invalid.";
-        return;
+        qWarning() << "no encrypt config or config is invalid.";
+        return false;
     }
 
     QFile devHandler("/dev/usec_crypt");
     if (!devHandler.exists()) {
         qWarning() << "no device handler exists!";
-        return;
+        return false;
     }
 
     if (!devHandler.open(QIODevice::WriteOnly)) {
         qWarning() << "device handler open failed!";
-        return;
+        return false;
     }
 
     if (0 > devHandler.write(clearDev.toLocal8Bit())) {
         qWarning() << "reencrypt trigger failed!";
         devHandler.close();
-        return;
+        return false;
     }
 
     qInfo() << "about to start encrypting" << clearDev;
 
     devHandler.close();
+    return true;
 }
 
 void DiskEncryptDBus::diskCheck()
