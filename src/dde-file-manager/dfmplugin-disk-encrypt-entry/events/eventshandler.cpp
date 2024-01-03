@@ -317,25 +317,38 @@ void EventsHandler::showChgPwdError(const QString &dev, const QString &devName, 
     QString title;
     QString msg;
     QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
+
+    int encType = device_utils::encKeyType(dev);
+    QString codeType;
+    switch (encType) {
+    case SecKeyType::kPasswordOnly:
+        codeType = tr("passphrase");
+        break;
+    default:
+        codeType = tr("PIN");
+        break;
+    }
+
     bool showError = false;
     switch (-code) {
     case (kSuccess):
-        title = tr("Change passphrase done");
-        msg = tr("%1's passphrase has been changed").arg(device);
+        title = tr("Change %1 done").arg(codeType);
+        msg = tr("%1's %2 has been changed").arg(device).arg(codeType);
         break;
     case kUserCancelled:
-        title = tr("Change passphrase");
+        title = tr("Change %1").arg(codeType);
         msg = tr("User cancelled operation");
         break;
     case kErrorChangePassphraseFailed:
-        title = tr("Change passphrase failed");
-        msg = tr("Wrong passpharse or PIN");
+        title = tr("Change %1 failed").arg(codeType);
+        msg = tr("Wrong %1").arg(codeType);
         showError = true;
         break;
     default:
-        title = tr("Change passphrase failed");
-        msg = tr("Device %1 change passphrase failed, please see log for more information.(%2)")
+        title = tr("Change %1 failed").arg(codeType);
+        msg = tr("Device %1 change %2 failed, please see log for more information.(%3)")
                       .arg(device)
+                      .arg(codeType)
                       .arg(code);
         showError = true;
         break;
