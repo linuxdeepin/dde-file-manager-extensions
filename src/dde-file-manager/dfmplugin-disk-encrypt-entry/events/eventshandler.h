@@ -8,7 +8,7 @@
 #include <QMap>
 
 namespace dfmplugin_diskenc {
-class EncryptProcessDialog;
+class EncryptProgressDialog;
 class EventsHandler : public QObject
 {
     Q_OBJECT
@@ -42,9 +42,9 @@ private Q_SLOTS:
 
 private:
     explicit EventsHandler(QObject *parent = nullptr);
-
-    QMap<QString, EncryptProcessDialog *> encryptDialogs;
-    QMap<QString, EncryptProcessDialog *> decryptDialogs;
+    
+    QMap<QString, EncryptProgressDialog *> encryptDialogs;
+    QMap<QString, EncryptProgressDialog *> decryptDialogs;
 signals:
 };
 }
