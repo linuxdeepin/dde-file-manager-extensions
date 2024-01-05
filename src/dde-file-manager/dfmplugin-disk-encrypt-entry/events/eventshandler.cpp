@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "eventshandler.h"
 #include "dfmplugin_disk_encrypt_global.h"
-#include "gui/encryptprocessdialog.h"
+#include "gui/encryptprogressdialog.h"
 #include "gui/unlockpartitiondialog.h"
 #include "utils/encryptutils.h"
 
@@ -130,9 +130,9 @@ void EventsHandler::onEncryptProgress(const QString &dev, const QString &devName
         QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
 
         QApplication::restoreOverrideCursor();
-        auto dlg = new EncryptProcessDialog(tr("Encrypting...%1").arg(device));
-        connect(dlg, &EncryptProcessDialog::destroyed,
-                this, [this, dev] { encryptDialogs.remove(dev); });
+        auto dlg = new EncryptProgressDialog(qApp->activeWindow());
+        dlg->setText(tr("%1 is under encrypting...").arg(device),
+                     tr("The encrypting process may have system lag, please minimize the system operation"));
         encryptDialogs.insert(dev, dlg);
     }
     auto dlg = encryptDialogs.value(dev);
@@ -146,7 +146,10 @@ void EventsHandler::onDecryptProgress(const QString &dev, const QString &devName
         QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
 
         QApplication::restoreOverrideCursor();
-        decryptDialogs.insert(dev, new EncryptProcessDialog(tr("Decrypting...%1").arg(device)));
+        auto dlg = new EncryptProgressDialog(qApp->activeWindow());
+        dlg->setText(tr("%1 is under decrypting...").arg(device),
+                     tr("The decrypting process may have system lag, please minimize the system operation"));
+        decryptDialogs.insert(dev, dlg);
     }
 
     auto dlg = decryptDialogs.value(dev);

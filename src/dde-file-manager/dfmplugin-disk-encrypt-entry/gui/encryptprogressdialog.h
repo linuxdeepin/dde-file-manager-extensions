@@ -2,36 +2,31 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#ifndef ENCRYPTPROCESSDIALOG_H
-#define ENCRYPTPROCESSDIALOG_H
+#ifndef ENCRYPTPROGRESSDIALOG_H
+#define ENCRYPTPROGRESSDIALOG_H
 
 #include <DDialog>
-#include <DProgressBar>
 #include <DWaterProgress>
-#include <QTimer>
 
 DWIDGET_USE_NAMESPACE
 
 namespace dfmplugin_diskenc {
 
-class EncryptProcessDialog : public DDialog
+class EncryptProgressDialog : public DDialog
 {
     Q_OBJECT
 public:
-    explicit EncryptProcessDialog(const QString &title, QWidget *parent = nullptr);
+    explicit EncryptProgressDialog(QWidget *parent = nullptr);
+    void setText(const QString &title, const QString &message);
     void updateProgress(double progress);
 
 protected:
     void initUI();
 
-protected Q_SLOTS:
-    void onBtnClicked(int idx);
-
 private:
     DWaterProgress *progress { nullptr };
-
-    QString title;
+    QLabel *message { nullptr };
 };
 }
 
-#endif   // ENCRYPTPROCESSDIALOG_H
+#endif   // ENCRYPTPROGRESSDIALOG_H
