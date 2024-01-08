@@ -10,6 +10,8 @@
 #include <QObject>
 #include <QDBusContext>
 #include <QDBusServiceWatcher>
+#include <QDBusUnixFileDescriptor>
+#include <QDBusReply>
 
 FILE_ENCRYPT_BEGIN_NS
 class DiskEncryptDBus : public QObject, public QDBusContext
@@ -53,6 +55,7 @@ private:
     static void updateInitrd();
 
     bool readEncryptDevice(QString *backingDev, QString *clearDev, QString *devName);
+    static QDBusReply<QDBusUnixFileDescriptor> inhibit();
 
 private:
     QSharedPointer<QDBusServiceWatcher> watcher;

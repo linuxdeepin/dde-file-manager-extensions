@@ -12,6 +12,7 @@
 #include <dfm-mount/dmount.h>
 
 #include <QDBusConnection>
+#include <QDBusInterface>
 #include <QtConcurrent>
 #include <QDateTime>
 #include <QDebug>
@@ -398,9 +399,13 @@ int DiskEncryptDBus::isEncrypted(const QString &device)
 
 void DiskEncryptDBus::updateInitrd()
 {
-    qDebug() << "start update initramfs..." << QDateTime::currentDateTime();
+    auto fd = inhibit();
+    qInfo() << "start update initramfs..." << QDateTime::currentDateTime();
+    qInfo() << "blocking reboot:" << fd.value().fileDescriptor();
     int ret = system("update-initramfs -u");
-    qDebug() << "initramfs updated: " << ret << QDateTime::currentDateTime();
+
+    qInfo() << "initramfs updated: " << ret << QDateTime::currentDateTime();
+    qInfo() << "release blocking fd done.";
 }
 
 bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev, QString *devName)
@@ -434,4 +439,18 @@ bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev, 
     *clearDev = volVal.toString();
     *devName = nameVal.toString();
     return true;
+}
+
+QDBusReply<QDBusUnixFileDescriptor> DiskEncryptDBus::inhibit()
+{
+    QDBusInterface iface("org.freedesktop.login1",
+                         "/org/freedesktop/login1",
+                         "org.freedesktop.login1.Manager",
+                         QDBusConnection::systemBus());
+    QVariantList args;
+    args << QString("shutdown:sleep:")
+         << QString("file-manager-daemon")
+         << QString("Updating initramfs...")
+         << QString("block");
+    return iface.callWithArgumentList(QDBus::Block, "Inhibit", args);
 }
