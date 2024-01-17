@@ -358,7 +358,10 @@ bool DiskEncryptDBus::updateCrypttab()
             lines.removeAt(i);
             cryptUpdated = true;
             qInfo() << "==== [remove] this item is not encrypted:" << line;
+            continue;
         }
+
+        qInfo() << "==== [ keep ] device is still encrypted:" << line;
     }
 
     qInfo() << "==== end checking crypttab, crypttab is updated:" << cryptUpdated;
@@ -381,19 +384,18 @@ int DiskEncryptDBus::isEncrypted(const QString &target, const QString &source)
     getDeviceMapper(&dev2uuid, &uuid2dev);
 
     QString dev = source;
-    if (dev.startsWith("UUID"))
+    if (dev.startsWith("UUID")) {
         dev = uuid2dev.value(dev);
-    if (dev.isEmpty()) {   // the UUID might not exist after decrypted.
-        qInfo() << "cannot find device description." << source;
-        if (target.startsWith("dm-"))
-            dev = "/dev/" + target.mid(3);
-
-        qInfo() << "try query by original device path:" << dev
-                << ",target device is:" << target;
+        if (dev.isEmpty()) {
+            qWarning() << "cannot find device by UUID, device might already decrypted." << source;
+            return 0;
+        }
     }
 
-    if (dev.isEmpty())
+    if (dev.isEmpty()) {
+        qWarning() << "cannot find device:" << target << source;
         return -1;
+    }
 
     auto devPtr = block_device_utils::bcCreateBlkDev(dev);
     if (!devPtr) {
