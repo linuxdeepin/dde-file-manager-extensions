@@ -6,6 +6,7 @@
 #define GLOBALTYPESDEFINE_H
 
 #include <QString>
+#include <QStringList>
 
 namespace disk_encrypt {
 
@@ -18,11 +19,19 @@ inline constexpr char kKeyOldPassphrase[] { "oldPassphrase" };
 inline constexpr char kKeyCipher[] { "cipher" };
 inline constexpr char kKeyRecoveryExportPath[] { "exportRecKeyTo" };
 inline constexpr char kKeyInitParamsOnly[] { "initParamsOnly" };
+inline constexpr char kKeyMountPoint[] { "mountpoint" };
 inline constexpr char kKeyTPMConfig[] { "tpmConfig" };
 inline constexpr char kKeyTPMToken[] { "tpmToken" };
 inline constexpr char kKeyValidateWithRecKey[] { "usingRecKey" };
 inline constexpr char kKeyDeviceName[] { "deviceName" };
 }   // namespace encrypt_param_keys
+
+inline const QStringList kDisabledEncryptPath {
+    "/",
+    "/boot",
+    "/boot/efi",
+    "/recovery"
+};
 
 enum EncryptOperationStatus {
     kSuccess = 0,
@@ -56,6 +65,7 @@ enum EncryptOperationStatus {
     kErrorOpenFileFailed,
     kErrorSetTokenFailed,
     kErrorResizeFs,
+    kErrorDisabledMountPoint,
 
     kErrorUnknown,
 };
@@ -75,6 +85,7 @@ struct DeviceEncryptParam
     QString newKey;
     QString exportPath;
     QString deviceDisplayName;
+    QString mountPoint;
     bool initOnly;
     bool validateByRecKey;
 };

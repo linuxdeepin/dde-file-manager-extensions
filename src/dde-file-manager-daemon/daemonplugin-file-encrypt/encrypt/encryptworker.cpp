@@ -37,6 +37,13 @@ PrencryptWorker::PrencryptWorker(const QString &jobID,
 
 void PrencryptWorker::run()
 {
+    QString mpt = params.value(encrypt_param_keys::kKeyMountPoint).toString();
+    if (kDisabledEncryptPath.contains(mpt, Qt::CaseInsensitive)) {
+        qInfo() << "device mounted at disable list, ignore encrypt.";
+        setExitCode(-kErrorDisabledMountPoint);
+        return;
+    }
+
     if (params.value(encrypt_param_keys::kKeyInitParamsOnly, false).toBool()) {
         setExitCode(writeEncryptParams());
         setFstabTimeout();
@@ -96,13 +103,15 @@ int PrencryptWorker::writeEncryptParams()
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
-    obj.insert("device", uuid);
-    obj.insert("device-path", dev);
-    obj.insert("volume", dmDev);
+
+    obj.insert("volume", dmDev);   // used to name a opened luks device.
+    obj.insert("device", uuid);   // used to locate the backing device.
+    obj.insert("device-path", dev);   // used to locate the backing device by device path.
+    obj.insert("device-name", params.value(encrypt_param_keys::kKeyDeviceName).toString());   // the device name display in dde-file-manager
+    obj.insert("device-mountpoint", params.value(encrypt_param_keys::kKeyMountPoint).toString());   // the mountpoint of the device
     obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString() + "-xts-plain64");
     obj.insert("key-size", "256");
     obj.insert("mode", encMode.value(params.value(encrypt_param_keys::kKeyEncMode).toInt()));
-    obj.insert("device-name", params.value(encrypt_param_keys::kKeyDeviceName).toString());
 
     QString expPath = params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString();
     if (!expPath.isEmpty()) {
@@ -112,7 +121,7 @@ int PrencryptWorker::writeEncryptParams()
     obj.insert("recoverykey-path", expPath);
 
     QJsonDocument tpmConfig = QJsonDocument::fromJson(params.value(encrypt_param_keys::kKeyTPMConfig).toString().toLocal8Bit());
-    obj.insert("tpm-config", tpmConfig.object());
+    obj.insert("tpm-config", tpmConfig.object());   // the tpm info used to decrypt passphrase from tpm.
     QJsonDocument doc(obj);
 
     createUsecPathIfNotExist();

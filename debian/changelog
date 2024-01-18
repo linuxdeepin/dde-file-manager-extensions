@@ -1,3 +1,9 @@
+dde-file-manager-extensions (1.1.7) unstable; urgency=medium
+
+  * disable encrypt root(/) and recovery(/recovery) partition.
+
+ -- xushitong <xushitong@uniontech.com>  Thu, 18 Jan 2024 16:40:13 +0800
+
 dde-file-manager-extensions (1.1.6) unstable; urgency=medium
 
   * fix some issues

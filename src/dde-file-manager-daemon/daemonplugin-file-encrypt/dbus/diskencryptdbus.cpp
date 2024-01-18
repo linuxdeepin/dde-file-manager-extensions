@@ -11,12 +11,9 @@
 #include <dfm-framework/dpf.h>
 #include <dfm-mount/dmount.h>
 
-#include <QDBusConnection>
-#include <QDBusInterface>
 #include <QtConcurrent>
 #include <QDateTime>
 #include <QDebug>
-#include <QSettings>
 
 #include <libcryptsetup.h>
 
@@ -192,10 +189,6 @@ void DiskEncryptDBus::onEncryptDBusRegistered(const QString &service)
     qInfo() << service << "  signal connected: " << connected << "DiskReencryptProgress";
     connected &= conn("DiskReencryptResult", SLOT(onFstabDiskEncFinished(const QString &, int, const QString &)));
     qInfo() << service << "  signal connected: " << connected << "DiskReencryptResult";
-
-    QTimer::singleShot(1000, qApp, [] {
-        QtConcurrent::run([] { updateInitrd(); });
-    });
 }
 
 void DiskEncryptDBus::onEncryptDBusUnregistered(const QString &service)
@@ -301,8 +294,7 @@ bool DiskEncryptDBus::triggerReencrypt()
 
 void DiskEncryptDBus::diskCheck()
 {
-    if (updateCrypttab())
-        updateInitrd();
+    updateCrypttab();
 }
 
 void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev)
@@ -406,17 +398,6 @@ int DiskEncryptDBus::isEncrypted(const QString &target, const QString &source)
     return devPtr->isEncrypted() ? 1 : 0;
 }
 
-void DiskEncryptDBus::updateInitrd()
-{
-    auto fd = inhibit();
-    qInfo() << "start update initramfs..." << QDateTime::currentDateTime();
-    qInfo() << "blocking reboot:" << fd.value().fileDescriptor();
-    int ret = system("update-initramfs -u");
-
-    qInfo() << "initramfs updated: " << ret << QDateTime::currentDateTime();
-    qInfo() << "release blocking fd done.";
-}
-
 bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev, QString *devName)
 {
     Q_ASSERT(backingDev && clearDev && devName);
@@ -448,18 +429,4 @@ bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev, 
     *clearDev = volVal.toString();
     *devName = nameVal.toString();
     return true;
-}
-
-QDBusReply<QDBusUnixFileDescriptor> DiskEncryptDBus::inhibit()
-{
-    QDBusInterface iface("org.freedesktop.login1",
-                         "/org/freedesktop/login1",
-                         "org.freedesktop.login1.Manager",
-                         QDBusConnection::systemBus());
-    QVariantList args;
-    args << QString("shutdown:sleep:")
-         << QString("file-manager-daemon")
-         << QString("Updating initramfs...")
-         << QString("block");
-    return iface.callWithArgumentList(QDBus::Block, "Inhibit", args);
 }
