@@ -94,25 +94,15 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     if (devMpt.isEmpty() && selectedItemInfo.contains("ClearBlockDeviceInfo"))
         devMpt = selectedItemInfo.value("ClearBlockDeviceInfo").toHash().value("MountPoint").toString();
 
-    QStringList disablePaths { "/boot/efi", "/boot", "/swap" };
-    bool disable = std::any_of(disablePaths.cbegin(), disablePaths.cend(),
-                               [devMpt](auto path) { return devMpt.startsWith(path); });
-    if (disable) {
+    if (kDisabledEncryptPath.contains(devMpt, Qt::CaseInsensitive)) {
         qInfo() << devMpt << "doesn't support encrypt";
         return false;
-    }
-
-    if (devMpt == "/") {
-        QStorageInfo boot("/boot");
-        if (boot.device() == device) {
-            qInfo() << "/boot does not have a separate partition, disable root partition encryption";
-            return false;
-        }
     }
 
     selectionMounted = !devMpt.isEmpty();
     param.devDesc = device;
     param.initOnly = fstab_utils::isFstabItem(devMpt);
+    param.mountPoint = devMpt;
     param.uuid = selectedItemInfo.value("IdUUID", "").toString();
     param.deviceDisplayName = info->displayOf(dfmbase::FileInfo::kFileDisplayName);
     param.type = SecKeyType::kPasswordOnly;
@@ -321,7 +311,8 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
             { encrypt_param_keys::kKeyInitParamsOnly, param.initOnly },
             { encrypt_param_keys::kKeyRecoveryExportPath, param.exportPath },
             { encrypt_param_keys::kKeyEncMode, static_cast<int>(param.type) },
-            { encrypt_param_keys::kKeyDeviceName, param.deviceDisplayName }
+            { encrypt_param_keys::kKeyDeviceName, param.deviceDisplayName },
+            { encrypt_param_keys::kKeyMountPoint, param.mountPoint }
         };
         if (!tpmConfig.isEmpty()) params.insert(encrypt_param_keys::kKeyTPMConfig, tpmConfig);
         if (!tpmToken.isEmpty()) params.insert(encrypt_param_keys::kKeyTPMToken, tpmToken);
