@@ -18,7 +18,7 @@
 <context>
     <name>dfmplugin_cooperation::CooperationMenuScene</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-cooperation/menu/cooperationmenuscene.cpp" line="34"/>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/menu/cooperationmenuscene.cpp" line="32"/>
         <source>File transfer</source>
         <translation>文件投送</translation>
     </message>
