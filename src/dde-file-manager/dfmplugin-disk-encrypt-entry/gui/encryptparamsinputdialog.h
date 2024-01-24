@@ -57,7 +57,7 @@ private:
 
     QLabel *keyHint1 { nullptr };
     QLabel *keyHint2 { nullptr };
-    QLabel *pinOnlyHint { nullptr };
+    QLabel *unlockTypeHint { nullptr };
     QStackedLayout *pagesLay { nullptr };
 
 private:

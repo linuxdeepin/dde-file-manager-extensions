@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "dfmplugin_disk_encrypt_global.h"
 #include "encryptparamsinputdialog.h"
 #include "utils/encryptutils.h"
 
@@ -102,12 +101,22 @@ void EncryptParamsInputDialog::initConn()
 QWidget *EncryptParamsInputDialog::createPasswordPage()
 {
     QWidget *wid = new QWidget(this);
-    QFormLayout *lay = new QFormLayout(this);
+    QFormLayout *lay = new QFormLayout();
+    lay->setContentsMargins(0, 10, 0, 0);
     wid->setLayout(lay);
 
     encType = new DComboBox(this);
     encType->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-    lay->addRow(tr("Encrypt type"), encType);
+    lay->addRow(tr("Unlock type"), encType);
+
+    unlockTypeHint = new QLabel(this); /*tr("User access to the partition is automatically "
+                                "unlocked without passphrase checking.")*/
+    unlockTypeHint->setWordWrap(true);
+    lay->addRow("", unlockTypeHint);
+    auto font = unlockTypeHint->font();
+    font.setPixelSize(12);
+    unlockTypeHint->setFont(font);
+    unlockTypeHint->setFixedWidth(360);
 
     keyHint1 = new QLabel(this);
     encKeyEdit1 = new DPasswordEdit(this);
@@ -117,14 +126,6 @@ QWidget *EncryptParamsInputDialog::createPasswordPage()
     keyHint2 = new QLabel(this);
     encKeyEdit2 = new DPasswordEdit(this);
     lay->addRow(keyHint2, encKeyEdit2);
-
-    pinOnlyHint = new QLabel(tr("User access to the partition is automatically "
-                                "unlocked without passphrase checking."));
-    pinOnlyHint->setWordWrap(true);
-    lay->addRow("", pinOnlyHint);
-    auto font = pinOnlyHint->font();
-    font.setPixelSize(12);
-    pinOnlyHint->setFont(font);
 
     encType->addItems({ tr("Unlocked by passphrase"),
                         tr("Use TPM+PIN to unlock on this computer (recommended)"),
@@ -146,7 +147,7 @@ QWidget *EncryptParamsInputDialog::createPasswordPage()
 
 QWidget *EncryptParamsInputDialog::createExportPage()
 {
-    QVBoxLayout *lay = new QVBoxLayout(this);
+    QVBoxLayout *lay = new QVBoxLayout();
     QWidget *wid = new QWidget(this);
     wid->setLayout(lay);
     lay->setMargin(0);
@@ -171,10 +172,10 @@ QWidget *EncryptParamsInputDialog::createExportPage()
 
 QWidget *EncryptParamsInputDialog::createConfirmLayout()
 {
-    QVBoxLayout *lay = new QVBoxLayout(this);
+    QVBoxLayout *lay = new QVBoxLayout();
     QWidget *wid = new QWidget(this);
     wid->setLayout(lay);
-    lay->setMargin(0);
+    lay->setMargin(10);
 
     QString displayName = QString("%1(%2)").arg(params.deviceDisplayName).arg(params.devDesc.mid(5));
     QLabel *hint = new QLabel(tr("After clicking \"Confirm encryption\", "
@@ -184,8 +185,21 @@ QWidget *EncryptParamsInputDialog::createConfirmLayout()
     hint->setWordWrap(true);
     hint->adjustSize();
     hint->setAlignment(Qt::AlignCenter);
-
     lay->addWidget(hint);
+
+    lay->addSpacerItem(new QSpacerItem(1, 300));
+
+    hint = new QLabel(tr("* After encrypting the partition, "
+                         "the system cannot be rolled back to a lower version, "
+                         "please confirm the encryption"));
+    hint->adjustSize();
+    hint->setWordWrap(true);
+    hint->setAlignment(Qt::AlignCenter);
+    auto pal = hint->palette();
+    pal.setColor(QPalette::WindowText, QColor("red"));
+    hint->setPalette(pal);
+    lay->addWidget(hint);
+
     return wid;
 }
 
@@ -286,8 +300,6 @@ void EncryptParamsInputDialog::setPasswordInputVisible(bool visible)
     keyHint2->setVisible(visible);
     encKeyEdit1->setVisible(visible);
     encKeyEdit2->setVisible(visible);
-
-    pinOnlyHint->setVisible(!visible);
 }
 
 void EncryptParamsInputDialog::onButtonClicked(int idx)
@@ -359,22 +371,24 @@ void EncryptParamsInputDialog::onEncTypeChanged(int type)
         keyHint2->setText(filed2.arg(tr("passphrase")));
         encKeyEdit1->setPlaceholderText(placeholder1);
         encKeyEdit2->setPlaceholderText(placeholder2.arg(tr("Passphrase")));
+        unlockTypeHint->setText(tr("Access to the partition will be unlocked using a passphrase."));
     } else if (type == kTPMAndPIN) {
         setPasswordInputVisible(true);
         keyHint1->setText(filed1.arg(tr("PIN")));
         keyHint2->setText(filed2.arg(tr("PIN")));
         encKeyEdit1->setPlaceholderText(placeholder1);
         encKeyEdit2->setPlaceholderText(placeholder2.arg(tr("PIN")));
+        unlockTypeHint->setText(tr("Access to the partition will be unlocked using the TPM security chip and PIN."));
     } else if (type == kTPMOnly) {
         setPasswordInputVisible(false);
+        unlockTypeHint->setText(tr("Access to the partition will be automatically unlocked using the TPM security chip, "
+                                   "no passphrase checking is required."));
     } else {
         qWarning() << "wrong encrypt type!" << type;
     }
 
-    if (params.initOnly) {
+    if (params.initOnly)
         setPasswordInputVisible(false);
-        pinOnlyHint->setHidden(type != kTPMOnly);
-    }
 }
 
 void EncryptParamsInputDialog::onExpPathChanged(const QString &path, bool silent)

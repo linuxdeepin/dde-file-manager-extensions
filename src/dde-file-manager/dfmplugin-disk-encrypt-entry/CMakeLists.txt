@@ -61,21 +61,21 @@ dconfig_meta_files(APPID "org.deepin.dde.file-manager"
     FILES "${CMAKE_SOURCE_DIR}/assets/configs/org.deepin.dde.file-manager.diskencrypt.json"
 )
 
-execute_process(
-    COMMAND lupdate
-        ./
-        -ts
-        -no-obsolete
-        ${CMAKE_SOURCE_DIR}/translations/disk-encrypt.ts
-    COMMAND lupdate
-        ./
-        -ts
-        -no-obsolete
-        ${CMAKE_SOURCE_DIR}/translations/disk-encrypt_zh_CN.ts
+# execute_process(
+#     COMMAND lupdate
+#         ./
+#         -ts
+#         -no-obsolete
+#         ${CMAKE_SOURCE_DIR}/translations/disk-encrypt.ts
+#     COMMAND lupdate
+#         ./
+#         -ts
+#         -no-obsolete
+#         ${CMAKE_SOURCE_DIR}/translations/disk-encrypt_zh_CN.ts
 
-    WORKING_DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+#     WORKING_DIRECTORY
+#         ${CMAKE_CURRENT_SOURCE_DIR}
+# )
 
 execute_process(
     COMMAND lrelease
