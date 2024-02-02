@@ -11,11 +11,11 @@
 #include <QDir>
 #include <QRegularExpression>
 #include <QSettings>
+#include <QReadWriteLock>
 
 FILE_ENCRYPT_USE_NS
 using namespace disk_encrypt;
 
-#define DEV_KEY QString("device/%1")
 static constexpr char kBootUsecPath[] { "/boot/usec-crypt" };
 
 void createUsecPathIfNotExist()
@@ -206,7 +206,8 @@ ReencryptWorker::ReencryptWorker(const QString &dev,
 void ReencryptWorker::run()
 {
     int ret = disk_encrypt_funcs::bcResumeReencrypt(device,
-                                                    passphrase);
+                                                    passphrase,
+                                                    "");
 
     Q_EMIT deviceReencryptResult(device, ret);
 }
@@ -297,4 +298,225 @@ void ChgPassWorker::run()
     }
 
     setExitCode(ret);
+}
+
+ReencryptWorkerV2::ReencryptWorkerV2(QObject *parent)
+    : Worker("", parent)
+{
+}
+
+void ReencryptWorkerV2::setEncryptParams(const QVariantMap &params)
+{
+    QWriteLocker lk(&lock);
+    this->params = params;
+}
+
+void ReencryptWorkerV2::loadReencryptConfig()
+{
+    disk_encrypt_utils::bcReadEncryptConfig(&config);
+}
+
+EncryptConfig ReencryptWorkerV2::encryptConfig() const
+{
+    return config;
+}
+
+void ReencryptWorkerV2::run()
+{
+    if (!hasUnfinishedOnlineEncryption()) {
+        qInfo() << "no unfinished encryption job exists. exit thread.";
+        return;
+    }
+
+    while (true) {
+        QReadLocker lk(&lock);
+        if (validateParams())
+            break;
+
+        Q_EMIT requestEncryptParams(config.keyConfig());
+        QThread::sleep(3);   // don't request frequently.
+    }
+
+    int ret = disk_encrypt_funcs::bcResumeReencrypt(config.devicePath, "", config.clearDev, false);
+    if (ret == kSuccess) {
+        // sets the passphrase, token, recovery-key
+        setPassphrase();
+        setRecoveryKey();
+        setBakcingDevLabel();
+        updateCrypttab();
+        removeEncryptFile();
+    } else {
+        setExitCode(ret);
+    }
+    Q_EMIT deviceReencryptResult(config.devicePath, ret);
+}
+
+bool ReencryptWorkerV2::hasUnfinishedOnlineEncryption()
+{
+    if (config.devicePath.isEmpty()) {
+        qInfo() << "no unfinished encrypt device.";
+        return false;
+    }
+
+    // 2. check if it's really unfinished.
+    EncryptStatus status;
+    if (kSuccess != block_device_utils::bcDevEncryptStatus(config.devicePath, &status)) {
+        qWarning() << "cannot get encrypt requirements!" << config.devicePath;
+        return false;
+    }
+
+    switch (status) {
+    case kStatusOnlineUnfinished:
+        // 3. start a worker if device is not finished ONLINE encryption.
+        qInfo() << "device is not finished ONLINE encryption:" << config.devicePath;
+        return true;
+    default:
+        break;
+    }
+    return false;
+}
+
+void ReencryptWorkerV2::setPassphrase()
+{
+    const QString &pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+    const QString &token = params.value(encrypt_param_keys::kKeyTPMToken).toString();
+    int passKeyslot = -1;
+    int ret = disk_encrypt_funcs::bcChangePassphrase(config.devicePath, "", pass, &passKeyslot);
+    if (ret != kSuccess) {
+        qCritical() << "cannot set passphrase for device!" << config.devicePath << ret;
+        setExitCode(ret);
+        return;
+    }
+
+    if (!token.isEmpty()) {
+        // update token keyslot.
+        auto _token = updateTokenKeyslots(token, passKeyslot);
+        ret = disk_encrypt_funcs::bcSetToken(config.devicePath, _token);
+        if (ret != kSuccess) {
+            qCritical() << "cannot set token for device!" << config.devicePath << ret;
+            setExitCode(ret);
+            return;
+        }
+    }
+
+    qInfo() << "passphrase has been setted at keyslot:" << passKeyslot;
+}
+
+void ReencryptWorkerV2::setRecoveryKey()
+{
+    const QString &pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+    const QString &recPath = params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString();
+    if (recPath.isEmpty())
+        return;
+
+    EncryptParams param;
+    param.device = config.devicePath;
+    param.recoveryPath = recPath;
+    QString recPass = disk_encrypt_utils::bcExpRecFile(param);
+    if (recPass.isEmpty()) {
+        qWarning() << "generate recovery key failed!";
+        return;
+    }
+
+    int recKeySlot = -1;
+    int ret = disk_encrypt_funcs::bcChangePassphraseByRecKey(config.devicePath, pass, recPass, &recKeySlot);
+    if (ret != kSuccess) {
+        qCritical() << "cannot set recovery key for device!" << config.devicePath << ret;
+        setExitCode(ret);
+        return;
+    }
+
+    QString recToken = QString("{ 'type': 'usec-recoverykey', 'keyslots': ['%1'] }").arg(recKeySlot);
+    ret = disk_encrypt_funcs::bcSetToken(config.devicePath, recToken);
+    if (ret != kSuccess) {
+        qCritical() << "cannot set recovery token for device!" << config.devicePath << ret;
+        setExitCode(ret);
+        return;
+    }
+    qInfo() << "recovery key has been setted at keyslot:" << recKeySlot;
+}
+
+void ReencryptWorkerV2::setBakcingDevLabel()
+{
+    int ret = disk_encrypt_funcs::bcSetLabel(config.devicePath, config.deviceName);
+    if (ret != kSuccess)
+        qWarning() << "set label to device failed:" << config.devicePath << config.deviceName << ret;
+    qInfo() << "device name setted." << config.devicePath << config.deviceName;
+}
+
+void ReencryptWorkerV2::updateCrypttab()
+{
+    qInfo() << "start updating crypttab...";
+
+    QString tpmToken = params.value(encrypt_param_keys::kKeyTPMToken).toString();
+    if (tpmToken.isEmpty())
+        return;
+
+    // do update crypttab item, append tpm info: tpm2-device=auto
+    QFile crypttab("/etc/crypttab");
+    if (!crypttab.open(QIODevice::ReadOnly)) {
+        qWarning() << "cannot open crypttab for reading";
+        return;
+    }
+    auto contents = crypttab.readAll();
+    crypttab.close();
+
+    bool crypttabUpdated = false;
+    QString srcDev = QString("UUID=") + params.value(encrypt_param_keys::kKeyBackingDevUUID).toString();
+    QByteArrayList lines = contents.split('\n');
+    for (auto &line : lines) {
+        QString _line = line;
+        if (_line.contains(srcDev)) {
+            if (!_line.contains("tpm2-device=auto")) {
+                _line.append(",tpm2-device=auto");
+                line = _line.toLocal8Bit();
+                crypttabUpdated = true;
+            }
+            break;
+        }
+    }
+    if (!crypttabUpdated) {
+        qInfo() << "no need to update crypttab.";
+        return;
+    }
+
+    contents = lines.join('\n');
+
+    if (!crypttab.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qWarning() << "cannot open crypttab for writing";
+        return;
+    }
+    crypttab.write(contents.data());
+    crypttab.close();
+    qInfo() << "crypttab has been updated:\n"
+            << contents;
+}
+
+void ReencryptWorkerV2::removeEncryptFile()
+{
+    int ret = ::remove(kEncConfigPath);
+    qInfo() << "encrypt job file has been removed." << ret;
+}
+
+QString ReencryptWorkerV2::updateTokenKeyslots(const QString &token, int keyslot)
+{
+    QJsonDocument doc = QJsonDocument::fromJson(token.toLocal8Bit());
+    auto obj = doc.object();
+    obj.insert("keyslots", QJsonArray::fromStringList({ QString::number(keyslot) }));
+    doc.setObject(obj);
+    return doc.toJson(QJsonDocument::Compact);
+}
+
+bool ReencryptWorkerV2::validateParams()
+{
+    if (params.isEmpty())
+        return false;
+
+    if (params.value(encrypt_param_keys::kKeyDevice).toString() != config.devicePath)
+        return false;
+
+    if (params.value(encrypt_param_keys::kKeyPassphrase).toString().isEmpty())
+        return false;
+
+    return true;
 }

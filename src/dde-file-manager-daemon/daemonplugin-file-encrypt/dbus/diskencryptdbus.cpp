@@ -25,7 +25,8 @@ static constexpr char kActionEncrypt[] { "com.deepin.filemanager.daemon.DiskEncr
 static constexpr char kActionDecrypt[] { "com.deepin.filemanager.daemon.DiskEncrypt.Decrypt" };
 static constexpr char kActionChgPwd[] { "com.deepin.filemanager.daemon.DiskEncrypt.ChangePassphrase" };
 static constexpr char kObjPath[] { "/com/deepin/filemanager/daemon/DiskEncrypt" };
-static constexpr char kEncConfigPath[] { "/boot/usec-crypt/encrypt.json" };
+
+ReencryptWorkerV2 *gFstabEncWorker { nullptr };
 
 DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
     : QObject(parent),
@@ -47,14 +48,8 @@ DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
             },
             Qt::QueuedConnection);
 
-    watcher.reset(new QDBusServiceWatcher("org.deepin.UsecCrypt", QDBusConnection::systemBus()));
-    connect(watcher.data(), &QDBusServiceWatcher::serviceRegistered,
-            this, &DiskEncryptDBus::onEncryptDBusRegistered);
-    connect(watcher.data(), &QDBusServiceWatcher::serviceUnregistered,
-            this, &DiskEncryptDBus::onEncryptDBusUnregistered);
-
-    triggerReencrypt();
     QtConcurrent::run([this] { diskCheck(); });
+    triggerReencrypt();
 }
 
 DiskEncryptDBus::~DiskEncryptDBus()
@@ -174,37 +169,20 @@ QString DiskEncryptDBus::QueryTPMToken(const QString &device)
     return token;
 }
 
-void DiskEncryptDBus::onEncryptDBusRegistered(const QString &service)
+void DiskEncryptDBus::SetEncryptParams(const QVariantMap &params)
 {
-    qInfo() << service << "registered";
-    auto conn = [=](const char *sig, const char *slot) -> bool {
-        return QDBusConnection::systemBus().connect("org.deepin.UsecCrypt",
-                                                    "/org/deepin/UsecCrypt",
-                                                    "org.deepin.UsecCrypt",
-                                                    sig,
-                                                    this,
-                                                    slot);
-    };
-    bool connected = conn("DiskReencryptProgress", SLOT(onFstabDiskEncProgressUpdated(const QString &, qint64, qint64)));
-    qInfo() << service << "  signal connected: " << connected << "DiskReencryptProgress";
-    connected &= conn("DiskReencryptResult", SLOT(onFstabDiskEncFinished(const QString &, int, const QString &)));
-    qInfo() << service << "  signal connected: " << connected << "DiskReencryptResult";
-}
+    if (!checkAuth(kActionEncrypt)) {
+        Q_EMIT PrepareEncryptDiskResult(params.value(encrypt_param_keys::kKeyDevice).toString(),
+                                        deviceName,
+                                        "",
+                                        -kUserCancelled);
+        return;
+    }
 
-void DiskEncryptDBus::onEncryptDBusUnregistered(const QString &service)
-{
-    qInfo() << service << "unregistered";
-    auto disconn = [=](const char *sig, const char *slot) -> bool {
-        return QDBusConnection::systemBus().disconnect("org.deepin.UsecCrypt",
-                                                       "/org/deepin/UsecCrypt",
-                                                       "org.deepin.UsecCrypt",
-                                                       sig,
-                                                       this,
-                                                       slot);
-    };
-    bool disconnected = disconn("DiskReencryptProgress", SLOT(onFstabDiskEncProgressUpdated(const QString &, qint64, qint64)));
-    disconnected &= disconn("DiskReencryptResult", SLOT(onFstabDiskEncFinished(const QString &, int, const QString &)));
-    qInfo() << service << "  signal disconnected: " << disconnected;
+    if (!gFstabEncWorker)
+        return;
+
+    gFstabEncWorker->setEncryptParams(params);
 }
 
 void DiskEncryptDBus::onFstabDiskEncProgressUpdated(const QString &dev, qint64 offset, qint64 total)
@@ -263,35 +241,26 @@ void DiskEncryptDBus::setToken(const QString &dev, const QString &token)
 
 bool DiskEncryptDBus::triggerReencrypt()
 {
-    QString clearDev;
-    if (!readEncryptDevice(&currentEncryptingDevice, &clearDev, &deviceName)) {
-        qWarning() << "no encrypt config or config is invalid.";
-        return false;
-    }
+    gFstabEncWorker = new ReencryptWorkerV2(this);
+    gFstabEncWorker->loadReencryptConfig();
+    connect(gFstabEncWorker, &ReencryptWorkerV2::requestEncryptParams,
+            this, &DiskEncryptDBus::RequestEncryptParams);
+    connect(gFstabEncWorker, &ReencryptWorkerV2::deviceReencryptResult,
+            this, [this](const QString &dev, int code) {
+                Q_EMIT EncryptDiskResult(dev, deviceName, code);
+            });
+    connect(gFstabEncWorker, &ReencryptWorkerV2::finished,
+            this, [] { gFstabEncWorker->deleteLater(); gFstabEncWorker = nullptr; });
 
-    QFile devHandler("/dev/usec_crypt");
-    if (!devHandler.exists()) {
-        qWarning() << "no device handler exists!";
-        return false;
-    }
-
-    if (!devHandler.open(QIODevice::WriteOnly)) {
-        qWarning() << "device handler open failed!";
-        return false;
-    }
-
-    if (0 > devHandler.write(clearDev.toLocal8Bit())) {
-        qWarning() << "reencrypt trigger failed!";
-        devHandler.close();
-        return false;
-    }
-
-    qInfo() << "about to start encrypting" << clearDev;
-
-    devHandler.close();
+    currentEncryptingDevice = gFstabEncWorker->encryptConfig().devicePath;
+    deviceName = gFstabEncWorker->encryptConfig().deviceName;
+    qInfo() << "about to start encrypting" << currentEncryptingDevice;
+    gFstabEncWorker->start();
     return true;
 }
 
+// this function should be running in thread.
+// it may take times.
 void DiskEncryptDBus::diskCheck()
 {
     updateCrypttab();
@@ -396,37 +365,4 @@ int DiskEncryptDBus::isEncrypted(const QString &target, const QString &source)
     }
 
     return devPtr->isEncrypted() ? 1 : 0;
-}
-
-bool DiskEncryptDBus::readEncryptDevice(QString *backingDev, QString *clearDev, QString *devName)
-{
-    Q_ASSERT(backingDev && clearDev && devName);
-
-    QFile encConfig(kEncConfigPath);
-    if (!encConfig.exists()) {
-        qInfo() << "the encrypt config file doesn't exist";
-        return false;
-    }
-
-    if (!encConfig.open(QIODevice::ReadOnly)) {
-        qWarning() << "encrypt config file open failed!";
-        return false;
-    }
-
-    QJsonDocument doc = QJsonDocument::fromJson(encConfig.readAll());
-    encConfig.close();
-
-    QJsonObject config = doc.object();
-    QJsonValue devVal = config.value("device-path");
-    QJsonValue volVal = config.value("volume");
-    QJsonValue nameVal = config.value("device-name");
-    if (devVal.isUndefined() || volVal.isUndefined()) {
-        qWarning() << "invalid encrypt config! device or volume is empty!";
-        return false;
-    }
-
-    *backingDev = devVal.toString();
-    *clearDev = volVal.toString();
-    *devName = nameVal.toString();
-    return true;
 }

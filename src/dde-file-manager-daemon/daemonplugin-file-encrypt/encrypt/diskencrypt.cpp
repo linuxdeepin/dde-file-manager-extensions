@@ -218,7 +218,7 @@ int disk_encrypt_funcs::bcInitHeaderFile(const EncryptParams &params,
     if (!disk_encrypt_utils::bcValidateParams(params))
         return -kErrorParamsInvalid;
 
-    auto status = block_device_utils::bcDevStatus(params.device);
+    auto status = block_device_utils::bcDevEncryptVersion(params.device);
     if (status != kNotEncrypted) {
         qWarning() << "cannot encrypt device:"
                    << params.device
@@ -451,7 +451,9 @@ int disk_encrypt_funcs::bcBackupCryptHeader(const QString &device, QString &head
 }
 
 int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
-                                          const QString &passphrase)
+                                          const QString &passphrase,
+                                          const QString &clearDev,
+                                          bool expandFs)
 {
     qDebug() << "start resume encryption for device"
              << device;
@@ -480,7 +482,7 @@ int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
                -kErrorWrongFlags);
 
     ret = crypt_reencrypt_init_by_passphrase(cdev,
-                                             nullptr,
+                                             clearDev.toStdString().c_str(),
                                              passphrase.toStdString().c_str(),
                                              passphrase.length(),
                                              CRYPT_ANY_SLOT,
@@ -492,6 +494,9 @@ int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
 
     ret = crypt_reencrypt(cdev, bcEncryptProgress);
     CHECK_INT(ret, "start resume failed " + device, -kErrorReencryptFailed);
+
+    if (!expandFs)
+        return kSuccess;
 
     // active device for expanding fs.
     QString activeDev = QString("dm-%1").arg(device.mid(5));
@@ -633,13 +638,13 @@ int disk_encrypt_funcs::bcSetToken(const QString &device, const QString &token)
     return 0;
 }
 
-EncryptStatus block_device_utils::bcDevStatus(const QString &device)
+EncryptVersion block_device_utils::bcDevEncryptVersion(const QString &device)
 {
     auto blkDev = block_device_utils::bcCreateBlkDev(device);
     if (!blkDev) {
         qWarning() << "cannot create block device handler:"
                    << device;
-        return kStatusError;
+        return kVersionUnknown;
     }
 
     const QString &idType = blkDev->getProperty(dfmmount::Property::kBlockIDType).toString();
@@ -647,11 +652,14 @@ EncryptStatus block_device_utils::bcDevStatus(const QString &device)
 
     if (idType == "crypto_LUKS") {
         if (idVersion == "1")
-            return kLUKS1;
+            return kVersionLUKS1;
         if (idVersion == "2")
-            return kLUKS2;
-        return kUnknownLUKS;
+            return kVersionLUKS2;
+        return kVersionLUKSUnknown;
     }
+
+    if (blkDev->isEncrypted())
+        return kVersionUnknown;
 
     // TODO: this should be completed, not only LUKS encrypt.
 
@@ -689,4 +697,86 @@ bool block_device_utils::bcIsMounted(const QString &device)
         return false;
     }
     return !blkDev->mountPoints().isEmpty();
+}
+
+int block_device_utils::bcDevEncryptStatus(const QString &device, EncryptStatus *status)
+{
+    Q_ASSERT(status);
+
+    struct crypt_device *cdev { nullptr };
+    dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
+
+    int ret = crypt_init(&cdev,
+                         device.toStdString().c_str());
+    CHECK_INT(ret, "init device failed " + device, -kErrorInitCrypt);
+
+    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
+    CHECK_INT(ret, "load device failed " + device, -kErrorLoadCrypt);
+
+    uint32_t flags;
+    ret = crypt_persistent_flags_get(cdev,
+                                     CRYPT_FLAGS_REQUIREMENTS,
+                                     &flags);
+    CHECK_INT(ret, "get device flag failed " + device, -kErrorGetReencryptFlag);
+
+    *status = kStatusFinished;
+    if (flags & CRYPT_REQUIREMENT_OFFLINE_REENCRYPT)
+        *status = kStatusOfflineUnfinished;
+    if (flags & CRYPT_REQUIREMENT_ONLINE_REENCRYPT)
+        *status = kStatusOnlineUnfinished;
+    if (flags & CRYPT_REQUIREMENT_UNKNOWN)
+        *status = kStatusUnknown;
+    return kSuccess;
+}
+
+int disk_encrypt_funcs::bcSetLabel(const QString &device, const QString &label)
+{
+
+    struct crypt_device *cdev { nullptr };
+    dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
+
+    int ret = crypt_init(&cdev,
+                         device.toStdString().c_str());
+    CHECK_INT(ret, "init device failed " + device, -kErrorInitCrypt);
+
+    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
+    CHECK_INT(ret, "load device failed " + device, -kErrorLoadCrypt);
+
+    ret = crypt_set_label(cdev, label.toStdString().c_str(), nullptr);
+    CHECK_INT(ret, "set label failed " + device, -kErrorSetLabel);
+
+    return kSuccess;
+}
+
+bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config)
+{
+    Q_ASSERT(config);
+
+    QFile encConfig(kEncConfigPath);
+    if (!encConfig.exists()) {
+        qInfo() << "the encrypt config file doesn't exist";
+        return false;
+    }
+
+    if (!encConfig.open(QIODevice::ReadOnly)) {
+        qWarning() << "encrypt config file open failed!";
+        return false;
+    }
+
+    QJsonDocument doc = QJsonDocument::fromJson(encConfig.readAll());
+    encConfig.close();
+    auto obj = doc.object();
+
+    config->cipher = obj.value("cipher").toString();
+    config->device = obj.value("device").toString();
+    config->mountPoint = obj.value("device-mountpoint").toString();
+    config->deviceName = obj.value("device-name").toString();
+    config->devicePath = obj.value("device-path").toString();
+    config->keySize = obj.value("key-size").toString();
+    config->mode = obj.value("mode").toString();
+    config->recoveryPath = obj.value("recoverykey-path").toString();
+    // config->tpmConfig = obj.value("tpm-config");// no tpmconfig will be set in pre-encrypt phase
+    config->clearDev = obj.value("volume").toString();
+
+    return true;
 }

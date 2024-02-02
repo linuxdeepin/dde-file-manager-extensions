@@ -24,9 +24,6 @@
 Q_DECLARE_METATYPE(bool *)
 Q_DECLARE_METATYPE(QString *)
 
-#define DEV_ENCTYPE_CFG "/etc/deepin/dde-file-manager/dev_enc_type.ini"
-#define DEV_KEY QString("device/%1")
-
 using namespace dfmplugin_diskenc;
 
 bool config_utils::exportKeyEnabled()
