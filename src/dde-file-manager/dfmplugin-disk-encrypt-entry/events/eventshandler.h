@@ -9,6 +9,7 @@
 
 namespace dfmplugin_diskenc {
 class EncryptProgressDialog;
+class EncryptParamsInputDialog;
 class EventsHandler : public QObject
 {
     Q_OBJECT
@@ -26,6 +27,7 @@ private Q_SLOTS:
     void onDecryptResult(const QString &, const QString &, const QString &, int);
     void onDecryptProgress(const QString &, const QString &, double);
     void onChgPassphraseResult(const QString &, const QString &, const QString &, int);
+    void onRequestEncryptParams(const QVariantMap &encConfig);
 
     QString acquirePassphrase(const QString &dev, bool &cancelled);
     QString acquirePassphraseByPIN(const QString &dev, bool &cancelled);
@@ -42,9 +44,10 @@ private Q_SLOTS:
 
 private:
     explicit EventsHandler(QObject *parent = nullptr);
-    
+
     QMap<QString, EncryptProgressDialog *> encryptDialogs;
     QMap<QString, EncryptProgressDialog *> decryptDialogs;
+    QMap<QString, EncryptParamsInputDialog *> encryptInputs;
 signals:
 };
 }

@@ -5,9 +5,12 @@
 #include "dfmplugin_disk_encrypt_global.h"
 #include "gui/encryptprogressdialog.h"
 #include "gui/unlockpartitiondialog.h"
+#include "gui/encryptparamsinputdialog.h"
 #include "utils/encryptutils.h"
+#include "menu/diskencryptmenuscene.h"
 
 #include <dfm-framework/dpf.h>
+#include <dfm-base/utils/finallyutil.h>
 
 #include <QApplication>
 #include <QtConcurrent/QtConcurrent>
@@ -56,6 +59,7 @@ void EventsHandler::bindDaemonSignals()
     conn("DecryptDiskResult", SLOT(onDecryptResult(const QString &, const QString &, const QString &, int)));
     conn("DecryptProgress", SLOT(onDecryptProgress(const QString &, const QString &, double)));
     conn("ChangePassphressResult", SLOT(onChgPassphraseResult(const QString &, const QString &, const QString &, int)));
+    conn("RequestEncryptParams", SLOT(onRequestEncryptParams(const QVariantMap &)));
 }
 
 void EventsHandler::hookEvents()
@@ -124,6 +128,37 @@ void EventsHandler::onChgPassphraseResult(const QString &dev, const QString &dev
     showChgPwdError(dev, devName, code);
 }
 
+void EventsHandler::onRequestEncryptParams(const QVariantMap &encConfig)
+{
+    QString devPath = encConfig.value("device-path").toString();
+    if (devPath.isEmpty()) {
+        qWarning() << "invalid encrypt config!" << encConfig;
+        return;
+    }
+
+    if (encryptInputs.value(devPath, nullptr))
+        return;
+
+    disk_encrypt::DeviceEncryptParam param;
+    param.devDesc = devPath;
+    param.initOnly = false;
+    param.clearDevUUID = encConfig.value("device").toString().remove("UUID=");
+    QString objPath = "/org/freedesktop/UDisks2/block_devices/" + devPath.mid(5);
+    auto blkDev = device_utils::createBlockDevice(objPath);
+    param.backingDevUUID = blkDev ? blkDev->getProperty(dfmmount::Property::kBlockIDUUID).toString() : "";
+    param.deviceDisplayName = encConfig.value("device-name").toString();
+    auto dlg = new EncryptParamsInputDialog(param, qApp->activeWindow());
+    encryptInputs.insert(devPath, dlg);
+
+    int ret = dlg->exec();
+    if (ret != QDialog::Accepted) {
+        delete encryptInputs.take(devPath);
+        return;
+    }
+    param = dlg->getInputs();
+    DiskEncryptMenuScene::doReencryptDevice(param);
+}
+
 void EventsHandler::onEncryptProgress(const QString &dev, const QString &devName, double progress)
 {
     if (!encryptDialogs.contains(dev)) {
@@ -138,6 +173,10 @@ void EventsHandler::onEncryptProgress(const QString &dev, const QString &devName
     auto dlg = encryptDialogs.value(dev);
     dlg->updateProgress(progress);
     dlg->show();
+
+    // when start encrypt, delete the inputs widget.
+    if (encryptInputs.contains(dev))
+        delete encryptInputs.take(dev);
 }
 
 void EventsHandler::onDecryptProgress(const QString &dev, const QString &devName, double progress)

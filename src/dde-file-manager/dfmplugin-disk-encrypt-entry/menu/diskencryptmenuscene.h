@@ -44,6 +44,8 @@ public:
     virtual bool triggered(QAction *action) override;
     virtual void updateState(QMenu *parent) override;
 
+    static void doReencryptDevice(const disk_encrypt::DeviceEncryptParam &param);
+
 protected:
     static void encryptDevice(const disk_encrypt::DeviceEncryptParam &param);
     static void deencryptDevice(const disk_encrypt::DeviceEncryptParam &param);

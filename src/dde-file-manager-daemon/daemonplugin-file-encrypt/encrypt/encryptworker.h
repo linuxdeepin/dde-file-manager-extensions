@@ -8,6 +8,7 @@
 
 #include <QThread>
 #include <QMutex>
+#include <QReadWriteLock>
 
 FILE_ENCRYPT_BEGIN_NS
 #define TOKEN_FILE_PATH QString("/tmp/%1_tpm_token.json")
@@ -68,17 +69,48 @@ public:
                              QObject *parent = nullptr);
 
 Q_SIGNALS:
-    void updateReencryptProgress(const QString &device,
-                                 double progress);
     void deviceReencryptResult(const QString &device,
                                int result);
 
 protected:
     void run() override;
 
-private:
+protected:
     QString passphrase;
     QString device;
+};
+
+class ReencryptWorkerV2 : public Worker
+{
+    Q_OBJECT
+
+public:
+    explicit ReencryptWorkerV2(QObject *parent = nullptr);
+    void setEncryptParams(const QVariantMap &params);
+    void loadReencryptConfig();
+    disk_encrypt::EncryptConfig encryptConfig() const;
+
+Q_SIGNALS:
+    void requestEncryptParams(const QVariantMap &encConf);
+    void deviceReencryptResult(const QString &device,
+                               int result);
+
+protected:
+    void run() override;
+    bool hasUnfinishedOnlineEncryption();
+    void setPassphrase();
+    void setRecoveryKey();
+    void setBakcingDevLabel();
+    void updateCrypttab();
+    void removeEncryptFile();
+    QString updateTokenKeyslots(const QString &token, int keyslot);
+    bool validateParams();
+
+private:
+    QVariantMap params;
+    QReadWriteLock lock;
+
+    disk_encrypt::EncryptConfig config;
 };
 
 class DecryptWorker : public Worker

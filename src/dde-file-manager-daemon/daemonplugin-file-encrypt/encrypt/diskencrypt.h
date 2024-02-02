@@ -14,27 +14,36 @@ class DBlockDevice;
 
 FILE_ENCRYPT_BEGIN_NS
 
-enum EncryptStatus {
+enum EncryptVersion {
     kNotEncrypted,
-    kLUKS1,
-    kLUKS2,
-    kUnknownLUKS,
+    kVersionLUKS1,
+    kVersionLUKS2,
+    kVersionLUKSUnknown,
 
-    kStatusError = 10000,
-};   // enum EncryptStatus
+    kVersionUnknown = 10000,
+};   // enum EncryptVersion
+
+enum EncryptStatus {
+    kStatusFinished,
+    kStatusOfflineUnfinished,
+    kStatusOnlineUnfinished,
+
+    kStatusUnknown = 10000
+};
 
 namespace disk_encrypt_funcs {
 int bcInitHeaderFile(const EncryptParams &params, QString &headerPath, int *keyslotCipher, int *keyslotRecKey);
 int bcGetToken(const QString &device, QString *tokenJson);
 int bcInitHeaderDevice(const QString &device, const QString &passphrase, const QString &headerPath);
 int bcSetToken(const QString &device, const QString &token);
-int bcResumeReencrypt(const QString &device, const QString &passphrase);
+int bcResumeReencrypt(const QString &device, const QString &passphrase, const QString &clearDev, bool expandFs = true);
 int bcChangePassphrase(const QString &device, const QString &oldPassphrase, const QString &newPassphrase, int *keyslot);
 int bcChangePassphraseByRecKey(const QString &device, const QString &oldPassphrase, const QString &newPassphrase, int *keyslot);
 int bcDecryptDevice(const QString &device, const QString &passphrase);
 int bcBackupCryptHeader(const QString &device, QString &headerPath);
 int bcDoSetupHeader(const EncryptParams &params, QString *headerPath, int *keyslotCipher, int *keyslotRecKey);
 int bcPrepareHeaderFile(const QString &device, QString *headerPath);
+int bcSetLabel(const QString &device, const QString &label);
 
 int bcEncryptProgress(uint64_t size, uint64_t offset, void *usrptr);
 int bcDecryptProgress(uint64_t size, uint64_t offset, void *usrptr);
@@ -44,6 +53,7 @@ int bcDecryptProgress(uint64_t size, uint64_t offset, void *usrptr);
 namespace disk_encrypt_utils {
 EncryptParams bcConvertParams(const QVariantMap &params);
 bool bcValidateParams(const EncryptParams &params);
+bool bcReadEncryptConfig(disk_encrypt::EncryptConfig *config);
 
 QString bcExpRecFile(const EncryptParams &params);
 QString bcGenRecKey();
@@ -52,7 +62,8 @@ QString bcGenRecKey();
 typedef QSharedPointer<dfmmount::DBlockDevice> DevPtr;
 namespace block_device_utils {
 DevPtr bcCreateBlkDev(const QString &device);
-EncryptStatus bcDevStatus(const QString &device);
+EncryptVersion bcDevEncryptVersion(const QString &device);
+int bcDevEncryptStatus(const QString &device, EncryptStatus *status);
 bool bcIsMounted(const QString &device);
 }   // namespace block_device_utils
 

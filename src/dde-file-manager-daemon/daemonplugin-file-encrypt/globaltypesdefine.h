@@ -7,8 +7,11 @@
 
 #include <QString>
 #include <QStringList>
+#include <QVariantMap>
 
 namespace disk_encrypt {
+
+inline constexpr char kEncConfigPath[] { "/boot/usec-crypt/encrypt.json" };
 
 namespace encrypt_param_keys {
 inline constexpr char kKeyDevice[] { "device" };
@@ -24,6 +27,8 @@ inline constexpr char kKeyTPMConfig[] { "tpmConfig" };
 inline constexpr char kKeyTPMToken[] { "tpmToken" };
 inline constexpr char kKeyValidateWithRecKey[] { "usingRecKey" };
 inline constexpr char kKeyDeviceName[] { "deviceName" };
+inline constexpr char kKeyBackingDevUUID[] { "backingDevUUID" };
+inline constexpr char kKeyClearDevUUID[] { "clearDevUUID" };
 }   // namespace encrypt_param_keys
 
 inline const QStringList kDisabledEncryptPath {
@@ -66,6 +71,7 @@ enum EncryptOperationStatus {
     kErrorSetTokenFailed,
     kErrorResizeFs,
     kErrorDisabledMountPoint,
+    kErrorSetLabel,
 
     kErrorUnknown,
 };
@@ -88,6 +94,32 @@ struct DeviceEncryptParam
     QString mountPoint;
     bool initOnly;
     bool validateByRecKey;
+    QString backingDevUUID;
+    QString clearDevUUID;
+};
+
+struct EncryptConfig
+{
+    QString cipher;
+    QString device;
+    QString mountPoint;
+    QString deviceName;
+    QString devicePath;
+    QString keySize;
+    QString mode;
+    QString recoveryPath;
+    QVariantMap tpmConfig;
+    QString clearDev;
+
+    QVariantMap keyConfig()
+    {
+        return QVariantMap {
+            { "device", device },
+            { "device-path", devicePath },
+            { "device-name", deviceName },
+            { "volume", clearDev },
+        };
+    };
 };
 
 }

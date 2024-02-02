@@ -26,6 +26,7 @@ public Q_SLOTS:
     QString DecryptDisk(const QVariantMap &params);
     QString ChangeEncryptPassphress(const QVariantMap &params);
     QString QueryTPMToken(const QString &device);
+    void SetEncryptParams(const QVariantMap &params);
 
 Q_SIGNALS:
     void PrepareEncryptDiskResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
@@ -34,10 +35,9 @@ Q_SIGNALS:
     void ChangePassphressResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
     void EncryptProgress(const QString &device, const QString &devName, double progress);
     void DecryptProgress(const QString &device, const QString &devName, double progress);
+    void RequestEncryptParams(const QVariantMap &encConfig);
 
 private Q_SLOTS:
-    void onEncryptDBusRegistered(const QString &service);
-    void onEncryptDBusUnregistered(const QString &service);
     void onFstabDiskEncProgressUpdated(const QString &dev, qint64 offset, qint64 total);
     void onFstabDiskEncFinished(const QString &dev, int result, const QString &errstr);
 
@@ -51,10 +51,7 @@ private:
     static bool updateCrypttab();
     static int isEncrypted(const QString &target, const QString &source);
 
-    bool readEncryptDevice(QString *backingDev, QString *clearDev, QString *devName);
-
 private:
-    QSharedPointer<QDBusServiceWatcher> watcher;
     QString currentEncryptingDevice;
     QString deviceName;
 };
