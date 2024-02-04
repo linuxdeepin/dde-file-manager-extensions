@@ -481,8 +481,10 @@ int disk_encrypt_funcs::bcResumeReencrypt(const QString &device,
                "wrong flags " + device + " flags " + QString::number(flags),
                -kErrorWrongFlags);
 
+    std::string _clearDev = clearDev.toStdString();
+    const char *__clearDev = clearDev.isEmpty() ? nullptr : _clearDev.c_str();
     ret = crypt_reencrypt_init_by_passphrase(cdev,
-                                             clearDev.toStdString().c_str(),
+                                             __clearDev,
                                              passphrase.toStdString().c_str(),
                                              passphrase.length(),
                                              CRYPT_ANY_SLOT,
