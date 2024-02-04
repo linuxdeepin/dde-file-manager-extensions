@@ -1,3 +1,9 @@
+dde-file-manager-extensions (1.1.8) unstable; urgency=medium
+
+  * encrypt fstab device without presetted key
+
+ -- xushitong <xushitong@uniontech.com>  Sun, 04 Feb 2024 16:01:23 +0800
+
 dde-file-manager-extensions (1.1.7) unstable; urgency=medium
 
   * disable encrypt root(/) and recovery(/recovery) partition.
