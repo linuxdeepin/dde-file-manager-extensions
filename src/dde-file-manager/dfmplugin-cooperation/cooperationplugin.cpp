@@ -12,6 +12,8 @@
 
 #include <QTranslator>
 
+#include <reportlog/reportlogmanager.h>
+
 #define COOPERATION_SETTING_GROUP "10_advance.03_cooperation"
 inline constexpr char kCooperationSettingGroup[] { COOPERATION_SETTING_GROUP };
 inline constexpr char kCooperationSettingTransfer[] { "00_file_transfer" };
@@ -22,6 +24,7 @@ using namespace dfmplugin_cooperation;
 
 void CooperationPlugin::initialize()
 {
+    deepin_cross::ReportLogManager::instance()->init();
     auto translator = new QTranslator(this);
     translator->load(QLocale(), "cooperation-transfer", "_", "/usr/share/dde-file-manager/translations");
     QCoreApplication::installTranslator(translator);
