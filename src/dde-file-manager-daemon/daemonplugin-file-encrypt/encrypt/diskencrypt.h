@@ -7,6 +7,8 @@
 #include "daemonplugin_file_encrypt_global.h"
 
 #include <QVariantMap>
+#include <QDBusUnixFileDescriptor>
+#include <QDBusReply>
 
 namespace dfmmount {
 class DBlockDevice;
@@ -66,6 +68,10 @@ EncryptVersion bcDevEncryptVersion(const QString &device);
 int bcDevEncryptStatus(const QString &device, EncryptStatus *status);
 bool bcIsMounted(const QString &device);
 }   // namespace block_device_utils
+
+namespace utils {
+QDBusReply<QDBusUnixFileDescriptor> inhibit();
+}
 
 FILE_ENCRYPT_END_NS
 

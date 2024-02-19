@@ -13,6 +13,7 @@
 #include <QLibrary>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QDBusInterface>
 
 #include <dfm-base/utils/finallyutil.h>
 #include <dfm-mount/dmount.h>
@@ -781,4 +782,18 @@ bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config
     config->clearDev = obj.value("volume").toString();
 
     return true;
+}
+
+QDBusReply<QDBusUnixFileDescriptor> utils::inhibit()
+{
+    QDBusInterface iface("org.freedesktop.login1",
+                         "/org/freedesktop/login1",
+                         "org.freedesktop.login1.Manager",
+                         QDBusConnection::systemBus());
+    QVariantList args;
+    args << QString("shutdown:sleep:")
+         << QString("file-manager-daemon")
+         << QString("Updating initramfs...")
+         << QString("block");
+    return iface.callWithArgumentList(QDBus::Block, "Inhibit", args);
 }

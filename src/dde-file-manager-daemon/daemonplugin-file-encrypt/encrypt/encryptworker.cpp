@@ -12,6 +12,7 @@
 #include <QRegularExpression>
 #include <QSettings>
 #include <QReadWriteLock>
+#include <QTime>
 
 FILE_ENCRYPT_USE_NS
 using namespace disk_encrypt;
@@ -328,6 +329,9 @@ void ReencryptWorkerV2::run()
         return;
     }
 
+    // found unfinished encrypt job, disable recovery.
+    disableABRecovery();
+
     while (true) {
         QReadLocker lk(&lock);
         if (validateParams())
@@ -519,4 +523,55 @@ bool ReencryptWorkerV2::validateParams()
         return false;
 
     return true;
+}
+
+void ReencryptWorkerV2::disableABRecovery()
+{
+    QFile cfg("/etc/default/grub.d/13_deepin_ab_recovery.cfg");
+    QByteArray cfgContents;
+    if (cfg.exists()) {
+        if (!cfg.open(QIODevice::ReadOnly)) {
+            qWarning() << "cannot open recovery config!";
+            return;
+        }
+        cfgContents = cfg.readAll();
+        cfg.close();
+    }
+
+    QByteArrayList lines = cfgContents.split('\n');
+    for (int i = 0; i < lines.count(); ++i) {
+        QString line = lines.at(i);
+        if (line.startsWith("#"))
+            continue;
+
+        if (line.contains("DISABLE_AB_ROLLBACK")) {
+            if (line.contains("export DISABLE_AB_ROLLBACK=true")) {
+                qInfo() << "rollback already disabled.";
+                return;
+            }
+
+            lines.removeAt(i);
+            break;
+        }
+    }
+    lines.append("export DISABLE_AB_ROLLBACK=true\n");
+    cfgContents = lines.join('\n');
+
+    qDebug() << "the ab recovery contents:\n"
+             << cfgContents;
+
+    if (!cfg.open(QIODevice::Truncate | QIODevice::WriteOnly)) {
+        qWarning() << "cannot open recovery config to write!";
+        return;
+    }
+    cfg.write(cfgContents);
+    cfg.close();
+
+    // update grub
+    auto fd = utils::inhibit();
+    qInfo() << "blocking reboot:" << fd.value().fileDescriptor();
+    QTime t;
+    t.start();
+    int ret = system("update-grub");
+    qInfo() << "update grub costs" << t.elapsed() << "ms and result is" << ret;
 }
