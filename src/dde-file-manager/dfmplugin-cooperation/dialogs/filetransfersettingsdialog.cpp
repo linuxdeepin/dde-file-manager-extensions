@@ -5,7 +5,7 @@
 #include "filetransfersettingsdialog.h"
 #include "configs/settings/configmanager.h"
 #include "configs/dconfig/dconfigmanager.h"
-
+#include "reportlog/reportlogmanager.h"
 #include <DStyle>
 #include <DGuiApplicationHelper>
 
@@ -228,6 +228,10 @@ void FileTransferSettingsDialog::onComBoxValueChanged(int index)
 {
 #ifdef linux
     DConfigManager::instance()->setValue(kDefaultCfgPath, "cooperation.transfer.mode", index);
+    bool status = index == 2 ? false : true;
+    QVariantMap data;
+    data.insert("enableFileDelivery", status);
+    deepin_cross::ReportLogManager::instance()->commit("CooperationStatus", data);
 #else
     ConfigManager::instance()->setAppAttribute("GenericAttribute", "TransferMode", index);
 #endif
