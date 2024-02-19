@@ -105,6 +105,7 @@ protected:
     void removeEncryptFile();
     QString updateTokenKeyslots(const QString &token, int keyslot);
     bool validateParams();
+    void disableABRecovery();
 
 private:
     QVariantMap params;
