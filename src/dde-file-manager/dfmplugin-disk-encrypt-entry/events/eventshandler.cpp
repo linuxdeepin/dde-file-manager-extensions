@@ -138,6 +138,7 @@ void EventsHandler::onChgPassphraseResult(const QString &dev, const QString &dev
 
 void EventsHandler::onRequestEncryptParams(const QVariantMap &encConfig)
 {
+    qApp->restoreOverrideCursor();
     QString devPath = encConfig.value("device-path").toString();
     if (devPath.isEmpty()) {
         qWarning() << "invalid encrypt config!" << encConfig;
