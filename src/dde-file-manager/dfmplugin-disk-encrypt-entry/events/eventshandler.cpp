@@ -94,10 +94,11 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &devNam
 void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, int code)
 {
     QApplication::restoreOverrideCursor();
-    if (encryptDialogs.contains(dev)) {
-        delete encryptDialogs.value(dev);
-        encryptDialogs.remove(dev);
-    }
+    // if (encryptDialogs.contains(dev)) {
+    //     delete encryptDialogs.value(dev);
+    //     encryptDialogs.remove(dev);
+    // }
+    auto dialog = encryptDialogs.take(dev);
 
     QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
 
@@ -110,21 +111,23 @@ void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, 
                       .arg(code);
     }
 
-    dialog_utils::showDialog(title, msg, code != 0 ? dialog_utils::kError : dialog_utils::kInfo);
+    if (!dialog)
+        dialog_utils::showDialog(title, msg, code != 0 ? dialog_utils::kError : dialog_utils::kInfo);
+    else {
+        auto pos = dialog->geometry().topLeft();
+        dialog->showResultPage(code == 0, title, msg);
+        dialog->move(pos);
+    }
 }
 
 void EventsHandler::onDecryptResult(const QString &dev, const QString &devName, const QString &, int code)
 {
     QApplication::restoreOverrideCursor();
-    if (decryptDialogs.contains(dev)) {
-        decryptDialogs.value(dev)->deleteLater();
-        decryptDialogs.remove(dev);
-    }
-
     if (code == -kRebootRequired)
         showRebootOnDecrypted(dev, devName);
-    else
+    else {
         showDecryptError(dev, devName, code);
+    }
 }
 
 void EventsHandler::onChgPassphraseResult(const QString &dev, const QString &devName, const QString &, int code)
@@ -360,8 +363,15 @@ void EventsHandler::showDecryptError(const QString &dev, const QString &devName,
         break;
     }
 
-    dialog_utils::showDialog(title, msg,
-                             showFailed ? dialog_utils::kError : dialog_utils::kInfo);
+    auto dialog = decryptDialogs.take(dev);
+    if (dialog) {
+        auto pos = dialog->geometry().topLeft();
+        dialog->showResultPage(code == 0, title, msg);
+        dialog->move(pos);
+    } else {
+        dialog_utils::showDialog(title, msg,
+                                 showFailed ? dialog_utils::kError : dialog_utils::kInfo);
+    }
 }
 
 void EventsHandler::showChgPwdError(const QString &dev, const QString &devName, int code)
