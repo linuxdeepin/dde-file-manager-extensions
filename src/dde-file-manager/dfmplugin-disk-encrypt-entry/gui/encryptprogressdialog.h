@@ -10,6 +10,8 @@
 
 DWIDGET_USE_NAMESPACE
 
+    class QStackedLayout;
+
 namespace dfmplugin_diskenc {
 
 class EncryptProgressDialog : public DDialog
@@ -19,6 +21,7 @@ public:
     explicit EncryptProgressDialog(QWidget *parent = nullptr);
     void setText(const QString &title, const QString &message);
     void updateProgress(double progress);
+    void showResultPage(bool success, const QString &title, const QString &message);
 
 protected:
     void initUI();
@@ -26,6 +29,9 @@ protected:
 private:
     DWaterProgress *progress { nullptr };
     QLabel *message { nullptr };
+    QStackedLayout *mainLay { nullptr };
+    QLabel *iconLabel { nullptr };
+    QLabel *resultMsg { nullptr };
 };
 }
 
