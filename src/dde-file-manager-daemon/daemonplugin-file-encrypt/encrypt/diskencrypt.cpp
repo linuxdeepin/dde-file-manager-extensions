@@ -751,11 +751,15 @@ int disk_encrypt_funcs::bcSetLabel(const QString &device, const QString &label)
     return kSuccess;
 }
 
-bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config)
+bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config, const QString &device)
 {
     Q_ASSERT(config);
 
-    QFile encConfig(kEncConfigPath);
+    QString encryptConfigPath = kEncConfigPath;
+    if (!device.isEmpty())
+        encryptConfigPath = kEncConfigDevicePath.arg(device.mid(5));
+
+    QFile encConfig(encryptConfigPath);
     if (!encConfig.exists()) {
         qInfo() << "the encrypt config file doesn't exist";
         return false;
@@ -780,6 +784,7 @@ bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config
     config->recoveryPath = obj.value("recoverykey-path").toString();
     // config->tpmConfig = obj.value("tpm-config");// no tpmconfig will be set in pre-encrypt phase
     config->clearDev = obj.value("volume").toString();
+    config->configPath = encryptConfigPath;
 
     return true;
 }

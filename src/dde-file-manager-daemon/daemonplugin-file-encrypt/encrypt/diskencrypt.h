@@ -55,7 +55,7 @@ int bcDecryptProgress(uint64_t size, uint64_t offset, void *usrptr);
 namespace disk_encrypt_utils {
 EncryptParams bcConvertParams(const QVariantMap &params);
 bool bcValidateParams(const EncryptParams &params);
-bool bcReadEncryptConfig(disk_encrypt::EncryptConfig *config);
+bool bcReadEncryptConfig(disk_encrypt::EncryptConfig *config, const QString &device = QString());
 
 QString bcExpRecFile(const EncryptParams &params);
 QString bcGenRecKey();

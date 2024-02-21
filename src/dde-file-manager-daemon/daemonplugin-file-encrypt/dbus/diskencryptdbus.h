@@ -43,10 +43,8 @@ private Q_SLOTS:
 
 private:
     bool checkAuth(const QString &actID);
-    void startReencrypt(const QString &dev, const QString &passphrase, const QString &token, int cipherPos, int recPos);
-    void setToken(const QString &dev, const QString &token);
-    bool triggerReencrypt();
     void diskCheck();
+    bool triggerReencrypt(const QString &device = QString());
     static void getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev);
     static bool updateCrypttab();
     static int isEncrypted(const QString &target, const QString &source);

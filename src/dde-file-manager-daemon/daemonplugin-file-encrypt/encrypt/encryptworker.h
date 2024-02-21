@@ -51,33 +51,13 @@ public:
 
 protected:
     void run() override;
-    int writeEncryptParams();
+    int writeEncryptParams(const QString &device = QString());
     int setFstabTimeout();
 
 private:
     QVariantMap params;
     int keyslotCipher { -1 };
     int keyslotRecKey { -1 };
-};
-
-class ReencryptWorker : public Worker
-{
-    Q_OBJECT
-public:
-    explicit ReencryptWorker(const QString &dev,
-                             const QString &passphrase,
-                             QObject *parent = nullptr);
-
-Q_SIGNALS:
-    void deviceReencryptResult(const QString &device,
-                               int result);
-
-protected:
-    void run() override;
-
-protected:
-    QString passphrase;
-    QString device;
 };
 
 class ReencryptWorkerV2 : public Worker
@@ -87,7 +67,7 @@ class ReencryptWorkerV2 : public Worker
 public:
     explicit ReencryptWorkerV2(QObject *parent = nullptr);
     void setEncryptParams(const QVariantMap &params);
-    void loadReencryptConfig();
+    void loadReencryptConfig(const QString &device = QString());
     disk_encrypt::EncryptConfig encryptConfig() const;
 
 Q_SIGNALS:

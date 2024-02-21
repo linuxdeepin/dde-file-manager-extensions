@@ -13,6 +13,7 @@
 
 #include <QtConcurrent>
 #include <QDateTime>
+#include <QDir>
 #include <QDebug>
 
 #include <libcryptsetup.h>
@@ -87,13 +88,7 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
                                                   static_cast<int>(ret));
         } else {
             qInfo() << "start reencrypt device" << device;
-            int ksCipher = worker->cipherPos();
-            int ksRec = worker->recKeyPos();
-            startReencrypt(device,
-                           params.value(encrypt_param_keys::kKeyPassphrase).toString(),
-                           params.value(encrypt_param_keys::kKeyTPMToken).toString(),
-                           ksCipher,
-                           ksRec);
+            triggerReencrypt(device);
         }
 
         worker->deleteLater();
@@ -207,42 +202,10 @@ bool DiskEncryptDBus::checkAuth(const QString &actID)
             .toBool();
 }
 
-void DiskEncryptDBus::startReencrypt(const QString &dev, const QString &passphrase, const QString &token, int /*cipherPos*/, int recPos)
-{
-    ReencryptWorker *worker = new ReencryptWorker(dev, passphrase, this);
-    connect(worker, &ReencryptWorker::deviceReencryptResult,
-            this, [this](const QString &dev, int result) {
-                Q_EMIT this->EncryptDiskResult(dev, deviceName, result);
-            });
-    connect(worker, &QThread::finished, this, [=] {
-        int ret = worker->exitError();
-        qDebug() << "reencrypt finished"
-                 << ret;
-        worker->deleteLater();
-        setToken(dev, token);
-
-        if (recPos >= 0) {
-            QString tokenJson = QString("{ 'type': 'usec-recoverykey', 'keyslots': ['%1'] }").arg(recPos);
-            setToken(dev, tokenJson);
-        }
-    });
-    worker->start();
-}
-
-void DiskEncryptDBus::setToken(const QString &dev, const QString &token)
-{
-    if (token.isEmpty())
-        return;
-
-    int ret = disk_encrypt_funcs::bcSetToken(dev, token.toStdString().c_str());
-    if (ret != 0)
-        qWarning() << "set token failed for device" << dev;
-}
-
-bool DiskEncryptDBus::triggerReencrypt()
+bool DiskEncryptDBus::triggerReencrypt(const QString &device)
 {
     gFstabEncWorker = new ReencryptWorkerV2(this);
-    gFstabEncWorker->loadReencryptConfig();
+    gFstabEncWorker->loadReencryptConfig(device);
     connect(gFstabEncWorker, &ReencryptWorkerV2::requestEncryptParams,
             this, &DiskEncryptDBus::RequestEncryptParams);
     connect(gFstabEncWorker, &ReencryptWorkerV2::deviceReencryptResult,
@@ -250,7 +213,25 @@ bool DiskEncryptDBus::triggerReencrypt()
                 Q_EMIT EncryptDiskResult(dev, deviceName, code);
             });
     connect(gFstabEncWorker, &ReencryptWorkerV2::finished,
-            this, [] { gFstabEncWorker->deleteLater(); gFstabEncWorker = nullptr; });
+            this, [this] { gFstabEncWorker->deleteLater(); gFstabEncWorker = nullptr;
+        // pick a new job.
+        const static QRegularExpression reg(R"(encrypt_(.*).json)");
+        QDir usecDir("/boot/usec-crypt");
+        auto files = usecDir.entryInfoList();
+        for (auto file: files) {
+            auto fileName = file.fileName();
+            if (fileName.contains(reg)) {
+                qInfo() << "found new unfinished job:" << fileName;
+                auto match = reg.match(fileName);
+                if (match.hasMatch()) {
+                    auto dev = match.captured(1);
+                    dev = "/dev/" + dev;
+                    triggerReencrypt(dev);
+                    return;
+                }
+            }
+        }
+    });
 
     currentEncryptingDevice = gFstabEncWorker->encryptConfig().devicePath;
     deviceName = gFstabEncWorker->encryptConfig().deviceName;

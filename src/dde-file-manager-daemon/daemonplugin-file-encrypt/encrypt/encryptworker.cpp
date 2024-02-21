@@ -80,6 +80,8 @@ void PrencryptWorker::run()
         return;
     }
 
+    writeEncryptParams(encParams.device);
+
     if (!encParams.tpmToken.isEmpty()) {
         QFile f(QString(TOKEN_FILE_PATH).arg(encParams.device.mid(5)));
         if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
@@ -92,7 +94,7 @@ void PrencryptWorker::run()
     }
 }
 
-int PrencryptWorker::writeEncryptParams()
+int PrencryptWorker::writeEncryptParams(const QString &device)
 {
     const static QMap<int, QString> encMode {
         { 0, "pin" },
@@ -127,7 +129,12 @@ int PrencryptWorker::writeEncryptParams()
 
     createUsecPathIfNotExist();
 
-    QFile f(QString("%1/encrypt.json").arg(kBootUsecPath));
+    QString configPath = QString("%1/encrypt.json").arg(kBootUsecPath);
+    if (!device.isEmpty()) {
+        configPath = QString("%1/encrypt_%2.json").arg(kBootUsecPath).arg(device.mid(5));
+    }
+
+    QFile f(configPath);
     if (f.exists())
         qInfo() << "has pending job, the pending job will be replaced";
 
@@ -193,24 +200,6 @@ int PrencryptWorker::setFstabTimeout()
     }
 
     return kSuccess;
-}
-
-ReencryptWorker::ReencryptWorker(const QString &dev,
-                                 const QString &passphrase,
-                                 QObject *parent)
-    : Worker("", parent),
-      passphrase(passphrase),
-      device(dev)
-{
-}
-
-void ReencryptWorker::run()
-{
-    int ret = disk_encrypt_funcs::bcResumeReencrypt(device,
-                                                    passphrase,
-                                                    "");
-
-    Q_EMIT deviceReencryptResult(device, ret);
 }
 
 DecryptWorker::DecryptWorker(const QString &jobID,
@@ -312,9 +301,9 @@ void ReencryptWorkerV2::setEncryptParams(const QVariantMap &params)
     this->params = params;
 }
 
-void ReencryptWorkerV2::loadReencryptConfig()
+void ReencryptWorkerV2::loadReencryptConfig(const QString &device)
 {
-    disk_encrypt_utils::bcReadEncryptConfig(&config);
+    disk_encrypt_utils::bcReadEncryptConfig(&config, device);
 }
 
 EncryptConfig ReencryptWorkerV2::encryptConfig() const
@@ -329,8 +318,12 @@ void ReencryptWorkerV2::run()
         return;
     }
 
+    QString clearDev;
     // found unfinished encrypt job, disable recovery.
-    disableABRecovery();
+    if (config.configPath.endsWith("encrypt.json")) {
+        disableABRecovery();
+        clearDev = config.clearDev;
+    }
 
     while (true) {
         QReadLocker lk(&lock);
@@ -341,7 +334,7 @@ void ReencryptWorkerV2::run()
         QThread::sleep(3);   // don't request frequently.
     }
 
-    int ret = disk_encrypt_funcs::bcResumeReencrypt(config.devicePath, "", config.clearDev, false);
+    int ret = disk_encrypt_funcs::bcResumeReencrypt(config.devicePath, "", clearDev, false);
     if (ret == kSuccess) {
         // sets the passphrase, token, recovery-key
         setPassphrase();
@@ -498,8 +491,9 @@ void ReencryptWorkerV2::updateCrypttab()
 
 void ReencryptWorkerV2::removeEncryptFile()
 {
-    int ret = ::remove(kEncConfigPath);
-    qInfo() << "encrypt job file has been removed." << ret;
+    int ret = ::remove(config.configPath.toStdString().c_str());
+    qInfo() << "encrypt job file has been removed." << ret
+            << config.configPath;
 }
 
 QString ReencryptWorkerV2::updateTokenKeyslots(const QString &token, int keyslot)
