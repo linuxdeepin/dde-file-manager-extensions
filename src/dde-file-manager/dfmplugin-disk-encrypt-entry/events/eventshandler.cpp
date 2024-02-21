@@ -73,6 +73,11 @@ bool EventsHandler::hasEnDecryptJob()
     return !(encryptDialogs.isEmpty() && decryptDialogs.isEmpty());
 }
 
+bool EventsHandler::isEncrypting(const QString &device)
+{
+    return encryptDialogs.contains(device) || decryptDialogs.contains(device);
+}
+
 void EventsHandler::onPreencryptResult(const QString &dev, const QString &devName, const QString &, int code)
 {
     QApplication::restoreOverrideCursor();
@@ -200,6 +205,11 @@ bool EventsHandler::onAcquireDevicePwd(const QString &dev, QString *pwd, bool *c
 {
     if (!pwd || !cancelled)
         return false;
+
+    if (EventsHandler::instance()->isEncrypting(dev)) {
+        *cancelled = true;
+        return true;
+    }
 
     int type = device_utils::encKeyType(dev);
 

@@ -12,6 +12,7 @@
 namespace disk_encrypt {
 
 inline constexpr char kEncConfigPath[] { "/boot/usec-crypt/encrypt.json" };
+inline const QString kEncConfigDevicePath {"/boot/usec-crypt/encrypt_%1.json"};
 
 namespace encrypt_param_keys {
 inline constexpr char kKeyDevice[] { "device" };
@@ -110,6 +111,7 @@ struct EncryptConfig
     QString recoveryPath;
     QVariantMap tpmConfig;
     QString clearDev;
+    QString configPath;
 
     QVariantMap keyConfig()
     {

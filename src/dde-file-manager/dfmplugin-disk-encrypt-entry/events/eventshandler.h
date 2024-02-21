@@ -18,6 +18,7 @@ public:
     void bindDaemonSignals();
     void hookEvents();
     bool hasEnDecryptJob();
+    bool isEncrypting(const QString &device);
     bool onAcquireDevicePwd(const QString &dev, QString *pwd, bool *giveup);
 
 private Q_SLOTS:
