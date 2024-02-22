@@ -61,31 +61,33 @@ dconfig_meta_files(APPID "org.deepin.dde.file-manager"
     FILES "${CMAKE_SOURCE_DIR}/assets/configs/org.deepin.dde.file-manager.diskencrypt.json"
 )
 
-# execute_process(
-#     COMMAND lupdate
-#         ./
-#         -ts
-#         -no-obsolete
-#         ${CMAKE_SOURCE_DIR}/translations/disk-encrypt.ts
-#     COMMAND lupdate
-#         ./
-#         -ts
-#         -no-obsolete
-#         ${CMAKE_SOURCE_DIR}/translations/disk-encrypt_zh_CN.ts
-
-#     WORKING_DIRECTORY
-#         ${CMAKE_CURRENT_SOURCE_DIR}
-# )
-
 execute_process(
-    COMMAND lrelease
+    COMMAND lupdate
+        ./
+        -ts
+        -no-obsolete
         ${CMAKE_SOURCE_DIR}/translations/disk-encrypt.ts
-    COMMAND lrelease
+    COMMAND lupdate
+        ./
+        -ts
+        -no-obsolete
         ${CMAKE_SOURCE_DIR}/translations/disk-encrypt_zh_CN.ts
 
     WORKING_DIRECTORY
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+# 查找匹配 disk-encrypt*.ts 的文件列表
+file(GLOB TS_FILES ${CMAKE_SOURCE_DIR}/translations/disk-encrypt*.ts)
+
+# 添加 lrelease 命令，传递 TS_FILES 列表
+foreach(TS_FILE ${TS_FILES})
+    execute_process(
+       COMMAND lrelease ${TS_FILE}
+       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endforeach()
+
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/translations
     DESTINATION share/dde-file-manager
