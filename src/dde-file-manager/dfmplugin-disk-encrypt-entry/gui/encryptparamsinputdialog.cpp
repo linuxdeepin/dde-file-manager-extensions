@@ -271,9 +271,15 @@ bool EncryptParamsInputDialog::validateExportPath(const QString &path, QString *
         return false;
     }
 
-    QString dev = QStorageInfo(path).device();
+    QStorageInfo storage(path);
+    QString dev = storage.device();
     if (dev == params.devDesc) {
         setMsg(tr("Please export to an external device such as a non-encrypted partition or USB flash drive."));
+        return false;
+    }
+
+    if (storage.isReadOnly()) {
+        setMsg(tr("This partition is read-only, please export to a writable partition"));
         return false;
     }
 
