@@ -425,7 +425,9 @@ void EventsHandler::showRebootOnPreencrypted(const QString &device, const QStrin
 {
     QString dev = QString("%1(%2)").arg(devName).arg(device.mid(5));
 
-    DDialog dlg;
+    DDialog dlg(qApp->activeWindow());
+    if (dialog_utils::isWayland())
+        dlg.setWindowFlag(Qt::WindowStaysOnTopHint);
     dlg.setIcon(QIcon::fromTheme("dialog-information"));
     dlg.setTitle(tr("Preencrypt done"));
     dlg.setMessage(tr("Device %1 has been preencrypt, please reboot to finish encryption.")
@@ -439,7 +441,9 @@ void EventsHandler::showRebootOnDecrypted(const QString &device, const QString &
 {
     QString dev = QString("%1(%2)").arg(devName).arg(device.mid(5));
 
-    DDialog dlg;
+    DDialog dlg(qApp->activeWindow());
+    if (dialog_utils::isWayland())
+        dlg.setWindowFlag(Qt::WindowStaysOnTopHint);
     dlg.setIcon(QIcon::fromTheme("dialog-information"));
     dlg.setTitle(tr("Decrypt device"));
     dlg.setMessage(tr("Please reboot to decrypt device %1.")

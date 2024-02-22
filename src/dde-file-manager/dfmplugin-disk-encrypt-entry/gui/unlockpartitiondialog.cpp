@@ -24,6 +24,8 @@ UnlockPartitionDialog::UnlockPartitionDialog(UnlockType type, QWidget *parent)
     setModal(true);
     initUI();
     initConnect();
+    if (dialog_utils::isWayland())
+        setWindowFlag(Qt::WindowStaysOnTopHint);
 }
 
 UnlockPartitionDialog::~UnlockPartitionDialog()

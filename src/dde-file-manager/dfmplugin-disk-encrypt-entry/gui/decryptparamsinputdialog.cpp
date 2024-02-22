@@ -18,6 +18,8 @@ DecryptParamsInputDialog::DecryptParamsInputDialog(const QString &device, QWidge
     connect(this, &DecryptParamsInputDialog::buttonClicked,
             this, &DecryptParamsInputDialog::onButtonClicked);
     updateUserHints();
+    if (dialog_utils::isWayland())
+        setWindowFlag(Qt::WindowStaysOnTopHint);
 }
 
 QString DecryptParamsInputDialog::getKey()

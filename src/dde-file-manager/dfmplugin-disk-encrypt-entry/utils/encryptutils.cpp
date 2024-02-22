@@ -15,6 +15,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QDir>
+#include <QApplication>
 
 #include <dconfig.h>
 #include <DDialog>
@@ -312,6 +313,8 @@ int dialog_utils::showDialog(const QString &title, const QString &msg, DialogTyp
         break;
     }
     Dtk::Widget::DDialog d;
+    if (isWayland())
+        d.setWindowFlag(Qt::WindowStaysOnTopHint);
     d.setTitle(title);
     d.setMessage(msg);
     d.setIcon(QIcon::fromTheme(icon));
@@ -394,4 +397,9 @@ void dialog_utils::showTPMError(const QString &title, tpm_passphrase_utils::TPME
     }
     if (!msg.isEmpty())
         showDialog(title, msg, kError);
+}
+
+bool dialog_utils::isWayland()
+{
+    return QApplication::platformName() == "wayland";
 }
