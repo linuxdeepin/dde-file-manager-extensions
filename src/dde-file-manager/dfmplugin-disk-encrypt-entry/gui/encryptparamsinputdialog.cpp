@@ -6,7 +6,6 @@
 #include "utils/encryptutils.h"
 
 #include <dfm-base/utils/finallyutil.h>
-
 #include <dfm-mount/dmount.h>
 
 #include <QVBoxLayout>
@@ -42,6 +41,8 @@ EncryptParamsInputDialog::EncryptParamsInputDialog(const disk_encrypt::DeviceEnc
 {
     initUi();
     initConn();
+    if (dialog_utils::isWayland())
+        setWindowFlag(Qt::WindowStaysOnTopHint);
 }
 
 DeviceEncryptParam EncryptParamsInputDialog::getInputs()
@@ -163,6 +164,8 @@ QWidget *EncryptParamsInputDialog::createExportPage()
 
     keyExportInput = new DFileChooserEdit(this);
     keyExportInput->setFileMode(QFileDialog::DirectoryOnly);
+    if (keyExportInput->fileDialog() && dialog_utils::isWayland())
+        keyExportInput->fileDialog()->setWindowFlag(Qt::WindowStaysOnTopHint);
     lay->addWidget(keyExportInput);
 
     keyExportInput->setPlaceholderText(tr("Please select a non-encrypted partition as the key file export path."));

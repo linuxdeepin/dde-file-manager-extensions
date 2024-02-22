@@ -27,6 +27,8 @@ ChgPassphraseDialog::ChgPassphraseDialog(const QString &device, QWidget *parent)
             this, &ChgPassphraseDialog::onRecSwitchClicked);
     connect(oldPass, &Dtk::Widget::DPasswordEdit::textChanged,
             this, &ChgPassphraseDialog::onOldKeyChanged);
+    if (dialog_utils::isWayland())
+        setWindowFlag(Qt::WindowStaysOnTopHint);
 }
 
 QPair<QString, QString> ChgPassphraseDialog::getPassphrase()

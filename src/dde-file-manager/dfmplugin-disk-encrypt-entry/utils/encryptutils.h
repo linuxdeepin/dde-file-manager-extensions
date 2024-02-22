@@ -68,6 +68,7 @@ enum DialogType {
 };
 int showDialog(const QString &title, const QString &msg, DialogType type);
 void showTPMError(const QString &title, tpm_passphrase_utils::TPMError err);
+bool isWayland();
 }
 
 }   // namespace dfmplugin_diskenc
