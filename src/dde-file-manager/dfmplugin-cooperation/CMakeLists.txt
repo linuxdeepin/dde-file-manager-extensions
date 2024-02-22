@@ -68,15 +68,16 @@ execute_process(
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-execute_process(
-    COMMAND lrelease
-        ${CMAKE_SOURCE_DIR}/translations/cooperation-transfer.ts
-    COMMAND lrelease
-        ${CMAKE_SOURCE_DIR}/translations/cooperation-transfer_zh_CN.ts
+# 查找匹配 cooperation-transfer*.ts 的文件列表
+file(GLOB TS_FILES ${CMAKE_SOURCE_DIR}/translations/cooperation-transfer*.ts)
 
-    WORKING_DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+# 添加 lrelease 命令，传递 TS_FILES 列表
+foreach(TS_FILE ${TS_FILES})
+    execute_process(
+       COMMAND lrelease ${TS_FILE}
+       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endforeach()
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/translations
     DESTINATION share/dde-file-manager

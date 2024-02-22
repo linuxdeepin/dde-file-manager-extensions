@@ -358,7 +358,7 @@ void EncryptParamsInputDialog::onPageChanged(int page)
     clearButtons();
     if (page == kPasswordInputPage) {
         addButton(tr("Next"));
-        setTitle(tr("Please continue to encrypt partition %1.").arg(params.deviceDisplayName));
+        setTitle(tr("Please continue to encrypt partition %1").arg(params.deviceDisplayName));
     } else if (page == kExportKeyPage) {
         addButton(tr("Previous"));
         addButton(tr("Next"), true, ButtonType::ButtonRecommend);
