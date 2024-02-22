@@ -42,7 +42,7 @@ void EncryptProgressDialog::showResultPage(bool success, const QString &title, c
     QIcon icon = success ? QIcon::fromTheme("dialog-ok") : QIcon::fromTheme("dialog-error");
     iconLabel->setPixmap(icon.pixmap(64, 64));
 
-    addButton("Confirm");
+    addButton(tr("Confirm"));
     setCloseButtonVisible(true);
     setAttribute(Qt::WA_DeleteOnClose);
     setOnButtonClickedClose(true);
