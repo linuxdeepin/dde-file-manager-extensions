@@ -28,13 +28,16 @@ void EncryptProgressDialog::setText(const QString &title, const QString &message
 void EncryptProgressDialog::updateProgress(double progress)
 {
     mainLay->setCurrentIndex(0);
-    this->progress->setValue(progress * 100);
+    int val = progress * 100 - 1;   // do not show 100%, wait at 99% and then jump to result page.
+    if (val < 0) val = 0;
+    this->progress->setValue(val);
     clearButtons();
     setCloseButtonVisible(false);
 }
 
 void EncryptProgressDialog::showResultPage(bool success, const QString &title, const QString &message)
 {
+    this->progress->setValue(100);
     mainLay->setCurrentIndex(1);
 
     setTitle(title);

@@ -1,3 +1,9 @@
+dde-file-manager-extensions (1.1.9) unstable; urgency=medium
+
+  * support re-encrypt after interrupted.
+
+ -- xushitong <xushitong@uniontech.com>  Fri, 23 Feb 2024 14:38:18 +0800
+
 dde-file-manager-extensions (1.1.8) unstable; urgency=medium
 
   * encrypt fstab device without presetted key
