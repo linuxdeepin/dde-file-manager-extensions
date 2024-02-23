@@ -42,6 +42,7 @@ private Q_SLOTS:
     void showRebootOnDecrypted(const QString &device, const QString &devName);
 
     void requestReboot();
+    void autoStartDFM();
 
 private:
     explicit EventsHandler(QObject *parent = nullptr);

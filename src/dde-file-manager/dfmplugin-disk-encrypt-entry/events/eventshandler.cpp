@@ -118,6 +118,12 @@ void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, 
         dialog->showResultPage(code == 0, title, msg);
         dialog->move(pos);
     }
+
+    // delete auto start file.
+    auto configPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+    auto autoStartFilePath = configPath + "/autostart/dfm-reencrypt.desktop";
+    int ret = ::remove(autoStartFilePath.toStdString().c_str());
+    qInfo() << "autostart file has been removed:" << ret;
 }
 
 void EventsHandler::onDecryptResult(const QString &dev, const QString &devName, const QString &, int code)
@@ -423,6 +429,8 @@ void EventsHandler::showChgPwdError(const QString &dev, const QString &devName, 
 
 void EventsHandler::showRebootOnPreencrypted(const QString &device, const QString &devName)
 {
+    autoStartDFM();
+
     QString dev = QString("%1(%2)").arg(devName).arg(device.mid(5));
 
     DDialog dlg(qApp->activeWindow());
@@ -460,6 +468,15 @@ void EventsHandler::requestReboot()
                            "/com/deepin/SessionManager",
                            "com.deepin.SessionManager");
     sessMng.asyncCall("RequestReboot");
+}
+
+void EventsHandler::autoStartDFM()
+{
+    qInfo() << "autostart is going to added...";
+    QDBusInterface sessMng("com.deepin.SessionManager",
+                           "/com/deepin/StartManager",
+                           "com.deepin.StartManager");
+    sessMng.asyncCall("AddAutostart", QString(kReencryptDesktopFile));
 }
 
 EventsHandler::EventsHandler(QObject *parent)

@@ -53,6 +53,7 @@ protected:
     void run() override;
     int writeEncryptParams(const QString &device = QString());
     int setFstabTimeout();
+    void createReencryptDesktop();
 
 private:
     QVariantMap params;
