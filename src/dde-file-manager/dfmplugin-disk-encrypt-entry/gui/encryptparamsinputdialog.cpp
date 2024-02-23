@@ -133,8 +133,10 @@ QWidget *EncryptParamsInputDialog::createPasswordPage()
                         tr("Automatic unlocking on this computer by TPM") });
 
     if (tpm_utils::checkTPM() != 0) {
-        encType->setItemData(kTPMAndPIN, QVariant(0), Qt::UserRole - 1);
-        encType->setItemData(kTPMOnly, QVariant(0), Qt::UserRole - 1);
+        // encType->setItemData(kTPMAndPIN, QVariant(0), Qt::UserRole - 1);
+        // encType->setItemData(kTPMOnly, QVariant(0), Qt::UserRole - 1);
+        encType->removeItem(1);
+        encType->removeItem(1);
 
         encType->setCurrentIndex(kPasswordOnly);
         onEncTypeChanged(kPasswordOnly);
