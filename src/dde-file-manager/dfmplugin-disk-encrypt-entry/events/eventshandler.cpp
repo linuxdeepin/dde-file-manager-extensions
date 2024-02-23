@@ -437,8 +437,9 @@ void EventsHandler::showRebootOnPreencrypted(const QString &device, const QStrin
     if (dialog_utils::isWayland())
         dlg.setWindowFlag(Qt::WindowStaysOnTopHint);
     dlg.setIcon(QIcon::fromTheme("dialog-information"));
-    dlg.setTitle(tr("Preencrypt done"));
-    dlg.setMessage(tr("Device %1 has been preencrypt, please reboot to finish encryption.")
+    dlg.setTitle(tr("Reboot to set up encryption"));
+    dlg.setMessage(tr("Partition encryption is being performed on device %1, "
+                      "please reboot the system to initialize the encryption environment.")
                            .arg(dev));
     dlg.addButtons({ tr("Reboot later"), tr("Reboot now") });
     if (dlg.exec() == 1)
