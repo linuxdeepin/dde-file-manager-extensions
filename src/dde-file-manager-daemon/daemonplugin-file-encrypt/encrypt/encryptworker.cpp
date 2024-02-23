@@ -46,6 +46,7 @@ void PrencryptWorker::run()
     }
 
     if (params.value(encrypt_param_keys::kKeyInitParamsOnly, false).toBool()) {
+        createReencryptDesktop();
         setExitCode(writeEncryptParams());
         setFstabTimeout();
         return;
@@ -200,6 +201,40 @@ int PrencryptWorker::setFstabTimeout()
     }
 
     return kSuccess;
+}
+
+// this is used to create a desktop file into
+// /usr/share/applications/dfm-reencrypt.desktop
+void PrencryptWorker::createReencryptDesktop()
+{
+    QFile f(kReencryptDesktopFile);
+    if (f.exists())
+        return;
+
+    QByteArray desktop {
+        "[Desktop Entry]\n"
+        "Categories=System;\n"
+        "Comment=To auto launch reencryption\n"
+        "Exec=/usr/bin/dde-file-manager -d\n"
+        "GenericName=Disk Reencrypt\n"
+        "Icon=dde-file-manager\n"
+        "Name=Disk Reencrypt\n"
+        "Terminal=false\n"
+        "Type=Application\n"
+        "NoDisplay=true\n"
+        "X-AppStream-Ignore=true\n"
+        "X-Deepin-AppID=dde-file-manager\n"
+        "X-Deepin-Vendor=deepin\n"
+    };
+
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qWarning() << "cannot open desktop file to write!";
+        return;
+    }
+    f.write(desktop);
+    f.close();
+
+    qInfo() << "desktop file created.";
 }
 
 DecryptWorker::DecryptWorker(const QString &jobID,
