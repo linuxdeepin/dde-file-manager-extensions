@@ -369,7 +369,15 @@ void ReencryptWorkerV2::run()
         QThread::sleep(3);   // don't request frequently.
     }
 
-    int ret = disk_encrypt_funcs::bcResumeReencrypt(config.devicePath, "", clearDev, false);
+    // this open action here is for repairing the reencrypt process.
+    int ret = disk_encrypt_funcs::bcOpenDevice(config.devicePath, config.clearDev);
+    if (ret != kSuccess) {
+        qWarning() << "cannot open device for reencryption!" << ret;
+        Q_EMIT deviceReencryptResult(config.devicePath, ret);
+        return;
+    }
+
+    ret = disk_encrypt_funcs::bcResumeReencrypt(config.devicePath, "", clearDev, false);
     if (ret == kSuccess) {
         // sets the passphrase, token, recovery-key
         setPassphrase();

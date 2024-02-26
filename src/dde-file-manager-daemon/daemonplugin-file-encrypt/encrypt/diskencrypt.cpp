@@ -802,3 +802,36 @@ QDBusReply<QDBusUnixFileDescriptor> utils::inhibit()
          << QString("block");
     return iface.callWithArgumentList(QDBus::Block, "Inhibit", args);
 }
+
+int disk_encrypt_funcs::bcOpenDevice(const QString &device, const QString &activeName)
+{
+    struct crypt_device *cdev { nullptr };
+    dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
+
+    int ret = crypt_init(&cdev,
+                         device.toStdString().c_str());
+    CHECK_INT(ret, "init device failed " + device, -kErrorInitCrypt);
+
+    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
+    CHECK_INT(ret, "load device failed " + device, -kErrorLoadCrypt);
+
+    auto status = crypt_status(cdev, activeName.toStdString().c_str());
+    if (status == CRYPT_INACTIVE) {
+        // try unlock by empty passphrase to repair reencryption.
+        ret = crypt_activate_by_passphrase(cdev, activeName.toStdString().c_str(),
+                                           CRYPT_ANY_SLOT,
+                                           "",
+                                           0,
+                                           CRYPT_ACTIVATE_NO_JOURNAL);
+        CHECK_INT(ret, "open device failed " + device, -kErrorActive);
+
+        // close device avoid operating.
+        ret = crypt_deactivate(cdev, activeName.toStdString().c_str());
+        CHECK_INT(ret, "close device failed " + device, -kErrorDeactive);
+    } else if (status == CRYPT_INVALID) {
+        qCritical() << "device encrypt status is invalid!" << device;
+        return -kErrorActive;
+    }
+
+    return kSuccess;
+}
