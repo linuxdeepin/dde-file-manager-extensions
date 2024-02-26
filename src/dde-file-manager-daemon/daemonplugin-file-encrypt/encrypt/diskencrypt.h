@@ -46,6 +46,7 @@ int bcBackupCryptHeader(const QString &device, QString &headerPath);
 int bcDoSetupHeader(const EncryptParams &params, QString *headerPath, int *keyslotCipher, int *keyslotRecKey);
 int bcPrepareHeaderFile(const QString &device, QString *headerPath);
 int bcSetLabel(const QString &device, const QString &label);
+int bcOpenDevice(const QString &device, const QString &activeName);
 
 int bcEncryptProgress(uint64_t size, uint64_t offset, void *usrptr);
 int bcDecryptProgress(uint64_t size, uint64_t offset, void *usrptr);
