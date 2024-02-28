@@ -19,7 +19,7 @@ Copyright: None
 License: CC0-1.0
 
 # debian
-Files: debian/*
+Files: debian/* */ddplugin-videowallpaper/debian/*
 Copyright: None
 License: CC0-1.0
 
@@ -29,7 +29,7 @@ Copyright: None
 License: CC0-1.0
 
 # translations
-Files: translations/*.ts */wallpapersetting/translations/*.ts
+Files: translations/*.ts */translations/*.ts
 Copyright: UnionTech Software Technology Co., Ltd.
 License: GPL-3.0-or-later
 
