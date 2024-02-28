@@ -11,6 +11,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wl,--as-needed")
 
+find_package(DtkCMake REQUIRED)
+
 #安全加固
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -Werror=return-type")
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "mips")
@@ -102,6 +104,17 @@ if(NOT CMAKE_BUILD_TYPE)
       FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 message("Build type:"${CMAKE_BUILD_TYPE})
+
+#Indentify the version
+if (${DEEPIN_OS_VERSION} MATCHES "23")
+    add_definitions(-DCOMPILE_ON_V23)
+    set(COMPLIE_ON_V23 TRUE)
+    message("COMPILE ON v23")
+else()
+    add_definitions(-DCOMPILE_ON_V20)
+    set(COMPLIE_ON_V20 TRUE)
+    message("COMPILE ON v20")
+endif()
 
 add_subdirectory(src)
 
