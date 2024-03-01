@@ -247,15 +247,29 @@ DecryptWorker::DecryptWorker(const QString &jobID,
 
 void DecryptWorker::run()
 {
+    const QString &device = params.value(encrypt_param_keys::kKeyDevice).toString();
+    EncryptStatus status;
+    int ret = block_device_utils::bcDevEncryptStatus(device, &status);
+    if (ret != kSuccess) {
+        qWarning() << "check device status failed!";
+        setExitCode(ret);
+        return;
+    }
+
+    if (status != EncryptStatus::kStatusFinished) {
+        qWarning() << "encrypt status not finished, cannot decrypt!" << status << device;
+        setExitCode(-kErrorNotFullyEncrypted);
+        return;
+    }
+
     bool initOnly = params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool();
     if (initOnly) {
         setExitCode(writeDecryptParams());
         return;
     }
 
-    const QString &device = params.value(encrypt_param_keys::kKeyDevice).toString();
     const QString &passphrase = params.value(encrypt_param_keys::kKeyPassphrase).toString();
-    int ret = disk_encrypt_funcs::bcDecryptDevice(device, passphrase);
+    ret = disk_encrypt_funcs::bcDecryptDevice(device, passphrase);
     if (ret < 0) {
         setExitCode(ret);
         qDebug() << "decrypt devcei failed"
