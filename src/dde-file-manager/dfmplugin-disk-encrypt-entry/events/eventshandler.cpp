@@ -362,6 +362,11 @@ void EventsHandler::showDecryptError(const QString &dev, const QString &devName,
         title = tr("Decrypt disk");
         msg = tr("Wrong passpharse or PIN");
         break;
+    case kErrorNotFullyEncrypted:
+        title = tr("Decrypt failed");
+        msg = tr("Device %1 is under encrypting, please decrypt after encryption finished.")
+                      .arg(device);
+        break;
     default:
         title = tr("Decrypt failed");
         msg = tr("Device %1 Decrypt failed, please see log for more information.(%2)")

@@ -81,6 +81,8 @@ void EncryptParamsInputDialog::initUi()
 
     onPageChanged(kPasswordInputPage);
 
+    setCloseButtonVisible(false);
+
     // for ui debugging
     //    setStyleSheet("border: 1px solid red;");
     //    center->setObjectName("center");
