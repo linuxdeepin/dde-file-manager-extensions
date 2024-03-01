@@ -1,3 +1,10 @@
+dde-file-manager-extensions (1.1.10) unstable; urgency=medium
+
+  * check partition status before decrypt
+  * 
+
+ -- xushitong <xushitong@uniontech.com>  Fri, 01 Mar 2024 17:52:32 +0800
+
 dde-file-manager-extensions (1.1.9) unstable; urgency=medium
 
   * support re-encrypt after interrupted.
