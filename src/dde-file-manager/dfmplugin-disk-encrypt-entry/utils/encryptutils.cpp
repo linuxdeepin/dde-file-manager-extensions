@@ -403,3 +403,11 @@ bool dialog_utils::isWayland()
 {
     return QApplication::platformName() == "wayland";
 }
+
+bool config_utils::enableEncrypt()
+{
+    auto cfg = Dtk::Core::DConfig::create("org.deepin.dde.file-manager",
+                                          "org.deepin.dde.file-manager.diskencrypt");
+    cfg->deleteLater();
+    return cfg->value("enableEncrypt", true).toBool();
+}

@@ -19,8 +19,19 @@
             "flags":["global"],
             "name":"Encrypt algorithm",
             "name[zh_CN]":"加密算法",
-            "description[zh_CN]":"磁盘加密所使用的默认加密算法",
-            "description":"It's the default algorithm for encrypting disks",
+            "description[zh_CN]":"分区加密所使用的默认加密算法",
+            "description":"It's the default algorithm for encrypting partitions",
+            "permissions":"readwrite",
+            "visibility":"public"
+        },
+        "enableEncrypt": {
+            "value": true,
+            "serial":0,
+            "flags":["global"],
+            "name":"Enable partition encrypt",
+            "name[zh_CN]":"启用分区加密",
+            "description[zh_CN]":"用于控制分区加密功能是否在文管启用",
+            "description":"It's used to control whether to enable partition encryption feature in dde-file-manager.",
             "permissions":"readwrite",
             "visibility":"public"
         }
