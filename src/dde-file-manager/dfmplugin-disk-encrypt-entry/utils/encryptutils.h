@@ -44,6 +44,7 @@ QString getPassphraseFromTPM(const QString &dev, const QString &pin);
 namespace config_utils {
 bool exportKeyEnabled();
 QString cipherType();
+bool enableEncrypt();
 }   // namespace config_utils
 
 namespace recovery_key_utils {

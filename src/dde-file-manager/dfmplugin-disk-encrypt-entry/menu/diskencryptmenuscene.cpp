@@ -56,6 +56,11 @@ QString DiskEncryptMenuScene::name() const
 
 bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
 {
+    if (!config_utils::enableEncrypt()) {
+        qInfo() << "partition encryption feature is disabled.";
+        return false;
+    }
+
     QList<QUrl> selectedItems = params.value(MenuParamKey::kSelectFiles).value<QList<QUrl>>();
     if (selectedItems.isEmpty())
         return false;
