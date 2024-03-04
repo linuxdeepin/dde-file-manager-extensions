@@ -9,6 +9,7 @@ Build-Depends:
  qttools5-dev,
  libdtkwidget-dev,
  libdtkcore-dev,
+ libdtkcore5-bin,
  libdfm-mount-dev,
  libdfm-io-dev,
  dde-file-manager-dev,
