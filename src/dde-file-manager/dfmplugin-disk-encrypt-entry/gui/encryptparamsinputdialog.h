@@ -35,7 +35,6 @@ protected:
     void initConn();
     QWidget *createPasswordPage();
     QWidget *createExportPage();
-    QWidget *createConfirmLayout();
     bool validatePassword();
     bool validateExportPath(const QString &path, QString *msg);
     void setPasswordInputVisible(bool visible);
@@ -62,6 +61,7 @@ private:
 
 private:
     bool expPathValid { false };
+    bool exportRecKeyEnabled { false };
     QString tpmPassword;
     disk_encrypt::DeviceEncryptParam params;
 };

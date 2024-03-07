@@ -31,7 +31,6 @@ DWIDGET_USE_NAMESPACE
 enum StepPage {
     kPasswordInputPage,
     kExportKeyPage,
-    kConfirmPage,
 };
 
 EncryptParamsInputDialog::EncryptParamsInputDialog(const disk_encrypt::DeviceEncryptParam &params,
@@ -39,6 +38,7 @@ EncryptParamsInputDialog::EncryptParamsInputDialog(const disk_encrypt::DeviceEnc
     : DTK_WIDGET_NAMESPACE::DDialog(parent),
       params(params)
 {
+    exportRecKeyEnabled = config_utils::exportKeyEnabled();
     initUi();
     initConn();
     if (dialog_utils::isWayland())
@@ -77,7 +77,6 @@ void EncryptParamsInputDialog::initUi()
 
     pagesLay->addWidget(createPasswordPage());
     pagesLay->addWidget(createExportPage());
-    pagesLay->addWidget(createConfirmLayout());
 
     onPageChanged(kPasswordInputPage);
 
@@ -173,39 +172,6 @@ QWidget *EncryptParamsInputDialog::createExportPage()
     lay->addWidget(keyExportInput);
 
     keyExportInput->setPlaceholderText(tr("Please select a non-encrypted partition as the key file export path."));
-
-    return wid;
-}
-
-QWidget *EncryptParamsInputDialog::createConfirmLayout()
-{
-    QVBoxLayout *lay = new QVBoxLayout();
-    QWidget *wid = new QWidget(this);
-    wid->setLayout(lay);
-    lay->setMargin(10);
-
-    QString displayName = QString("%1(%2)").arg(params.deviceDisplayName).arg(params.devDesc.mid(5));
-    QLabel *hint = new QLabel(tr("After clicking \"Confirm encryption\", "
-                                 "enter the user password to finish encrypting the \"%1\" partition.")
-                                      .arg(displayName),
-                              this);
-    hint->setWordWrap(true);
-    hint->adjustSize();
-    hint->setAlignment(Qt::AlignCenter);
-    lay->addWidget(hint);
-
-    lay->addSpacerItem(new QSpacerItem(1, 300));
-
-    hint = new QLabel(tr("* After encrypting the partition, "
-                         "the system cannot be rolled back to a lower version, "
-                         "please confirm the encryption"));
-    hint->adjustSize();
-    hint->setWordWrap(true);
-    hint->setAlignment(Qt::AlignCenter);
-    auto pal = hint->palette();
-    pal.setColor(QPalette::WindowText, QColor("red"));
-    hint->setPalette(pal);
-    lay->addWidget(hint);
 
     return wid;
 }
@@ -319,39 +285,41 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
 {
     qDebug() << "button clicked:" << idx << "page: " << pagesLay->currentIndex();
 
+    auto confirmEnc = [this] {
+        if (encType->currentIndex() == kPasswordOnly) {
+            accept();
+            return;
+        }
+        if (!params.initOnly && !encryptByTpm(params.devDesc)) {
+            qWarning() << "encrypt by TPM failed!";
+            dialog_utils::showDialog(tr("TPM error"), tr("TPM status error!"), dialog_utils::DialogType::kError);
+            return;
+        }
+        accept();
+    };
+
     int currPage = pagesLay->currentIndex();
     if (currPage == kPasswordInputPage) {
         if (!validatePassword() && !params.initOnly)
             return;
-        if (config_utils::exportKeyEnabled()) {
+
+        if (exportRecKeyEnabled) {
             pagesLay->setCurrentIndex(kExportKeyPage);
             onExpPathChanged(keyExportInput->text(), true);
         } else {
-            pagesLay->setCurrentIndex(kConfirmPage);
+            confirmEnc();
         }
     } else if (currPage == kExportKeyPage) {
-        if (idx == 0) {
+        if (idx == 0)
             pagesLay->setCurrentIndex(kPasswordInputPage);
-        } else if (idx == 1) {
-            pagesLay->setCurrentIndex(kConfirmPage);
-        }
-    } else if (currPage == kConfirmPage) {
-        qDebug() << "confirm encrypt device: " << params.devDesc << encType->currentIndex();
-        if (encType->currentIndex() == kTPMAndPIN || encType->currentIndex() == kTPMOnly) {
-            if (!params.initOnly && !encryptByTpm(params.devDesc)) {
-                qWarning() << "encrypt by TPM failed!";
-                return;
-            }
-        }
-        accept();
-    } else {
-        qWarning() << "button triggered in wrong page!" << currPage << idx;
+        else if (idx == 1)
+            confirmEnc();
     }
 }
 
 void EncryptParamsInputDialog::onPageChanged(int page)
 {
-    if (page > kConfirmPage && page < kPasswordInputPage) {
+    if (page > kExportKeyPage && page < kPasswordInputPage) {
         qWarning() << "invalid page index!" << page;
         return;
     }
@@ -359,15 +327,12 @@ void EncryptParamsInputDialog::onPageChanged(int page)
     pagesLay->setCurrentIndex(page);
     clearButtons();
     if (page == kPasswordInputPage) {
-        addButton(tr("Next"));
         setTitle(tr("Please continue to encrypt partition %1").arg(params.deviceDisplayName));
+        exportRecKeyEnabled ? addButton(tr("Next")) : addButton(tr("Confirm encrypt"));
     } else if (page == kExportKeyPage) {
-        addButton(tr("Previous"));
-        addButton(tr("Next"), true, ButtonType::ButtonRecommend);
         setTitle(tr("Export Recovery Key"));
-    } else if (page == kConfirmPage) {
-        addButton(tr("Confrim encrypt"));
-        setTitle(tr("Partitioning Encryption"));
+        addButton(tr("Previous"));
+        addButton(tr("Confirm encrypt"), true, ButtonType::ButtonRecommend);
     }
 }
 
@@ -417,10 +382,9 @@ void EncryptParamsInputDialog::onExpPathChanged(const QString &path, bool silent
 
 bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
 {
-    auto btnNext = getButton(0);
-    if (btnNext) btnNext->setEnabled(false);
-    dfmbase::FinallyUtil finalClear([btnNext] {
-        if (btnNext) btnNext->setEnabled(true);
+    this->setEnabled(false);
+    dfmbase::FinallyUtil finalClear([this] {
+        this->setEnabled(true);
     });
 
     QString sessionHashAlgo, sessionKeyAlgo, primaryHashAlgo, primaryKeyAlgo, minorHashAlgo, minorKeyAlgo;

@@ -48,7 +48,7 @@ public:
 
 protected:
     static void encryptDevice(const disk_encrypt::DeviceEncryptParam &param);
-    static void deencryptDevice(const disk_encrypt::DeviceEncryptParam &param);
+    static void decryptDevice(const disk_encrypt::DeviceEncryptParam &param);
     static void changePassphrase(disk_encrypt::DeviceEncryptParam param);
     static void unlockDevice(const QString &dev);
 
@@ -63,7 +63,7 @@ protected:
     static void onUnlocked(bool ok, dfmmount::OperationErrorInfo, QString);
     static void onMounted(bool ok, dfmmount::OperationErrorInfo, QString);
 
-    void unmountBefore(const std::function<void(const disk_encrypt::DeviceEncryptParam &)> &after);
+    static void unmountBefore(const std::function<void(const disk_encrypt::DeviceEncryptParam &)> &after, const disk_encrypt::DeviceEncryptParam &param);
     enum OpType { kUnmount,
                   kLock };
     static void onUnmountError(OpType t, const QString &dev, const dfmmount::OperationErrorInfo &err);

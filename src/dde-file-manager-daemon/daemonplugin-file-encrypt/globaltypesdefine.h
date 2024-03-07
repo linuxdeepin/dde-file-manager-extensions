@@ -87,6 +87,7 @@ enum SecKeyType {
 
 struct DeviceEncryptParam
 {
+    QString devID;
     QString devDesc;
     QString uuid;
     SecKeyType type;
