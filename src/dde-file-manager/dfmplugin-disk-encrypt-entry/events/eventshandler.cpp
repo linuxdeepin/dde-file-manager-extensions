@@ -87,17 +87,17 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &devNam
         return;
     }
 
+    // set dde-file-manager autostart without GUI to automatically raise the encrypt dialog.
+    autoStartDFM();
+
     qInfo() << "reboot is required..." << dev;
-    showRebootOnPreencrypted(dev, devName);
+    requestReboot();
+    // showRebootOnPreencrypted(dev, devName);
 }
 
 void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, int code)
 {
     QApplication::restoreOverrideCursor();
-    // if (encryptDialogs.contains(dev)) {
-    //     delete encryptDialogs.value(dev);
-    //     encryptDialogs.remove(dev);
-    // }
     auto dialog = encryptDialogs.take(dev);
 
     QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
@@ -324,9 +324,7 @@ void EventsHandler::showPreEncryptError(const QString &dev, const QString &devNa
                       .arg(device);
         break;
     case kUserCancelled:
-        title = tr("Encrypt disk");
-        msg = tr("User cancelled operation");
-        break;
+        return;
     default:
         title = tr("Preencrypt failed");
         msg = tr("Device %1 preencrypt failed, please see log for more information.(%2)")
@@ -354,10 +352,7 @@ void EventsHandler::showDecryptError(const QString &dev, const QString &devName,
         showFailed = false;
         break;
     case kUserCancelled:
-        title = tr("Decrypt disk");
-        msg = tr("User cancelled operation");
-        showFailed = false;
-        break;
+        return;
     case kErrorWrongPassphrase:
         title = tr("Decrypt disk");
         msg = tr("Wrong passpharse or PIN");
@@ -410,9 +405,7 @@ void EventsHandler::showChgPwdError(const QString &dev, const QString &devName, 
         msg = tr("%1's %2 has been changed").arg(device).arg(codeType);
         break;
     case kUserCancelled:
-        title = tr("Change %1").arg(codeType);
-        msg = tr("User cancelled operation");
-        break;
+        return;
     case kErrorChangePassphraseFailed:
         title = tr("Change %1 failed").arg(codeType);
         msg = tr("Wrong %1").arg(codeType);

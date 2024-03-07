@@ -9,6 +9,8 @@
 
 #include <dfm-mount/dmount.h>
 
+#include <QLabel>
+#include <QVBoxLayout>
 #include <QSettings>
 #include <QDBusInterface>
 #include <QDBusReply>
@@ -410,4 +412,39 @@ bool config_utils::enableEncrypt()
                                           "org.deepin.dde.file-manager.diskencrypt");
     cfg->deleteLater();
     return cfg->value("enableEncrypt", true).toBool();
+}
+
+int dialog_utils::showConfirmEncryptionDialog(const QString &device, bool needReboot)
+{
+    Dtk::Widget::DDialog dlg(qApp->activeWindow());
+    if (isWayland())
+        dlg.setWindowFlag(Qt::WindowStaysOnTopHint);
+    dlg.setIcon(QIcon::fromTheme("drive-harddisk-root"));
+    dlg.setTitle(QObject::tr("Confirm encrypt %1?").arg(device));
+    // dlg.setMessage(QObject::tr("The partition is about to be encrypted, and cannot be canceled during "
+    //                            "the encryption process, please confirm the encryption."));
+    QWidget *wid = new QWidget(&dlg);
+    QVBoxLayout *lay = new QVBoxLayout(wid);
+    QLabel *hint1 = new QLabel(QObject::tr("The current partition is about to be encrypted and cannot be canceled during "
+                                           "the encryption process, please confirm the encryption."),
+                               wid);
+    hint1->setAlignment(Qt::AlignLeft);
+    hint1->setWordWrap(true);
+    lay->addWidget(hint1);
+
+    QLabel *hint2 = new QLabel(QObject::tr("* After encrypting the partition, "
+                                           "the system cannot be rolled back to a lower version, "
+                                           "please confirm the encryption"),
+                               wid);
+    hint2->setAlignment(Qt::AlignLeft);
+    hint2->setWordWrap(true);
+    QPalette pal = hint2->palette();
+    pal.setColor(QPalette::WindowText, QColor("red"));
+    hint2->setPalette(pal);
+    lay->addWidget(hint2);
+    dlg.addContent(wid);
+    dlg.addButton(QObject::tr("Cancel"));
+    needReboot ? dlg.addButton(QObject::tr("Confirm and Reboot"), true, Dtk::Widget::DDialog::ButtonRecommend)
+               : dlg.addButton(QObject::tr("Confirm"), true, Dtk::Widget::DDialog::ButtonRecommend);
+    return dlg.exec();
 }
