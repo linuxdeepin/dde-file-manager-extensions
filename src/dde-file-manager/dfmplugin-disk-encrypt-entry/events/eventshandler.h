@@ -17,7 +17,8 @@ public:
     static EventsHandler *instance();
     void bindDaemonSignals();
     void hookEvents();
-    bool hasEnDecryptJob();
+    bool isTaskWorking();
+    bool hasDecryptJob();
     bool isEncrypting(const QString &device);
     bool onAcquireDevicePwd(const QString &dev, QString *pwd, bool *giveup);
 
@@ -38,8 +39,6 @@ private Q_SLOTS:
     void showPreEncryptError(const QString &device, const QString &devName, int code);
     void showDecryptError(const QString &device, const QString &devName, int code);
     void showChgPwdError(const QString &device, const QString &devName, int code);
-    void showRebootOnPreencrypted(const QString &device, const QString &devName);
-    void showRebootOnDecrypted(const QString &device, const QString &devName);
 
     void requestReboot();
     void autoStartDFM();

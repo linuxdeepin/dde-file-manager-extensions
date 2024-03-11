@@ -18,6 +18,7 @@
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusPendingCall>
+#include <QDBusReply>
 
 #include <DDialog>
 
@@ -68,9 +69,24 @@ void EventsHandler::hookEvents()
                             this, &EventsHandler::onAcquireDevicePwd);
 }
 
-bool EventsHandler::hasEnDecryptJob()
+bool EventsHandler::isTaskWorking()
 {
-    return !(encryptDialogs.isEmpty() && decryptDialogs.isEmpty());
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    QDBusReply<bool> reply = iface.call("IsWorkerRunning");
+    return reply.isValid() && reply.value();
+}
+
+bool EventsHandler::hasDecryptJob()
+{
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    QDBusReply<bool> reply = iface.call("HasDecryptJob");
+    return reply.isValid() && reply.value();
 }
 
 bool EventsHandler::isEncrypting(const QString &device)
@@ -92,7 +108,6 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &devNam
 
     qInfo() << "reboot is required..." << dev;
     requestReboot();
-    // showRebootOnPreencrypted(dev, devName);
 }
 
 void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, int code)
@@ -129,9 +144,9 @@ void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, 
 void EventsHandler::onDecryptResult(const QString &dev, const QString &devName, const QString &, int code)
 {
     QApplication::restoreOverrideCursor();
-    if (code == -kRebootRequired)
-        showRebootOnDecrypted(dev, devName);
-    else {
+    if (code == -kRebootRequired) {
+        requestReboot();
+    } else {
         showDecryptError(dev, devName, code);
     }
 }
@@ -423,41 +438,6 @@ void EventsHandler::showChgPwdError(const QString &dev, const QString &devName, 
 
     dialog_utils::showDialog(title, msg,
                              showError ? dialog_utils::kError : dialog_utils::kInfo);
-}
-
-void EventsHandler::showRebootOnPreencrypted(const QString &device, const QString &devName)
-{
-    autoStartDFM();
-
-    QString dev = QString("%1(%2)").arg(devName).arg(device.mid(5));
-
-    DDialog dlg(qApp->activeWindow());
-    if (dialog_utils::isWayland())
-        dlg.setWindowFlag(Qt::WindowStaysOnTopHint);
-    dlg.setIcon(QIcon::fromTheme("dialog-information"));
-    dlg.setTitle(tr("Reboot to set up encryption"));
-    dlg.setMessage(tr("Partition encryption is being performed on device %1, "
-                      "please reboot the system to initialize the encryption environment.")
-                           .arg(dev));
-    dlg.addButtons({ tr("Reboot later"), tr("Reboot now") });
-    if (dlg.exec() == 1)
-        requestReboot();
-}
-
-void EventsHandler::showRebootOnDecrypted(const QString &device, const QString &devName)
-{
-    QString dev = QString("%1(%2)").arg(devName).arg(device.mid(5));
-
-    DDialog dlg(qApp->activeWindow());
-    if (dialog_utils::isWayland())
-        dlg.setWindowFlag(Qt::WindowStaysOnTopHint);
-    dlg.setIcon(QIcon::fromTheme("dialog-information"));
-    dlg.setTitle(tr("Decrypt device"));
-    dlg.setMessage(tr("Please reboot to decrypt device %1.")
-                           .arg(dev));
-    dlg.addButtons({ tr("Reboot later"), tr("Reboot now") });
-    if (dlg.exec() == 1)
-        requestReboot();
 }
 
 void EventsHandler::requestReboot()

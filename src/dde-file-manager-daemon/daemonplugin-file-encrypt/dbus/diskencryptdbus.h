@@ -27,6 +27,8 @@ public Q_SLOTS:
     QString ChangeEncryptPassphress(const QVariantMap &params);
     QString QueryTPMToken(const QString &device);
     void SetEncryptParams(const QVariantMap &params);
+    bool HasDecryptJob();
+    bool IsWorkerRunning();
 
 Q_SIGNALS:
     void PrepareEncryptDiskResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
@@ -52,6 +54,7 @@ private:
 private:
     QString currentEncryptingDevice;
     QString deviceName;
+    bool running { false };
 };
 
 FILE_ENCRYPT_END_NS

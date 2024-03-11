@@ -73,6 +73,7 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
                                                   params,
                                                   this);
     connect(worker, &QThread::finished, this, [=] {
+        running = false;
         int ret = worker->exitError();
         QString device = params.value(encrypt_param_keys::kKeyDevice).toString();
 
@@ -95,6 +96,7 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
     });
 
     worker->start();
+    running = true;
 
     return jobID;
 }
@@ -119,6 +121,7 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
 
     DecryptWorker *worker = new DecryptWorker(jobID, params, this);
     connect(worker, &QThread::finished, this, [=] {
+        running = false;
         int ret = worker->exitError();
         qDebug() << "decrypt device finished:"
                  << dev
@@ -127,6 +130,7 @@ QString DiskEncryptDBus::DecryptDisk(const QVariantMap &params)
         worker->deleteLater();
     });
     worker->start();
+    running = true;
     return jobID;
 }
 
@@ -145,6 +149,7 @@ QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
     auto jobID = JOB_ID.arg(QDateTime::currentMSecsSinceEpoch());
     ChgPassWorker *worker = new ChgPassWorker(jobID, params, this);
     connect(worker, &QThread::finished, this, [=] {
+        running = false;
         int ret = worker->exitError();
         QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
         qDebug() << "change password finished:"
@@ -154,6 +159,7 @@ QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
         worker->deleteLater();
     });
     worker->start();
+    running = true;
     return jobID;
 }
 
@@ -178,6 +184,16 @@ void DiskEncryptDBus::SetEncryptParams(const QVariantMap &params)
         return;
 
     gFstabEncWorker->setEncryptParams(params);
+}
+
+bool DiskEncryptDBus::HasDecryptJob()
+{
+    return QFile("/boot/usec-crypt/decrypt.json").exists();
+}
+
+bool DiskEncryptDBus::IsWorkerRunning()
+{
+    return running;
 }
 
 void DiskEncryptDBus::onFstabDiskEncProgressUpdated(const QString &dev, qint64 offset, qint64 total)
@@ -213,30 +229,34 @@ bool DiskEncryptDBus::triggerReencrypt(const QString &device)
                 Q_EMIT EncryptDiskResult(dev, deviceName, code);
             });
     connect(gFstabEncWorker, &ReencryptWorkerV2::finished,
-            this, [this] { gFstabEncWorker->deleteLater(); gFstabEncWorker = nullptr;
-        // pick a new job.
-        const static QRegularExpression reg(R"(encrypt_(.*).json)");
-        QDir usecDir("/boot/usec-crypt");
-        auto files = usecDir.entryInfoList();
-        for (auto file: files) {
-            auto fileName = file.fileName();
-            if (fileName.contains(reg)) {
-                qInfo() << "found new unfinished job:" << fileName;
-                auto match = reg.match(fileName);
-                if (match.hasMatch()) {
-                    auto dev = match.captured(1);
-                    dev = "/dev/" + dev;
-                    triggerReencrypt(dev);
-                    return;
+            this, [this] {
+                running = false;
+                gFstabEncWorker->deleteLater();
+                gFstabEncWorker = nullptr;
+                // pick a new job.
+                const static QRegularExpression reg(R"(encrypt_(.*).json)");
+                QDir usecDir("/boot/usec-crypt");
+                auto files = usecDir.entryInfoList();
+                for (const auto &file : files) {
+                    auto fileName = file.fileName();
+                    if (fileName.contains(reg)) {
+                        qInfo() << "found new unfinished job:" << fileName;
+                        auto match = reg.match(fileName);
+                        if (match.hasMatch()) {
+                            auto dev = match.captured(1);
+                            dev = "/dev/" + dev;
+                            triggerReencrypt(dev);
+                            return;
+                        }
+                    }
                 }
-            }
-        }
-    });
+            });
 
     currentEncryptingDevice = gFstabEncWorker->encryptConfig().devicePath;
     deviceName = gFstabEncWorker->encryptConfig().deviceName;
     qInfo() << "about to start encrypting" << currentEncryptingDevice;
     gFstabEncWorker->start();
+    running = true;
     return true;
 }
 
