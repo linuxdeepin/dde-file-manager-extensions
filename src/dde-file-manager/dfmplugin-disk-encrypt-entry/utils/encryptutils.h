@@ -69,6 +69,7 @@ enum DialogType {
 };
 int showDialog(const QString &title, const QString &msg, DialogType type);
 int showConfirmEncryptionDialog(const QString &device, bool needReboot);
+int showConfirmDecryptionDialog(const QString &device, bool needReboot);
 void showTPMError(const QString &title, tpm_passphrase_utils::TPMError err);
 bool isWayland();
 }

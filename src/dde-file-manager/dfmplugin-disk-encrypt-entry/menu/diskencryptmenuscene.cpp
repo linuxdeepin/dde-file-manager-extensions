@@ -123,8 +123,9 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
 
 bool DiskEncryptMenuScene::create(QMenu *)
 {
-    bool hasJob = EventsHandler::instance()->hasEnDecryptJob();
+    bool taskWorking = EventsHandler::instance()->isTaskWorking();
     bool isCurrentEncrypting = EventsHandler::instance()->isEncrypting(param.devDesc);
+    bool hasDecryptJob = EventsHandler::instance()->hasDecryptJob();
     if (itemEncrypted) {
         QAction *act = nullptr;
 
@@ -136,7 +137,7 @@ bool DiskEncryptMenuScene::create(QMenu *)
         act = new QAction(tr("Cancel partition encryption"));
         act->setProperty(ActionPropertyKey::kActionID, kActIDDecrypt);
         actions.insert(kActIDDecrypt, act);
-        act->setEnabled(!hasJob);
+        act->setEnabled(!taskWorking && !hasDecryptJob);
 
         if (param.type == kTPMOnly)
             return true;
@@ -153,7 +154,7 @@ bool DiskEncryptMenuScene::create(QMenu *)
         QAction *act = new QAction(tr("Enable partition encryption"));
         act->setProperty(ActionPropertyKey::kActionID, kActIDEncrypt);
         actions.insert(kActIDEncrypt, act);
-        act->setEnabled(!hasJob);
+        act->setEnabled(!taskWorking && !hasDecryptJob);
     }
 
     return true;
@@ -165,9 +166,12 @@ bool DiskEncryptMenuScene::triggered(QAction *action)
 
     if (actID == kActIDEncrypt)
         encryptDevice(param);
-    else if (actID == kActIDDecrypt)
+    else if (actID == kActIDDecrypt) {
+        QString displayName = QString("%1(%2)").arg(param.deviceDisplayName).arg(param.devDesc.mid(5));
+        if (dialog_utils::showConfirmDecryptionDialog(displayName, param.initOnly) != QDialog::Accepted)
+            return true;
         param.initOnly ? doDecryptDevice(param) : unmountBefore(decryptDevice, param);
-    else if (actID == kActIDChangePwd)
+    } else if (actID == kActIDChangePwd)
         changePassphrase(param);
     else if (actID == kActIDUnlock)
         unlockDevice(selectedItemInfo.value("Id").toString());

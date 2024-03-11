@@ -421,8 +421,6 @@ int dialog_utils::showConfirmEncryptionDialog(const QString &device, bool needRe
         dlg.setWindowFlag(Qt::WindowStaysOnTopHint);
     dlg.setIcon(QIcon::fromTheme("drive-harddisk-root"));
     dlg.setTitle(QObject::tr("Confirm encrypt %1?").arg(device));
-    // dlg.setMessage(QObject::tr("The partition is about to be encrypted, and cannot be canceled during "
-    //                            "the encryption process, please confirm the encryption."));
     QWidget *wid = new QWidget(&dlg);
     QVBoxLayout *lay = new QVBoxLayout(wid);
     QLabel *hint1 = new QLabel(QObject::tr("The current partition is about to be encrypted and cannot be canceled during "
@@ -446,5 +444,20 @@ int dialog_utils::showConfirmEncryptionDialog(const QString &device, bool needRe
     dlg.addButton(QObject::tr("Cancel"));
     needReboot ? dlg.addButton(QObject::tr("Confirm and Reboot"), true, Dtk::Widget::DDialog::ButtonRecommend)
                : dlg.addButton(QObject::tr("Confirm"), true, Dtk::Widget::DDialog::ButtonRecommend);
+    return dlg.exec();
+}
+
+int dialog_utils::showConfirmDecryptionDialog(const QString &device, bool needReboot)
+{
+    Dtk::Widget::DDialog dlg(qApp->activeWindow());
+    if (isWayland())
+        dlg.setWindowFlag(Qt::WindowStaysOnTopHint);
+    dlg.setIcon(QIcon::fromTheme("drive-harddisk-root"));
+    dlg.setTitle(QObject::tr("Decrypt %1?").arg(device));
+    dlg.setMessage(QObject::tr("Decryption can take a long time, "
+                               "so make sure power is connected until the decryption is complete."));
+    dlg.addButton(QObject::tr("Cancel"));
+    QString confirmTxt = needReboot ? QObject::tr("Confirm and Reboot") : QObject::tr("Confirm");
+    dlg.addButton(confirmTxt, true, Dtk::Widget::DDialog::ButtonRecommend);
     return dlg.exec();
 }
