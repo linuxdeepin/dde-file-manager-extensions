@@ -163,11 +163,29 @@ QString DiskEncryptDBus::ChangeEncryptPassphress(const QVariantMap &params)
     return jobID;
 }
 
+void DiskEncryptDBus::IgnoreParamRequest()
+{
+    if (gFstabEncWorker)
+        gFstabEncWorker->ignoreParamRequest();
+}
+
+void DiskEncryptDBus::ResumeEncryption(const QString &device)
+{
+    triggerReencrypt(device);
+}
+
 QString DiskEncryptDBus::QueryTPMToken(const QString &device)
 {
     QString token;
     disk_encrypt_funcs::bcGetToken(device, &token);
     return token;
+}
+
+int DiskEncryptDBus::EncryptStatus(const QString &device)
+{
+    EncryptStates states;
+    block_device_utils::bcDevEncryptStatus(device, &states);
+    return states;
 }
 
 void DiskEncryptDBus::SetEncryptParams(const QVariantMap &params)
@@ -186,9 +204,17 @@ void DiskEncryptDBus::SetEncryptParams(const QVariantMap &params)
     gFstabEncWorker->setEncryptParams(params);
 }
 
-bool DiskEncryptDBus::HasDecryptJob()
+bool DiskEncryptDBus::HasPendingTask()
 {
-    return QFile("/boot/usec-crypt/decrypt.json").exists();
+    QDir d("/boot/usec-crypt/");
+    auto files = d.entryInfoList(QDir::Filter::NoDotAndDotDot | QDir::Filter::Files);
+    for (const auto &file : files) {
+        auto name = file.fileName();
+        // search for decrypt.json, encrypt.json, encrypt_<dev>.json
+        if (name.contains(QRegularExpression(R"((decrypt|encrypt|encrypt_.{3,})\.json)")))
+            return true;
+    }
+    return false;
 }
 
 bool DiskEncryptDBus::IsWorkerRunning()
@@ -231,8 +257,11 @@ bool DiskEncryptDBus::triggerReencrypt(const QString &device)
     connect(gFstabEncWorker, &ReencryptWorkerV2::finished,
             this, [this] {
                 running = false;
+                auto exitCode = gFstabEncWorker->exitError();
                 gFstabEncWorker->deleteLater();
                 gFstabEncWorker = nullptr;
+                if (exitCode == -kIgnoreRequest)
+                    return;
                 // pick a new job.
                 const static QRegularExpression reg(R"(encrypt_(.*).json)");
                 QDir usecDir("/boot/usec-crypt");

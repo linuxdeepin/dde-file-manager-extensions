@@ -69,6 +69,10 @@ void EventsHandler::hookEvents()
                             this, &EventsHandler::onAcquireDevicePwd);
 }
 
+/**
+ * @brief EventsHandler::isTaskWorking, if any device is running encrypt, decrypt and change passphrase background
+ * @return
+ */
 bool EventsHandler::isTaskWorking()
 {
     QDBusInterface iface(kDaemonBusName,
@@ -79,19 +83,51 @@ bool EventsHandler::isTaskWorking()
     return reply.isValid() && reply.value();
 }
 
-bool EventsHandler::hasDecryptJob()
+/**
+ * @brief EventsHandler::hasPendingTask, if task files existed in /boot/usec-crypt/
+ * @return
+ */
+bool EventsHandler::hasPendingTask()
 {
     QDBusInterface iface(kDaemonBusName,
                          kDaemonBusPath,
                          kDaemonBusIface,
                          QDBusConnection::systemBus());
-    QDBusReply<bool> reply = iface.call("HasDecryptJob");
+    QDBusReply<bool> reply = iface.call("HasPendingTask");
     return reply.isValid() && reply.value();
 }
 
-bool EventsHandler::isEncrypting(const QString &device)
+/**
+ * @brief EventsHandler::isUnderOperating, If the device is performing a task in the foreground
+ * @param device
+ * @return
+ */
+bool EventsHandler::isUnderOperating(const QString &device)
 {
-    return encryptDialogs.contains(device) || decryptDialogs.contains(device);
+    return encryptDialogs.contains(device)
+            || decryptDialogs.contains(device)
+            || encryptInputs.contains(device);
+}
+
+int EventsHandler::deviceEncryptStatus(const QString &device)
+{
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    QDBusReply<int> reply = iface.call("EncryptStatus", device);
+    if (reply.isValid())
+        return reply.value();
+    return -1;
+}
+
+void EventsHandler::resumeEncrypt(const QString &device)
+{
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    iface.asyncCall("ResumeEncryption", device);
 }
 
 void EventsHandler::onPreencryptResult(const QString &dev, const QString &devName, const QString &, int code)
@@ -169,24 +205,36 @@ void EventsHandler::onRequestEncryptParams(const QVariantMap &encConfig)
     if (encryptInputs.value(devPath, nullptr))
         return;
 
+    QString objPath = "/org/freedesktop/UDisks2/block_devices/" + devPath.mid(5);
+    auto blkDev = device_utils::createBlockDevice(objPath);
     disk_encrypt::DeviceEncryptParam param;
     param.devDesc = devPath;
     param.initOnly = false;
     param.clearDevUUID = encConfig.value("device").toString().remove("UUID=");
-    QString objPath = "/org/freedesktop/UDisks2/block_devices/" + devPath.mid(5);
-    auto blkDev = device_utils::createBlockDevice(objPath);
     param.backingDevUUID = blkDev ? blkDev->getProperty(dfmmount::Property::kBlockIDUUID).toString() : "";
     param.deviceDisplayName = encConfig.value("device-name").toString();
     auto dlg = new EncryptParamsInputDialog(param, qApp->activeWindow());
     encryptInputs.insert(devPath, dlg);
 
-    int ret = dlg->exec();
-    if (ret != QDialog::Accepted) {
-        delete encryptInputs.take(devPath);
-        return;
-    }
-    param = dlg->getInputs();
-    DiskEncryptMenuScene::doReencryptDevice(param);
+    connect(dlg, &DDialog::finished, this, [=](auto ret) {
+        if (ret != QDialog::Accepted) {
+            ignoreParamRequest();
+            delete encryptInputs.take(devPath);   // also will be deleted when encryption started.
+        } else {
+            DiskEncryptMenuScene::doReencryptDevice(dlg->getInputs());
+        }
+    });
+    dlg->show();
+}
+
+void EventsHandler::ignoreParamRequest()
+{
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    iface.asyncCall("IgnoreParamRequest");
+    qInfo() << "ignore param request...";
 }
 
 void EventsHandler::onEncryptProgress(const QString &dev, const QString &devName, double progress)
@@ -231,7 +279,7 @@ bool EventsHandler::onAcquireDevicePwd(const QString &dev, QString *pwd, bool *c
     if (!pwd || !cancelled)
         return false;
 
-    if (EventsHandler::instance()->isEncrypting(dev)) {
+    if (EventsHandler::instance()->isUnderOperating(dev)) {
         *cancelled = true;
         return true;
     }

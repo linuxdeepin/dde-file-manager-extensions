@@ -18,8 +18,10 @@ public:
     void bindDaemonSignals();
     void hookEvents();
     bool isTaskWorking();
-    bool hasDecryptJob();
-    bool isEncrypting(const QString &device);
+    bool hasPendingTask();
+    bool isUnderOperating(const QString &device);
+    int deviceEncryptStatus(const QString &device);
+    void resumeEncrypt(const QString &device);
     bool onAcquireDevicePwd(const QString &dev, QString *pwd, bool *giveup);
 
 private Q_SLOTS:
@@ -30,6 +32,8 @@ private Q_SLOTS:
     void onDecryptProgress(const QString &, const QString &, double);
     void onChgPassphraseResult(const QString &, const QString &, const QString &, int);
     void onRequestEncryptParams(const QVariantMap &encConfig);
+
+    void ignoreParamRequest();
 
     QString acquirePassphrase(const QString &dev, bool &cancelled);
     QString acquirePassphraseByPIN(const QString &dev, bool &cancelled);

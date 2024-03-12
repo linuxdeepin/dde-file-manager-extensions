@@ -25,9 +25,12 @@ public Q_SLOTS:
     QString PrepareEncryptDisk(const QVariantMap &params);
     QString DecryptDisk(const QVariantMap &params);
     QString ChangeEncryptPassphress(const QVariantMap &params);
-    QString QueryTPMToken(const QString &device);
+    void IgnoreParamRequest();
+    void ResumeEncryption(const QString &device);
     void SetEncryptParams(const QVariantMap &params);
-    bool HasDecryptJob();
+    QString QueryTPMToken(const QString &device);
+    int EncryptStatus(const QString &device);
+    bool HasPendingTask();
     bool IsWorkerRunning();
 
 Q_SIGNALS:

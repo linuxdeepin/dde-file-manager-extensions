@@ -68,13 +68,13 @@ protected:
                   kLock };
     static void onUnmountError(OpType t, const QString &dev, const dfmmount::OperationErrorInfo &err);
 
+    void sortActions(QMenu *parent);
+    void updateActions();
+
 private:
     QMap<QString, QAction *> actions;
-
-    bool itemEncrypted { false };
-    bool selectionMounted { false };
+    bool hasCryptHeader { false };
     QVariantHash selectedItemInfo;
-
     disk_encrypt::DeviceEncryptParam param;
 };
 

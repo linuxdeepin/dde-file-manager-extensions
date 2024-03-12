@@ -44,6 +44,7 @@ enum EncryptOperationStatus {
     kSuccess = 0,
     kUserCancelled,
     kRebootRequired,
+    kIgnoreRequest,
 
     kErrorParamsInvalid,
     kErrorDeviceMounted,
@@ -126,6 +127,20 @@ struct EncryptConfig
         };
     };
 };
+
+enum EncryptState {
+    kStatusNotEncrypted = 0,
+    kStatusFinished = 1,
+    kStatusOffline = kStatusFinished << 1,
+    kStatusOnline = kStatusFinished << 2,
+    kStatusEncrypt = kStatusFinished << 3,
+    kStatusDecrypt = kStatusFinished << 4,
+
+    kStatusUnknown = kStatusFinished << 7,
+};
+Q_ENUMS(EncryptState)
+Q_DECLARE_FLAGS(EncryptStates, EncryptState)
+Q_DECLARE_OPERATORS_FOR_FLAGS(EncryptStates)
 
 }
 

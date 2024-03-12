@@ -248,7 +248,7 @@ DecryptWorker::DecryptWorker(const QString &jobID,
 void DecryptWorker::run()
 {
     const QString &device = params.value(encrypt_param_keys::kKeyDevice).toString();
-    EncryptStatus status;
+    EncryptStates status;
     int ret = block_device_utils::bcDevEncryptStatus(device, &status);
     if (ret != kSuccess) {
         qWarning() << "check device status failed!";
@@ -256,7 +256,8 @@ void DecryptWorker::run()
         return;
     }
 
-    if (status != EncryptStatus::kStatusFinished) {
+    bool isOnlineEncrypting = (status & kStatusOnline) && (status & kStatusEncrypt);
+    if (isOnlineEncrypting) {
         qWarning() << "encrypt status not finished, cannot decrypt!" << status << device;
         setExitCode(-kErrorNotFullyEncrypted);
         return;
@@ -346,7 +347,7 @@ ReencryptWorkerV2::ReencryptWorkerV2(QObject *parent)
 
 void ReencryptWorkerV2::setEncryptParams(const QVariantMap &params)
 {
-    QWriteLocker lk(&lock);
+    QWriteLocker lk(&lockParam);
     this->params = params;
 }
 
@@ -358,6 +359,13 @@ void ReencryptWorkerV2::loadReencryptConfig(const QString &device)
 EncryptConfig ReencryptWorkerV2::encryptConfig() const
 {
     return config;
+}
+
+void ReencryptWorkerV2::ignoreParamRequest()
+{
+    QWriteLocker locker(&lockRequest);
+    ignoreRequest = true;
+    qInfo() << "ignore param request.";
 }
 
 void ReencryptWorkerV2::run()
@@ -374,13 +382,9 @@ void ReencryptWorkerV2::run()
         clearDev = config.clearDev;
     }
 
-    while (true) {
-        QReadLocker lk(&lock);
-        if (validateParams())
-            break;
-
-        Q_EMIT requestEncryptParams(config.keyConfig());
-        QThread::sleep(3);   // don't request frequently.
+    if (waitForInput() == kIgnoreRequest) {
+        setExitCode(-kIgnoreRequest);
+        return;
     }
 
     // this open action here is for repairing the reencrypt process.
@@ -413,19 +417,17 @@ bool ReencryptWorkerV2::hasUnfinishedOnlineEncryption()
     }
 
     // 2. check if it's really unfinished.
-    EncryptStatus status;
+    EncryptStates status;
     if (kSuccess != block_device_utils::bcDevEncryptStatus(config.devicePath, &status)) {
         qWarning() << "cannot get encrypt requirements!" << config.devicePath;
         return false;
     }
 
-    switch (status) {
-    case kStatusOnlineUnfinished:
+    if ((status & kStatusOnline)
+        && (status & kStatusEncrypt)) {
         // 3. start a worker if device is not finished ONLINE encryption.
         qInfo() << "device is not finished ONLINE encryption:" << config.devicePath;
         return true;
-    default:
-        break;
     }
     return false;
 }
@@ -625,4 +627,24 @@ void ReencryptWorkerV2::disableABRecovery()
     t.start();
     int ret = system("update-grub");
     qInfo() << "update grub costs" << t.elapsed() << "ms and result is" << ret;
+}
+
+int ReencryptWorkerV2::waitForInput()
+{
+    while (true) {
+        {
+            QReadLocker lk(&lockParam);
+            if (validateParams())
+                break;
+        }
+        {
+            QReadLocker lk(&lockRequest);
+            if (ignoreRequest)
+                return kIgnoreRequest;
+        }
+
+        Q_EMIT requestEncryptParams(config.keyConfig());
+        QThread::sleep(3);   // don't request frequently.
+    }
+    return kSuccess;
 }
