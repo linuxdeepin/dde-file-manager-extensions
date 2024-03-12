@@ -35,6 +35,7 @@ using namespace dfmplugin_diskenc;
 using namespace disk_encrypt;
 
 static constexpr char kActIDEncrypt[] { "de_0_encrypt" };
+static constexpr char kActIDResume[] { "de_0_resume" };
 static constexpr char kActIDUnlock[] { "de_0_unlock" };
 static constexpr char kActIDDecrypt[] { "de_1_decrypt" };
 static constexpr char kActIDChangePwd[] { "de_2_changePwd" };
@@ -90,7 +91,7 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     if (idType == "crypto_LUKS") {
         if (selectedItemInfo.value("IdVersion").toString() == "1")
             return false;
-        itemEncrypted = true;
+        hasCryptHeader = true;
     } else if (!supportedFS.contains(idType)) {
         return false;
     }
@@ -104,7 +105,6 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
         return false;
     }
 
-    selectionMounted = !devMpt.isEmpty();
     param.devID = selectedItemInfo.value("Id").toString();
     param.devDesc = device;
     param.initOnly = fstab_utils::isFstabItem(devMpt);
@@ -115,7 +115,7 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     param.backingDevUUID = param.uuid;
     param.clearDevUUID = selectedItemInfo.value("ClearBlockDeviceInfo").toHash().value("IdUUID", "").toString();
 
-    if (itemEncrypted)
+    if (hasCryptHeader)
         param.type = static_cast<SecKeyType>(device_utils::encKeyType(device));
 
     return true;
@@ -123,39 +123,28 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
 
 bool DiskEncryptMenuScene::create(QMenu *)
 {
-    bool taskWorking = EventsHandler::instance()->isTaskWorking();
-    bool isCurrentEncrypting = EventsHandler::instance()->isEncrypting(param.devDesc);
-    bool hasDecryptJob = EventsHandler::instance()->hasDecryptJob();
-    if (itemEncrypted) {
-        QAction *act = nullptr;
+    QAction *act = nullptr;
 
-        act = new QAction(tr("Unlock encrypted partition"));
-        act->setProperty(ActionPropertyKey::kActionID, kActIDUnlock);
-        actions.insert(kActIDUnlock, act);
-        act->setEnabled(!isCurrentEncrypting);
+    act = new QAction(tr("Unlock encrypted partition"));
+    act->setProperty(ActionPropertyKey::kActionID, kActIDUnlock);
+    actions.insert(kActIDUnlock, act);
 
-        act = new QAction(tr("Cancel partition encryption"));
-        act->setProperty(ActionPropertyKey::kActionID, kActIDDecrypt);
-        actions.insert(kActIDDecrypt, act);
-        act->setEnabled(!taskWorking && !hasDecryptJob);
+    act = new QAction(tr("Cancel partition encryption"));
+    act->setProperty(ActionPropertyKey::kActionID, kActIDDecrypt);
+    actions.insert(kActIDDecrypt, act);
 
-        if (param.type == kTPMOnly)
-            return true;
+    QString keyType = (param.type == kTPMAndPIN) ? "PIN" : tr("passphrase");
+    act = new QAction(tr("Changing the encryption %1").arg(keyType));
+    act->setProperty(ActionPropertyKey::kActionID, kActIDChangePwd);
+    actions.insert(kActIDChangePwd, act);
 
-        QString keyType = tr("passphrase");
-        if (param.type == kTPMAndPIN)
-            keyType = "PIN";
+    act = new QAction(tr("Continue partition encryption"));
+    act->setProperty(ActionPropertyKey::kActionID, kActIDResume);
+    actions.insert(kActIDResume, act);
 
-        act = new QAction(tr("Changing the encryption %1").arg(keyType));
-        act->setProperty(ActionPropertyKey::kActionID, kActIDChangePwd);
-        actions.insert(kActIDChangePwd, act);
-        act->setEnabled(!isCurrentEncrypting);
-    } else {
-        QAction *act = new QAction(tr("Enable partition encryption"));
-        act->setProperty(ActionPropertyKey::kActionID, kActIDEncrypt);
-        actions.insert(kActIDEncrypt, act);
-        act->setEnabled(!taskWorking && !hasDecryptJob);
-    }
+    act = new QAction(tr("Enable partition encryption"));
+    act->setProperty(ActionPropertyKey::kActionID, kActIDEncrypt);
+    actions.insert(kActIDEncrypt, act);
 
     return true;
 }
@@ -164,48 +153,29 @@ bool DiskEncryptMenuScene::triggered(QAction *action)
 {
     QString actID = action->property(ActionPropertyKey::kActionID).toString();
 
-    if (actID == kActIDEncrypt)
+    if (actID == kActIDEncrypt) {
         encryptDevice(param);
-    else if (actID == kActIDDecrypt) {
+    } else if (actID == kActIDResume) {
+        EventsHandler::instance()->resumeEncrypt(param.devDesc);
+    } else if (actID == kActIDDecrypt) {
         QString displayName = QString("%1(%2)").arg(param.deviceDisplayName).arg(param.devDesc.mid(5));
         if (dialog_utils::showConfirmDecryptionDialog(displayName, param.initOnly) != QDialog::Accepted)
             return true;
         param.initOnly ? doDecryptDevice(param) : unmountBefore(decryptDevice, param);
-    } else if (actID == kActIDChangePwd)
+    } else if (actID == kActIDChangePwd) {
         changePassphrase(param);
-    else if (actID == kActIDUnlock)
+    } else if (actID == kActIDUnlock) {
         unlockDevice(selectedItemInfo.value("Id").toString());
-    else
+    } else {
         return false;
+    }
     return true;
 }
 
 void DiskEncryptMenuScene::updateState(QMenu *parent)
 {
-    Q_ASSERT(parent);
-    QList<QAction *> acts = parent->actions();
-    QAction *before { nullptr };
-    for (int i = 0; i < acts.count(); ++i) {
-        auto act = acts.at(i);
-        QString actID = act->property(ActionPropertyKey::kActionID).toString();
-        if (actID == "computer-rename"   // the encrypt actions should be under computer-rename
-            && (i + 1) < acts.count()) {
-            before = acts.at(i + 1);
-            break;
-        }
-    }
-
-    if (!before)
-        before = acts.last();
-
-    std::for_each(actions.begin(), actions.end(), [=](QAction *val) {
-        parent->insertAction(before, val);
-        val->setParent(parent);
-
-        if (val->property(ActionPropertyKey::kActionID).toString() == kActIDUnlock
-            && selectionMounted)
-            val->setVisible(false);
-    });
+    sortActions(parent);
+    updateActions();
 }
 
 void DiskEncryptMenuScene::encryptDevice(const DeviceEncryptParam &param)
@@ -579,4 +549,61 @@ void DiskEncryptMenuScene::onUnmountError(OpType t, const QString &dev, const df
     dialog_utils::showDialog(tr("Encrypt failed"),
                              tr("Cannot %1 device %2").arg(operation, dev),
                              dialog_utils::kError);
+}
+
+void DiskEncryptMenuScene::sortActions(QMenu *parent)
+{
+    Q_ASSERT(parent);
+    QList<QAction *> acts = parent->actions();
+    QAction *before { acts.last() };
+    for (int i = 0; i < acts.count(); ++i) {
+        auto act = acts.at(i);
+        QString actID = act->property(ActionPropertyKey::kActionID).toString();
+        if (actID == "computer-rename"   // the encrypt actions should be under computer-rename
+            && (i + 1) < acts.count()) {
+            before = acts.at(i + 1);
+            break;
+        }
+    }
+
+    std::for_each(actions.begin(), actions.end(), [=](QAction *act) {
+        parent->insertAction(before, act);
+        act->setParent(parent);
+    });
+}
+
+void DiskEncryptMenuScene::updateActions()
+{
+    std::for_each(actions.begin(), actions.end(), [](QAction *act) {
+        act->setVisible(false);
+        act->setEnabled(false);
+    });
+
+    // update visibility
+    if (hasCryptHeader) {
+        bool unlocked = selectedItemInfo.value("CleartextDevice").toString() != "/";
+        int states = EventsHandler::instance()->deviceEncryptStatus(param.devDesc);
+        if (states & kStatusFinished) {   // fully encrypted
+            actions[kActIDDecrypt]->setVisible(true);
+            actions[kActIDUnlock]->setVisible(!unlocked);
+            if (param.type != disk_encrypt::kTPMOnly)
+                actions[kActIDChangePwd]->setVisible(true);
+        } else if (states & (kStatusOnline | kStatusEncrypt)) {   // not fully encrypted
+            actions[kActIDResume]->setVisible(true);
+        } else {
+            qWarning() << "unmet status!" << param.devDesc << states;
+        }
+    } else {
+        actions[kActIDEncrypt]->setVisible(true);
+    }
+
+    // update operatable
+    bool taskWorking = EventsHandler::instance()->isTaskWorking();
+    bool currDevOperating = EventsHandler::instance()->isUnderOperating(param.devDesc);
+    bool hasPendingJob = EventsHandler::instance()->hasPendingTask();
+    actions[kActIDEncrypt]->setEnabled(!taskWorking && !hasPendingJob);
+    actions[kActIDDecrypt]->setEnabled(!taskWorking && !hasPendingJob && !currDevOperating);
+    actions[kActIDChangePwd]->setEnabled(!taskWorking);
+    actions[kActIDResume]->setEnabled(!taskWorking && !currDevOperating);
+    actions[kActIDUnlock]->setEnabled(!currDevOperating);
 }

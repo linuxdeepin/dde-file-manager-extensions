@@ -702,9 +702,16 @@ bool block_device_utils::bcIsMounted(const QString &device)
     return !blkDev->mountPoints().isEmpty();
 }
 
-int block_device_utils::bcDevEncryptStatus(const QString &device, EncryptStatus *status)
+int block_device_utils::bcDevEncryptStatus(const QString &device, EncryptStates *status)
 {
     Q_ASSERT(status);
+    *status = kStatusUnknown;
+
+    auto version = bcDevEncryptVersion(device);
+    if (version == kNotEncrypted) {
+        *status = kStatusNotEncrypted;
+        return kSuccess;
+    }
 
     struct crypt_device *cdev { nullptr };
     dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
@@ -716,17 +723,28 @@ int block_device_utils::bcDevEncryptStatus(const QString &device, EncryptStatus 
     ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
     CHECK_INT(ret, "load device failed " + device, -kErrorLoadCrypt);
 
+    crypt_params_reencrypt param;
+    int state = crypt_reencrypt_status(cdev, &param);
+    if (state == CRYPT_REENCRYPT_NONE) {
+        *status = kStatusFinished;
+        return kSuccess;
+    }
+
+    if (param.mode == CRYPT_REENCRYPT_ENCRYPT)
+        *status = kStatusEncrypt;
+    else if (param.mode == CRYPT_REENCRYPT_DECRYPT)
+        *status = kStatusDecrypt;
+
     uint32_t flags;
     ret = crypt_persistent_flags_get(cdev,
                                      CRYPT_FLAGS_REQUIREMENTS,
                                      &flags);
     CHECK_INT(ret, "get device flag failed " + device, -kErrorGetReencryptFlag);
 
-    *status = kStatusFinished;
     if (flags & CRYPT_REQUIREMENT_OFFLINE_REENCRYPT)
-        *status = kStatusOfflineUnfinished;
+        *status |= kStatusOffline;
     if (flags & CRYPT_REQUIREMENT_ONLINE_REENCRYPT)
-        *status = kStatusOnlineUnfinished;
+        *status |= kStatusOnline;
     if (flags & CRYPT_REQUIREMENT_UNKNOWN)
         *status = kStatusUnknown;
     return kSuccess;

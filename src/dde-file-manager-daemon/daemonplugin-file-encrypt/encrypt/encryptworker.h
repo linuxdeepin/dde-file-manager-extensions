@@ -70,6 +70,7 @@ public:
     void setEncryptParams(const QVariantMap &params);
     void loadReencryptConfig(const QString &device = QString());
     disk_encrypt::EncryptConfig encryptConfig() const;
+    void ignoreParamRequest();
 
 Q_SIGNALS:
     void requestEncryptParams(const QVariantMap &encConf);
@@ -87,10 +88,14 @@ protected:
     QString updateTokenKeyslots(const QString &token, int keyslot);
     bool validateParams();
     void disableABRecovery();
+    int waitForInput();
 
 private:
     QVariantMap params;
-    QReadWriteLock lock;
+    QReadWriteLock lockParam;
+
+    QReadWriteLock lockRequest;
+    bool ignoreRequest { false };
 
     disk_encrypt::EncryptConfig config;
 };

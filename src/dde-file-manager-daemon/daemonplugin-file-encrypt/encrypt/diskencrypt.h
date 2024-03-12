@@ -25,14 +25,6 @@ enum EncryptVersion {
     kVersionUnknown = 10000,
 };   // enum EncryptVersion
 
-enum EncryptStatus {
-    kStatusFinished,
-    kStatusOfflineUnfinished,
-    kStatusOnlineUnfinished,
-
-    kStatusUnknown = 10000
-};
-
 namespace disk_encrypt_funcs {
 int bcInitHeaderFile(const EncryptParams &params, QString &headerPath, int *keyslotCipher, int *keyslotRecKey);
 int bcGetToken(const QString &device, QString *tokenJson);
@@ -66,7 +58,7 @@ typedef QSharedPointer<dfmmount::DBlockDevice> DevPtr;
 namespace block_device_utils {
 DevPtr bcCreateBlkDev(const QString &device);
 EncryptVersion bcDevEncryptVersion(const QString &device);
-int bcDevEncryptStatus(const QString &device, EncryptStatus *status);
+int bcDevEncryptStatus(const QString &device, disk_encrypt::EncryptStates *status);
 bool bcIsMounted(const QString &device);
 }   // namespace block_device_utils
 
