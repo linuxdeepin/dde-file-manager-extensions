@@ -55,7 +55,7 @@ void EventsHandler::bindDaemonSignals()
                                              slot);
     };
     conn("PrepareEncryptDiskResult", SLOT(onPreencryptResult(const QString &, const QString &, const QString &, int)));
-    conn("EncryptDiskResult", SLOT(onEncryptResult(const QString &, const QString &, int)));
+    conn("EncryptDiskResult", SLOT(onEncryptResult(const QString &, const QString &, int, const QString &)));
     conn("EncryptProgress", SLOT(onEncryptProgress(const QString &, const QString &, double)));
     conn("DecryptDiskResult", SLOT(onDecryptResult(const QString &, const QString &, const QString &, int)));
     conn("DecryptProgress", SLOT(onDecryptProgress(const QString &, const QString &, double)));
@@ -134,6 +134,9 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &devNam
 {
     QApplication::restoreOverrideCursor();
 
+    if (encryptInputs.contains(dev))
+        delete encryptInputs.take(dev);
+
     if (code != kSuccess) {
         showPreEncryptError(dev, devName, code);
         return;
@@ -146,27 +149,34 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &devNam
     requestReboot();
 }
 
-void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, int code)
+void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, int code, const QString &info)
 {
     QApplication::restoreOverrideCursor();
-    auto dialog = encryptDialogs.take(dev);
 
     QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
-
-    QString title = tr("Encrypt done");
-    QString msg = tr("Device %1 has been encrypted").arg(device);
-    if (code != 0) {
+    QString title, msg;
+    bool success = false;
+    if (code == kSuccess || code == KErrorRequestExportRecKey) {
+        title = tr("Encrypt done");
+        msg = tr("Device %1 has been encrypted").arg(device);
+        success = true;
+    } else {
         title = tr("Encrypt failed");
         msg = tr("Device %1 encrypt failed, please see log for more information.(%2)")
                       .arg(device)
                       .arg(code);
     }
 
+    auto dialog = encryptDialogs.take(dev);
     if (!dialog)
         dialog_utils::showDialog(title, msg, code != 0 ? dialog_utils::kError : dialog_utils::kInfo);
     else {
         auto pos = dialog->geometry().topLeft();
-        dialog->showResultPage(code == 0, title, msg);
+        dialog->showResultPage(success, title, msg);
+        if (code == KErrorRequestExportRecKey) {
+            dialog->setRecoveryKey(info, dev);
+            dialog->showExportPage();
+        }
         dialog->move(pos);
     }
 

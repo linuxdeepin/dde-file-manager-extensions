@@ -10,7 +10,7 @@
 
 DWIDGET_USE_NAMESPACE
 
-    class QStackedLayout;
+class QStackedLayout;
 
 namespace dfmplugin_diskenc {
 
@@ -22,9 +22,20 @@ public:
     void setText(const QString &title, const QString &message);
     void updateProgress(double progress);
     void showResultPage(bool success, const QString &title, const QString &message);
+    void showExportPage();
+    inline void setRecoveryKey(const QString &key, const QString &device)
+    {
+        recKey = key;
+        this->device = device;
+    }
+
+protected Q_SLOTS:
+    void onCicked(int idx, const QString &btnTxt);
 
 protected:
     void initUI();
+    bool validateExportPath(const QString &path, QString *msg);
+    void saveRecKey(const QString &path);
 
 private:
     DWaterProgress *progress { nullptr };
@@ -32,6 +43,10 @@ private:
     QStackedLayout *mainLay { nullptr };
     QLabel *iconLabel { nullptr };
     QLabel *resultMsg { nullptr };
+    QLabel *warningLabel { nullptr };
+
+    QString recKey;
+    QString device;
 };
 }
 
