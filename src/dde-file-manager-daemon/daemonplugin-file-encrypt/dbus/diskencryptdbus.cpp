@@ -195,6 +195,7 @@ void DiskEncryptDBus::SetEncryptParams(const QVariantMap &params)
                                         deviceName,
                                         "",
                                         -kUserCancelled);
+        IgnoreParamRequest();
         return;
     }
 
@@ -230,7 +231,7 @@ void DiskEncryptDBus::onFstabDiskEncProgressUpdated(const QString &dev, qint64 o
 void DiskEncryptDBus::onFstabDiskEncFinished(const QString &dev, int result, const QString &errstr)
 {
     qInfo() << "device has been encrypted: " << dev << result << errstr;
-    Q_EMIT EncryptDiskResult(dev, deviceName, result != 0 ? -1000 : 0);
+    Q_EMIT EncryptDiskResult(dev, deviceName, result != 0 ? -1000 : 0, "");
     if (result == 0) {
         qInfo() << "encrypt finished, remove encrypt config";
         ::remove(kEncConfigPath);
@@ -251,8 +252,8 @@ bool DiskEncryptDBus::triggerReencrypt(const QString &device)
     connect(gFstabEncWorker, &ReencryptWorkerV2::requestEncryptParams,
             this, &DiskEncryptDBus::RequestEncryptParams);
     connect(gFstabEncWorker, &ReencryptWorkerV2::deviceReencryptResult,
-            this, [this](const QString &dev, int code) {
-                Q_EMIT EncryptDiskResult(dev, deviceName, code);
+            this, [this](const QString &dev, int code, const QString &msg) {
+                Q_EMIT EncryptDiskResult(dev, deviceName, code, msg);
             });
     connect(gFstabEncWorker, &ReencryptWorkerV2::finished,
             this, [this] {

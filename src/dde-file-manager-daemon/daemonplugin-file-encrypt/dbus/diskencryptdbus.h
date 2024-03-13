@@ -35,7 +35,7 @@ public Q_SLOTS:
 
 Q_SIGNALS:
     void PrepareEncryptDiskResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
-    void EncryptDiskResult(const QString &device, const QString &devName, int errCode);
+    void EncryptDiskResult(const QString &device, const QString &devName, int errCode, const QString &msg);
     void DecryptDiskResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
     void ChangePassphressResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
     void EncryptProgress(const QString &device, const QString &devName, double progress);

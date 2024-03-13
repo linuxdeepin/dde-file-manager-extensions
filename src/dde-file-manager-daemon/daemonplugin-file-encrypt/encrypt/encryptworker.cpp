@@ -391,22 +391,33 @@ void ReencryptWorkerV2::run()
     int ret = disk_encrypt_funcs::bcOpenDevice(config.devicePath, config.clearDev);
     if (ret != kSuccess) {
         qWarning() << "cannot open device for reencryption!" << ret;
-        Q_EMIT deviceReencryptResult(config.devicePath, ret);
+        Q_EMIT deviceReencryptResult(config.devicePath, ret, "");
         return;
     }
 
+    QString msg;
     ret = disk_encrypt_funcs::bcResumeReencrypt(config.devicePath, "", clearDev, false);
     if (ret == kSuccess) {
         // sets the passphrase, token, recovery-key
         setPassphrase();
-        setRecoveryKey();
         setBakcingDevLabel();
         updateCrypttab();
         removeEncryptFile();
+        QString recKey;
+        bool expKey;
+        setRecoveryKey(&recKey, &expKey);
+        if (expKey && !recKey.isEmpty()) {
+            if (!disk_encrypt_utils::bcSaveRecoveryKey(config.devicePath,
+                                                       recKey,
+                                                       params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString())) {
+                ret = KErrorRequestExportRecKey;
+                msg = recKey;
+            }
+        }
     } else {
         setExitCode(ret);
     }
-    Q_EMIT deviceReencryptResult(config.devicePath, ret);
+    Q_EMIT deviceReencryptResult(config.devicePath, ret, msg);
 }
 
 bool ReencryptWorkerV2::hasUnfinishedOnlineEncryption()
@@ -458,29 +469,29 @@ void ReencryptWorkerV2::setPassphrase()
     qInfo() << "passphrase has been setted at keyslot:" << passKeyslot;
 }
 
-void ReencryptWorkerV2::setRecoveryKey()
+void ReencryptWorkerV2::setRecoveryKey(QString *key, bool *expKey)
 {
-    const QString &pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+    Q_ASSERT(key && expKey);
+    *expKey = false;
     const QString &recPath = params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString();
     if (recPath.isEmpty())
         return;
 
-    EncryptParams param;
-    param.device = config.devicePath;
-    param.recoveryPath = recPath;
-    QString recPass = disk_encrypt_utils::bcExpRecFile(param);
-    if (recPass.isEmpty()) {
+    *key = disk_encrypt_utils::bcGenRecKey();
+    if (key->isEmpty()) {
         qWarning() << "generate recovery key failed!";
         return;
     }
 
     int recKeySlot = -1;
-    int ret = disk_encrypt_funcs::bcChangePassphraseByRecKey(config.devicePath, pass, recPass, &recKeySlot);
+    const QString &pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+    int ret = disk_encrypt_funcs::bcChangePassphraseByRecKey(config.devicePath, pass, *key, &recKeySlot);
     if (ret != kSuccess) {
         qCritical() << "cannot set recovery key for device!" << config.devicePath << ret;
         setExitCode(ret);
         return;
     }
+    *expKey = true;
 
     QString recToken = QString("{ 'type': 'usec-recoverykey', 'keyslots': ['%1'] }").arg(recKeySlot);
     ret = disk_encrypt_funcs::bcSetToken(config.devicePath, recToken);

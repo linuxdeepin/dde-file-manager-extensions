@@ -75,13 +75,14 @@ public:
 Q_SIGNALS:
     void requestEncryptParams(const QVariantMap &encConf);
     void deviceReencryptResult(const QString &device,
-                               int result);
+                               int result,
+                               const QString &msg);
 
 protected:
     void run() override;
     bool hasUnfinishedOnlineEncryption();
     void setPassphrase();
-    void setRecoveryKey();
+    void setRecoveryKey(QString *key, bool *expKey);
     void setBakcingDevLabel();
     void updateCrypttab();
     void removeEncryptFile();

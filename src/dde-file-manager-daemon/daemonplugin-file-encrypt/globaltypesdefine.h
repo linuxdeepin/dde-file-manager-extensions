@@ -76,6 +76,7 @@ enum EncryptOperationStatus {
     kErrorDisabledMountPoint,
     kErrorSetLabel,
     kErrorNotFullyEncrypted,
+    KErrorRequestExportRecKey,
 
     kErrorUnknown,
 };

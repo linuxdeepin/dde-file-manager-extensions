@@ -147,42 +147,6 @@ bool disk_encrypt_utils::bcValidateParams(const EncryptParams &params)
     return true;
 }
 
-QString disk_encrypt_utils::bcExpRecFile(const EncryptParams &params)
-{
-    if (params.recoveryPath.isEmpty())
-        return "";
-
-    while (1) {
-        if (!QDir(params.recoveryPath).exists()) {
-            qWarning() << "the recovery key path does not exists!"
-                       << params.recoveryPath;
-            break;
-        }
-        QString recKey = bcGenRecKey();
-        if (recKey.isEmpty()) {
-            qWarning() << "no recovery key generated, give up export.";
-            break;
-        }
-
-        QString recFileName = QString("%1/%2_recovery_key.txt")
-                                      .arg(params.recoveryPath)
-                                      .arg(params.device.mid(5));
-        QFile recFile(recFileName);
-        if (!recFile.open(QIODevice::ReadWrite)) {
-            qWarning() << "cannot create recovery file!";
-            break;
-        }
-
-        recFile.write(recKey.toLocal8Bit());
-        recFile.flush();
-        recFile.close();
-
-        return QString(recKey);
-    }
-
-    return "";
-}
-
 QString disk_encrypt_utils::bcGenRecKey()
 {
     QString recKey;
@@ -297,22 +261,27 @@ int disk_encrypt_funcs::bcDoSetupHeader(const EncryptParams &params, QString *he
                                           params.passphrase.length());
     CHECK_INT(ret, "add key failed " + params.device, -kErrorAddKeyslot);
     *keyslotCipher = ret;
+#if 0
+    if (!params.recoveryPath.isEmpty()) {
+        QString recKey = disk_encrypt_utils::bcGenRecKey();
+        if (!recKey.isEmpty()) {
+            ret = crypt_keyslot_add_by_volume_key(cdev,
+                                                  CRYPT_ANY_SLOT,
+                                                  nullptr,
+                                                  0,
+                                                  recKey.toStdString().c_str(),
+                                                  recKey.length());
+            if (ret < 0) {
+                qWarning() << "add recovery key failed:"
+                           << params.device
+                           << ret;
+            }
+            *keyslotRecKey = ret;
 
-    QString recKey = disk_encrypt_utils::bcExpRecFile(params);
-    if (!recKey.isEmpty()) {
-        ret = crypt_keyslot_add_by_volume_key(cdev,
-                                              CRYPT_ANY_SLOT,
-                                              nullptr,
-                                              0,
-                                              recKey.toStdString().c_str(),
-                                              recKey.length());
-        if (ret < 0) {
-            qWarning() << "add recovery key failed:"
-                       << params.device
-                       << ret;
+            // TODO export key.
         }
-        *keyslotRecKey = ret;
     }
+#endif
 
     ret = crypt_reencrypt_init_by_passphrase(cdev,
                                              nullptr,
@@ -852,4 +821,31 @@ int disk_encrypt_funcs::bcOpenDevice(const QString &device, const QString &activ
     }
 
     return kSuccess;
+}
+
+bool disk_encrypt_utils::bcSaveRecoveryKey(const QString &dev, const QString &key, const QString &path)
+{
+    if (!QDir(path).exists()) {
+        qWarning() << "export path not exists!" << path;
+        return false;
+    }
+
+    QString recFileName = QString("%1/%2_recovery_key.txt")
+                                  .arg(path)
+                                  .arg(dev.mid(5));
+    QFile f(recFileName);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qWarning() << "cannot open file for write recovery key" << recFileName;
+        return false;
+    }
+
+    if (f.write(key.toLocal8Bit()) != key.length()) {
+        qWarning() << "write length not correct!";
+        f.close();
+        return false;
+    }
+    f.close();
+
+    qInfo() << "recovery key has been wrote to" << recFileName;
+    return true;
 }

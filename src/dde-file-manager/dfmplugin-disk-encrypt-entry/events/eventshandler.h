@@ -26,7 +26,7 @@ public:
 
 private Q_SLOTS:
     void onPreencryptResult(const QString &, const QString &, const QString &, int);
-    void onEncryptResult(const QString &, const QString &, int);
+    void onEncryptResult(const QString &, const QString &, int, const QString &);
     void onEncryptProgress(const QString &, const QString &, double);
     void onDecryptResult(const QString &, const QString &, const QString &, int);
     void onDecryptProgress(const QString &, const QString &, double);
