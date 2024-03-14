@@ -39,6 +39,9 @@ bool getAlgorithm(QString *sessionHashAlgo, QString *sessionKeyAlgo,
                   QString *minorHashAlgo, QString *minorKeyAlgo);
 int genPassphraseFromTPM(const QString &dev, const QString &pin, QString *passphrase);
 QString getPassphraseFromTPM(const QString &dev, const QString &pin);
+
+int genPassphraseFromTPM_NonBlock(const QString &dev, const QString &pin, QString *passphrase);
+QString getPassphraseFromTPM_NonBlock(const QString &dev, const QString &pin);
 }
 
 namespace config_utils {

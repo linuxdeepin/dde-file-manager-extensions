@@ -191,10 +191,10 @@ int DiskEncryptDBus::EncryptStatus(const QString &device)
 void DiskEncryptDBus::SetEncryptParams(const QVariantMap &params)
 {
     if (!checkAuth(kActionEncrypt)) {
-        Q_EMIT PrepareEncryptDiskResult(params.value(encrypt_param_keys::kKeyDevice).toString(),
-                                        deviceName,
-                                        "",
-                                        -kUserCancelled);
+        Q_EMIT EncryptDiskResult(params.value(encrypt_param_keys::kKeyDevice).toString(),
+                                 deviceName,
+                                 -kUserCancelled,
+                                 "");
         IgnoreParamRequest();
         return;
     }

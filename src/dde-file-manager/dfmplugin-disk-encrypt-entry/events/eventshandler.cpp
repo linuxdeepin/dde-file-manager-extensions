@@ -134,9 +134,6 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &devNam
 {
     QApplication::restoreOverrideCursor();
 
-    if (encryptInputs.contains(dev))
-        delete encryptInputs.take(dev);
-
     if (code != kSuccess) {
         showPreEncryptError(dev, devName, code);
         return;
@@ -153,18 +150,28 @@ void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, 
 {
     QApplication::restoreOverrideCursor();
 
+    if (encryptInputs.contains(dev))
+        encryptInputs.take(dev)->deleteLater();
+
     QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
     QString title, msg;
     bool success = false;
-    if (code == kSuccess || code == KErrorRequestExportRecKey) {
+    switch (-code) {
+    case kUserCancelled:
+        ignoreParamRequest();
+        return;
+    case kSuccess:
+    case KErrorRequestExportRecKey:
         title = tr("Encrypt done");
         msg = tr("Device %1 has been encrypted").arg(device);
         success = true;
-    } else {
+        break;
+    default:
         title = tr("Encrypt failed");
         msg = tr("Device %1 encrypt failed, please see log for more information.(%2)")
                       .arg(device)
                       .arg(code);
+        break;
     }
 
     auto dialog = encryptDialogs.take(dev);
@@ -173,7 +180,7 @@ void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, 
     else {
         auto pos = dialog->geometry().topLeft();
         dialog->showResultPage(success, title, msg);
-        if (code == KErrorRequestExportRecKey) {
+        if (code == -KErrorRequestExportRecKey) {
             dialog->setRecoveryKey(info, dev);
             dialog->showExportPage();
         }
@@ -229,7 +236,7 @@ void EventsHandler::onRequestEncryptParams(const QVariantMap &encConfig)
     connect(dlg, &DDialog::finished, this, [=](auto ret) {
         if (ret != QDialog::Accepted) {
             ignoreParamRequest();
-            delete encryptInputs.take(devPath);   // also will be deleted when encryption started.
+            encryptInputs.take(devPath)->deleteLater();   // also will be deleted when encryption started.
         } else {
             DiskEncryptMenuScene::doReencryptDevice(dlg->getInputs());
         }
@@ -361,14 +368,14 @@ QString EventsHandler::acquirePassphraseByPIN(const QString &dev, bool &cancelle
     }
     auto keys = dlg.getUnlockKey();
     if (keys.first == UnlockPartitionDialog::kPin)
-        return tpm_passphrase_utils::getPassphraseFromTPM(dev, keys.second);
+        return tpm_passphrase_utils::getPassphraseFromTPM_NonBlock(dev, keys.second);
     else
         return keys.second;
 }
 
 QString EventsHandler::acquirePassphraseByTPM(const QString &dev, bool &)
 {
-    return tpm_passphrase_utils::getPassphraseFromTPM(dev, "");
+    return tpm_passphrase_utils::getPassphraseFromTPM_NonBlock(dev, "");
 }
 
 QString EventsHandler::acquirePassphraseByRec(const QString &dev, bool &cancelled)

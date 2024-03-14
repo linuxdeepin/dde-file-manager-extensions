@@ -56,6 +56,7 @@ void DecryptParamsInputDialog::onRecSwitchClicked()
         editor->setPlaceholderText(tr("Please input %1 to decrypt device").arg(requestPIN ? tr("PIN") : tr("passphrase")));
         recSwitch->setText(tr("Validate with recovery key"));
     }
+    editor->setFocus();
 }
 
 void DecryptParamsInputDialog::onKeyChanged(const QString &key)
@@ -109,4 +110,6 @@ void DecryptParamsInputDialog::initUI()
     addContent(content);
     addButton(tr("Confirm"));
     setOnButtonClickedClose(false);
+
+    editor->setFocus();
 }

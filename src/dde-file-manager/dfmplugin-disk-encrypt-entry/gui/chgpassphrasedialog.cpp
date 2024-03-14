@@ -83,6 +83,8 @@ void ChgPassphraseDialog::initUI()
     onRecSwitchClicked();
 
     setMinimumWidth(500);
+
+    oldPass->setFocus();
 }
 
 bool ChgPassphraseDialog::validatePasswd()
@@ -176,6 +178,7 @@ void ChgPassphraseDialog::onRecSwitchClicked()
         oldPass->setPlaceholderText(tr("At least 8 bits, contains 3 types of A-Z, a-z, 0-9 and symbols"));
     }
     newPass1->setPlaceholderText(tr("At least 8 bits, contains 3 types of A-Z, a-z, 0-9 and symbols"));
+    oldPass->setFocus();
 }
 
 void ChgPassphraseDialog::onOldKeyChanged(const QString &inputs)

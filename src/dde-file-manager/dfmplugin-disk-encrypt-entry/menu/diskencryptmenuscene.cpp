@@ -194,7 +194,7 @@ void DiskEncryptMenuScene::decryptDevice(const DeviceEncryptParam &param)
 {
     auto inputs = param;
     if (inputs.type == kTPMOnly) {
-        QString passphrase = tpm_passphrase_utils::getPassphraseFromTPM(inputs.devDesc, "");
+        QString passphrase = tpm_passphrase_utils::getPassphraseFromTPM_NonBlock(inputs.devDesc, "");
         inputs.key = passphrase;
         if (passphrase.isEmpty()) {
             dialog_utils::showDialog(tr("Error"),
@@ -218,7 +218,7 @@ void DiskEncryptMenuScene::decryptDevice(const DeviceEncryptParam &param)
     if (dlg.usingRecKey() || inputs.type == kPasswordOnly)
         doDecryptDevice(inputs);
     else {
-        inputs.key = tpm_passphrase_utils::getPassphraseFromTPM(inputs.devDesc, inputs.key);
+        inputs.key = tpm_passphrase_utils::getPassphraseFromTPM_NonBlock(inputs.devDesc, inputs.key);
         if (inputs.key.isEmpty()) {
             dialog_utils::showDialog(tr("Error"), tr("PIN error"), dialog_utils::DialogType::kError);
             return;
@@ -239,14 +239,14 @@ void DiskEncryptMenuScene::changePassphrase(DeviceEncryptParam param)
     QString newKey = inputs.second;
     if (param.type == SecKeyType::kTPMAndPIN) {
         if (!dlg.validateByRecKey()) {
-            oldKey = tpm_passphrase_utils::getPassphraseFromTPM(dev, oldKey);
+            oldKey = tpm_passphrase_utils::getPassphraseFromTPM_NonBlock(dev, oldKey);
             if (oldKey.isEmpty()) {
                 dialog_utils::showDialog(tr("Error"), tr("PIN error"), dialog_utils::DialogType::kError);
                 return;
             }
         }
         QString newPassphrase;
-        int ret = tpm_passphrase_utils::genPassphraseFromTPM(dev, newKey, &newPassphrase);
+        int ret = tpm_passphrase_utils::genPassphraseFromTPM_NonBlock(dev, newKey, &newPassphrase);
         if (ret != tpm_passphrase_utils::kTPMNoError) {
             dialog_utils::showTPMError(tr("Change passphrase failed"), static_cast<tpm_passphrase_utils::TPMError>(ret));
             return;
