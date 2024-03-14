@@ -18,6 +18,8 @@
 #include <QJsonDocument>
 #include <QDir>
 #include <QApplication>
+#include <QFutureWatcher>
+#include <QtConcurrent>
 
 #include <dconfig.h>
 #include <DDialog>
@@ -460,4 +462,35 @@ int dialog_utils::showConfirmDecryptionDialog(const QString &device, bool needRe
     QString confirmTxt = needReboot ? QObject::tr("Confirm and Reboot") : QObject::tr("Confirm");
     dlg.addButton(confirmTxt, true, Dtk::Widget::DDialog::ButtonRecommend);
     return dlg.exec();
+}
+
+QString tpm_passphrase_utils::getPassphraseFromTPM_NonBlock(const QString &dev, const QString &pin)
+{
+    QEventLoop loop;
+    QFutureWatcher<QString> watcher;
+    QObject::connect(&watcher, &QFutureWatcher<QString>::finished, [&] { loop.exit(); });
+    watcher.setFuture(QtConcurrent::run(tpm_passphrase_utils::getPassphraseFromTPM,
+                                        dev,
+                                        pin));
+
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    loop.exec();
+    qApp->restoreOverrideCursor();
+    return watcher.result();
+}
+
+int tpm_passphrase_utils::genPassphraseFromTPM_NonBlock(const QString &dev, const QString &pin, QString *passphrase)
+{
+    QEventLoop loop;
+    QFutureWatcher<int> watcher;
+    QObject::connect(&watcher, &QFutureWatcher<int>::finished, [&] { loop.exit(); });
+    watcher.setFuture(QtConcurrent::run(tpm_passphrase_utils::genPassphraseFromTPM,
+                                        dev,
+                                        pin,
+                                        passphrase));
+
+    qApp->setOverrideCursor(Qt::WaitCursor);
+    loop.exec();
+    qApp->restoreOverrideCursor();
+    return watcher.result();
 }

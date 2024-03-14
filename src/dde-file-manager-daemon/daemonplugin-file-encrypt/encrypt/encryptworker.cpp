@@ -410,7 +410,7 @@ void ReencryptWorkerV2::run()
             if (!disk_encrypt_utils::bcSaveRecoveryKey(config.devicePath,
                                                        recKey,
                                                        params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString())) {
-                ret = KErrorRequestExportRecKey;
+                ret = -KErrorRequestExportRecKey;
                 msg = recKey;
             }
         }

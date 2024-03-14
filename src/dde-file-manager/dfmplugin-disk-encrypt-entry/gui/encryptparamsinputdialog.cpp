@@ -327,10 +327,12 @@ void EncryptParamsInputDialog::onPageChanged(int page)
     if (page == kPasswordInputPage) {
         setTitle(tr("Please continue to encrypt partition %1").arg(params.deviceDisplayName));
         exportRecKeyEnabled ? addButton(tr("Next")) : addButton(tr("Confirm encrypt"));
+        encKeyEdit1->setFocus();
     } else if (page == kExportKeyPage) {
         setTitle(tr("Export Recovery Key"));
         addButton(tr("Previous"));
         addButton(tr("Confirm encrypt"), true, ButtonType::ButtonRecommend);
+        keyExportInput->setFocus();
     }
 }
 
@@ -380,34 +382,25 @@ void EncryptParamsInputDialog::onExpPathChanged(const QString &path, bool silent
 
 bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
 {
-    this->setEnabled(false);
-    dfmbase::FinallyUtil finalClear([this] {
-        this->setEnabled(true);
+    auto btns = this->getButtons();
+    for (auto btn : btns)
+        btn->setEnabled(false);
+    dfmbase::FinallyUtil finalClear([=] {
+        for (auto btn : btns)
+            btn->setEnabled(true);
     });
 
     QString sessionHashAlgo, sessionKeyAlgo, primaryHashAlgo, primaryKeyAlgo, minorHashAlgo, minorKeyAlgo;
-    if (!tpm_passphrase_utils::getAlgorithm(&sessionHashAlgo, &sessionKeyAlgo, &primaryHashAlgo, &primaryKeyAlgo, &minorHashAlgo, &minorKeyAlgo)) {
+    bool checkAlgo = tpm_passphrase_utils::getAlgorithm(&sessionHashAlgo,
+                                                        &sessionKeyAlgo,
+                                                        &primaryHashAlgo,
+                                                        &primaryKeyAlgo,
+                                                        &minorHashAlgo,
+                                                        &minorKeyAlgo);
+    if (!checkAlgo) {
         qCritical() << "TPM algo choice failed!";
         return false;
     }
-
-    QString pin = (encType->currentIndex() == SecKeyType::kTPMAndPIN)
-            ? encKeyEdit1->text()
-            : "";
-
-    QEventLoop loop;
-    QFutureWatcher<QPair<int, QString>> watcher;
-    QFuture<QPair<int, QString>> future = QtConcurrent::run([=] {
-        QString passphrase;
-        int err = tpm_passphrase_utils::genPassphraseFromTPM(deviceName, pin, &passphrase);
-        return QPair<int, QString>(err, passphrase);
-    });
-    connect(&watcher, &QFutureWatcher<QPair<int, QString>>::finished,
-            this, [&watcher, &loop] {
-                int tpmErr = watcher.result().first;
-                loop.exit(tpmErr == tpm_passphrase_utils::kTPMNoError ? 0 : -1);
-            });
-    watcher.setFuture(future);
 
     DSpinner spinner(this);
     spinner.setFixedSize(50, 50);
@@ -415,15 +408,15 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
     spinner.start();
     spinner.show();
 
-    int exitCode = loop.exec();
-    QPair<int, QString> result = watcher.result();
+    QString pin = (encType->currentIndex() == SecKeyType::kTPMAndPIN)
+            ? encKeyEdit1->text()
+            : "";
+    int exitCode = tpm_passphrase_utils::genPassphraseFromTPM_NonBlock(deviceName, pin, &tpmPassword);
     if (exitCode != 0) {
         qCritical() << "TPM encrypt failed!";
         dialog_utils::showTPMError(tr("Encrypt failed"),
-                                   static_cast<tpm_passphrase_utils::TPMError>(result.first));
+                                   static_cast<tpm_passphrase_utils::TPMError>(exitCode));
         return false;
     }
-
-    tpmPassword = result.second;
     return true;
 }
