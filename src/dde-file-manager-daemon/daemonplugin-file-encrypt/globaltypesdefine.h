@@ -31,6 +31,8 @@ inline constexpr char kKeyValidateWithRecKey[] { "usingRecKey" };
 inline constexpr char kKeyDeviceName[] { "deviceName" };
 inline constexpr char kKeyBackingDevUUID[] { "backingDevUUID" };
 inline constexpr char kKeyClearDevUUID[] { "clearDevUUID" };
+inline constexpr char kKeySeparationHeaderPartEncrypt[] { "isSeparationHeaderPartEncrypt" };
+inline constexpr char kKeyClearBlockDeviceVolume[] { "clearBlockDeviceVolume" };
 }   // namespace encrypt_param_keys
 
 inline const QStringList kDisabledEncryptPath {
@@ -102,6 +104,8 @@ struct DeviceEncryptParam
     bool validateByRecKey;
     QString backingDevUUID;
     QString clearDevUUID;
+    bool isSeparationHeaderPartEncrypt;
+    QString clearBlockDeviceVolume;
 };
 
 struct EncryptConfig
@@ -136,6 +140,7 @@ enum EncryptState {
     kStatusOnline = kStatusFinished << 2,
     kStatusEncrypt = kStatusFinished << 3,
     kStatusDecrypt = kStatusFinished << 4,
+    kStatusNoEncryptConfig = kStatusFinished << 5,
 
     kStatusUnknown = kStatusFinished << 7,
 };

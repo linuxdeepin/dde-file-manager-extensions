@@ -716,6 +716,14 @@ int block_device_utils::bcDevEncryptStatus(const QString &device, EncryptStates 
         *status |= kStatusOnline;
     if (flags & CRYPT_REQUIREMENT_UNKNOWN)
         *status = kStatusUnknown;
+
+    if (*status & (kStatusOnline | kStatusEncrypt)) {
+        const QString configFile = disk_encrypt::kEncConfigDevicePath.arg(device.mid(5));
+        QFile f(configFile);
+        if (!f.exists())
+            *status |= kStatusNoEncryptConfig;
+    }
+
     return kSuccess;
 }
 
