@@ -38,6 +38,12 @@ PrencryptWorker::PrencryptWorker(const QString &jobID,
 
 void PrencryptWorker::run()
 {
+    auto encParams = disk_encrypt_utils::bcConvertParams(params);
+    if (params.value(encrypt_param_keys::kKeySeparationHeaderPartEncrypt).toBool()) {
+        writeEncryptParams(encParams.device);
+        return;
+    }
+
     QString mpt = params.value(encrypt_param_keys::kKeyMountPoint).toString();
     if (kDisabledEncryptPath.contains(mpt, Qt::CaseInsensitive)) {
         qInfo() << "device mounted at disable list, ignore encrypt.";
@@ -52,7 +58,6 @@ void PrencryptWorker::run()
         return;
     }
 
-    auto encParams = disk_encrypt_utils::bcConvertParams(params);
     if (!disk_encrypt_utils::bcValidateParams(encParams)) {
         setExitCode(-kErrorParamsInvalid);
         qDebug() << "invalid params" << params;
@@ -106,6 +111,8 @@ int PrencryptWorker::writeEncryptParams(const QString &device)
     QJsonObject obj;
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
+    if (params.value(encrypt_param_keys::kKeySeparationHeaderPartEncrypt).toBool())
+        dmDev = params.value(encrypt_param_keys::kKeyClearBlockDeviceVolume).toString();
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
 
     obj.insert("volume", dmDev);   // used to name a opened luks device.
@@ -131,7 +138,7 @@ int PrencryptWorker::writeEncryptParams(const QString &device)
     createUsecPathIfNotExist();
 
     QString configPath = QString("%1/encrypt.json").arg(kBootUsecPath);
-    if (!device.isEmpty()) {
+    if (!device.isEmpty() && !params.value(encrypt_param_keys::kKeySeparationHeaderPartEncrypt).toBool()) {
         configPath = QString("%1/encrypt_%2.json").arg(kBootUsecPath).arg(device.mid(5));
     }
 
