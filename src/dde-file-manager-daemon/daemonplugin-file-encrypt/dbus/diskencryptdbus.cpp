@@ -266,7 +266,7 @@ bool DiskEncryptDBus::triggerReencrypt(const QString &device)
                 // pick a new job.
                 const static QRegularExpression reg(R"(encrypt_(.*).json)");
                 QDir usecDir("/boot/usec-crypt");
-                auto files = usecDir.entryInfoList();
+                auto files = usecDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
                 for (const auto &file : files) {
                     auto fileName = file.fileName();
                     if (fileName.contains(reg)) {
