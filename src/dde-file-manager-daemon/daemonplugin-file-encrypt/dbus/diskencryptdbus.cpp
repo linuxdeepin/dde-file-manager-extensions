@@ -81,13 +81,11 @@ QString DiskEncryptDBus::PrepareEncryptDisk(const QVariantMap &params)
                  << device
                  << ret;
 
-        if (params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool()
-            || ret != kSuccess) {
-            Q_EMIT this->PrepareEncryptDiskResult(device,
-                                                  deviceName,
-                                                  jobID,
-                                                  static_cast<int>(ret));
-        } else {
+        Q_EMIT this->PrepareEncryptDiskResult(device,
+                                              deviceName,
+                                              jobID,
+                                              static_cast<int>(ret));
+        if (ret == kSuccess) {
             qInfo() << "start reencrypt device" << device;
             triggerReencrypt(device);
         }
