@@ -195,7 +195,6 @@ void DiskEncryptDBus::SetEncryptParams(const QVariantMap &params)
                                  deviceName,
                                  -kUserCancelled,
                                  "");
-        IgnoreParamRequest();
         return;
     }
 

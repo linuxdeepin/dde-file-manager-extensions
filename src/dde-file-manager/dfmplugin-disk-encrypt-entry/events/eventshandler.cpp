@@ -150,8 +150,11 @@ void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, 
 {
     QApplication::restoreOverrideCursor();
 
-    if (encryptInputs.contains(dev))
-        encryptInputs.take(dev)->deleteLater();
+    // delay delete input dialogs. avoid when new request comes new dialog raises.
+    QTimer::singleShot(1000, this, [=] {
+        if (encryptInputs.contains(dev))
+            encryptInputs.take(dev)->deleteLater();
+    });
 
     QString device = QString("%1(%2)").arg(devName).arg(dev.mid(5));
     QString title, msg;
