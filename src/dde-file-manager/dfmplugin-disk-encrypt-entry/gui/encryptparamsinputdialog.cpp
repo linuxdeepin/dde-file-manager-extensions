@@ -325,7 +325,8 @@ void EncryptParamsInputDialog::onPageChanged(int page)
     pagesLay->setCurrentIndex(page);
     clearButtons();
     if (page == kPasswordInputPage) {
-        setTitle(tr("Please continue to encrypt partition %1").arg(params.deviceDisplayName));
+        QString devName = QString("%1(%2)").arg(params.deviceDisplayName).arg(params.devDesc.mid(5));
+        setTitle(tr("Please continue to encrypt partition %1").arg(devName));
         exportRecKeyEnabled ? addButton(tr("Next")) : addButton(tr("Confirm encrypt"));
         encKeyEdit1->setFocus();
     } else if (page == kExportKeyPage) {
