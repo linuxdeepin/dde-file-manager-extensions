@@ -142,8 +142,10 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &devNam
     // set dde-file-manager autostart without GUI to automatically raise the encrypt dialog.
     autoStartDFM();
 
-    qInfo() << "reboot is required..." << dev;
-    requestReboot();
+    if (code == -kRebootRequired) {
+        qInfo() << "reboot is required..." << dev;
+        requestReboot();
+    }
 }
 
 void EventsHandler::onEncryptResult(const QString &dev, const QString &devName, int code, const QString &info)
