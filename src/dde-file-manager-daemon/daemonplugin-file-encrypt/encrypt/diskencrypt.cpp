@@ -749,6 +749,10 @@ bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config
     QFile encConfig(encryptConfigPath);
     if (!encConfig.exists()) {
         qInfo() << "the encrypt config file doesn't exist";
+        if (encryptConfigPath != kEncConfigPath) {
+            qInfo() << "try trigger default encrypt device.";
+            return bcReadEncryptConfig(config, "");
+        }
         return false;
     }
 
