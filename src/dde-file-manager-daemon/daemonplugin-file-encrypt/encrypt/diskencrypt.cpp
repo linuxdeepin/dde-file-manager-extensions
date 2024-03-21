@@ -784,6 +784,8 @@ bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config
     // config->tpmConfig = obj.value("tpm-config");// no tpmconfig will be set in pre-encrypt phase
     config->clearDev = obj.value("volume").toString();
     config->configPath = encryptConfigPath;
+    config->clearDevUUID = obj.value("clear-device-uuid").toString();
+    config->isSeparationHeaderPartEncrypt = obj.value("separation-header-part-encrypt").toBool();
 
     return true;
 }

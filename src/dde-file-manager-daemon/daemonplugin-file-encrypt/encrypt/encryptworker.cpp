@@ -123,6 +123,8 @@ int PrencryptWorker::writeEncryptParams(const QString &device)
     obj.insert("cipher", params.value(encrypt_param_keys::kKeyCipher).toString() + "-xts-plain64");
     obj.insert("key-size", "256");
     obj.insert("mode", encMode.value(params.value(encrypt_param_keys::kKeyEncMode).toInt()));
+    obj.insert("clear-device-uuid", params.value(encrypt_param_keys::kKeyClearDevUUID).toString());
+    obj.insert("separation-header-part-encrypt", params.value(encrypt_param_keys::kKeySeparationHeaderPartEncrypt).toBool());
 
     QString expPath = params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString();
     if (!expPath.isEmpty()) {
@@ -402,11 +404,23 @@ void ReencryptWorkerV2::run()
         return;
     }
 
+    if (config.isSeparationHeaderPartEncrypt) {
+        if (!setFsPassno(config.clearDevUUID, "0")) {
+            qCritical() << "set filesystem passno to 0 failed, uuid is " << config.clearDevUUID;
+            Q_EMIT deviceReencryptResult(config.devicePath, -kErrorSetFsPassno, "");
+            return;
+        }
+    }
     QString msg;
     ret = disk_encrypt_funcs::bcResumeReencrypt(config.devicePath, "", clearDev, false);
     if (ret == kSuccess) {
         // sets the passphrase, token, recovery-key
         setPassphrase();
+        if (config.isSeparationHeaderPartEncrypt) {
+            if (!setFsPassno(config.clearDevUUID, "2")) {
+                qWarning() << "set filesystem passno to 2 failed, uuid is " << config.clearDevUUID;
+            }
+        }
         setBakcingDevLabel();
         updateCrypttab();
         removeEncryptFile();
@@ -665,4 +679,60 @@ int ReencryptWorkerV2::waitForInput()
         QThread::sleep(3);   // don't request frequently.
     }
     return kSuccess;
+}
+
+bool ReencryptWorkerV2::setFsPassno(const QString &uuid, const QString &state)
+{
+    static const QString kFstabPath { "/etc/fstab" };
+    QFile fstab(kFstabPath);
+    if (!fstab.open(QIODevice::ReadOnly))
+        return false;
+
+    QByteArray fstabContents = fstab.readAll();
+    fstab.close();
+
+    QString devUUID = QString("UUID=%1").arg(uuid);
+    QByteArrayList fstabLines = fstabContents.split('\n');
+    QList<QStringList> fstabItems;
+    bool foundItem = false;
+    int size = fstabLines.size();
+    for (int i = 0; i < size; ++i) {
+        QStringList items;
+         const QString &line = QString::fromUtf8(fstabLines.at(i));
+         if (line.startsWith("#")) {
+             items << line ;
+         } else {
+             items = line.split(QRegularExpression(R"(\t| )"), QString::SkipEmptyParts);
+             if (items.count() == 6 && items[0] == devUUID && !foundItem) {
+                 items[5] = state;
+                 foundItem = true;
+             }
+         }
+         fstabItems.append(items);
+    }
+
+    if (foundItem) {
+        QByteArray newContents;
+        size = fstabItems.size();
+        for (int i = 0; i < size; ++i) {
+            newContents += fstabItems.at(i).join('\t');
+            newContents.append('\n');
+        }
+
+        if (!fstab.open(QIODevice::Truncate | QIODevice::ReadWrite))
+            return false;
+
+        fstab.write(newContents);
+        fstab.flush();
+        fstab.close();
+
+        qDebug() << "old fstab contents:"
+                 << fstabContents;
+        qDebug() << "new fstab contents"
+                 << newContents;
+
+        return true;
+    } else {
+        return false;
+    }
 }
