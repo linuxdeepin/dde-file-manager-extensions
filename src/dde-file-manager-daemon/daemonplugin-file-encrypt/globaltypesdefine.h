@@ -79,6 +79,7 @@ enum EncryptOperationStatus {
     kErrorSetLabel,
     kErrorNotFullyEncrypted,
     KErrorRequestExportRecKey,
+    kErrorSetFsPassno,
 
     kErrorUnknown,
 };
@@ -121,6 +122,8 @@ struct EncryptConfig
     QVariantMap tpmConfig;
     QString clearDev;
     QString configPath;
+    QString clearDevUUID;
+    bool isSeparationHeaderPartEncrypt;
 
     QVariantMap keyConfig()
     {

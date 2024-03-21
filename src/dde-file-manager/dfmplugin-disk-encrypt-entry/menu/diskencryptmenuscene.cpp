@@ -182,7 +182,10 @@ void DiskEncryptMenuScene::updateState(QMenu *parent)
 void DiskEncryptMenuScene::encryptDevice(const DeviceEncryptParam &param)
 {
     QString displayName = QString("%1(%2)").arg(param.deviceDisplayName).arg(param.devDesc.mid(5));
-    int ret = dialog_utils::showConfirmEncryptionDialog(displayName, param.initOnly);
+    bool needreboot { param.initOnly };
+    if (param.isSeparationHeaderPartEncrypt)
+        needreboot = false;
+    int ret = dialog_utils::showConfirmEncryptionDialog(displayName, needreboot);
     if (ret == QDialog::Accepted) {
         if (param.initOnly)
             doEncryptDevice(param);
@@ -303,7 +306,8 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
             { encrypt_param_keys::kKeyDeviceName, param.deviceDisplayName },
             { encrypt_param_keys::kKeyMountPoint, param.mountPoint },
             { encrypt_param_keys::kKeySeparationHeaderPartEncrypt, param.isSeparationHeaderPartEncrypt },
-            { encrypt_param_keys::kKeyClearBlockDeviceVolume, param.clearBlockDeviceVolume }
+            { encrypt_param_keys::kKeyClearBlockDeviceVolume, param.clearBlockDeviceVolume },
+            { encrypt_param_keys::kKeyClearDevUUID, param.clearDevUUID }
         };
         if (!tpmConfig.isEmpty()) params.insert(encrypt_param_keys::kKeyTPMConfig, tpmConfig);
         if (!tpmToken.isEmpty()) params.insert(encrypt_param_keys::kKeyTPMToken, tpmToken);
