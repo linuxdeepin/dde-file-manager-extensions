@@ -31,7 +31,7 @@ inline constexpr char kKeyValidateWithRecKey[] { "usingRecKey" };
 inline constexpr char kKeyDeviceName[] { "deviceName" };
 inline constexpr char kKeyBackingDevUUID[] { "backingDevUUID" };
 inline constexpr char kKeyClearDevUUID[] { "clearDevUUID" };
-inline constexpr char kKeySeparationHeaderPartEncrypt[] { "isSeparationHeaderPartEncrypt" };
+inline constexpr char kKeyIsDetachedHeader[] { "isDetachedHeader" };
 inline constexpr char kKeyClearBlockDeviceVolume[] { "clearBlockDeviceVolume" };
 }   // namespace encrypt_param_keys
 
@@ -79,6 +79,7 @@ enum EncryptOperationStatus {
     kErrorSetLabel,
     kErrorNotFullyEncrypted,
     KErrorRequestExportRecKey,
+    kErrorSetFsPassno,
 
     kErrorUnknown,
 };
@@ -104,7 +105,7 @@ struct DeviceEncryptParam
     bool validateByRecKey;
     QString backingDevUUID;
     QString clearDevUUID;
-    bool isSeparationHeaderPartEncrypt;
+    bool isDetachedHeader;
     QString clearBlockDeviceVolume;
 };
 
@@ -121,6 +122,8 @@ struct EncryptConfig
     QVariantMap tpmConfig;
     QString clearDev;
     QString configPath;
+    QString clearDevUUID;
+    bool isDetachedHeader;
 
     QVariantMap keyConfig()
     {

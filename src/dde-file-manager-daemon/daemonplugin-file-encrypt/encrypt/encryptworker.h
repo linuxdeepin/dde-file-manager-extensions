@@ -90,6 +90,7 @@ protected:
     bool validateParams();
     void disableABRecovery();
     int waitForInput();
+    bool setFsPassno(const QString &uuid, const QString &state);
 
 private:
     QVariantMap params;
