@@ -39,7 +39,7 @@ PrencryptWorker::PrencryptWorker(const QString &jobID,
 void PrencryptWorker::run()
 {
     auto encParams = disk_encrypt_utils::bcConvertParams(params);
-    if (params.value(encrypt_param_keys::kKeySeparationHeaderPartEncrypt).toBool()) {
+    if (params.value(encrypt_param_keys::kKeyIsDetachedHeader).toBool()) {
         writeEncryptParams(encParams.device);
         return;
     }
@@ -111,7 +111,7 @@ int PrencryptWorker::writeEncryptParams(const QString &device)
     QJsonObject obj;
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
-    if (params.value(encrypt_param_keys::kKeySeparationHeaderPartEncrypt).toBool())
+    if (params.value(encrypt_param_keys::kKeyIsDetachedHeader).toBool())
         dmDev = params.value(encrypt_param_keys::kKeyClearBlockDeviceVolume).toString();
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
 
@@ -124,7 +124,7 @@ int PrencryptWorker::writeEncryptParams(const QString &device)
     obj.insert("key-size", "256");
     obj.insert("mode", encMode.value(params.value(encrypt_param_keys::kKeyEncMode).toInt()));
     obj.insert("clear-device-uuid", params.value(encrypt_param_keys::kKeyClearDevUUID).toString());
-    obj.insert("separation-header-part-encrypt", params.value(encrypt_param_keys::kKeySeparationHeaderPartEncrypt).toBool());
+    obj.insert("is-detached-header", params.value(encrypt_param_keys::kKeyIsDetachedHeader).toBool());
 
     QString expPath = params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString();
     if (!expPath.isEmpty()) {
@@ -140,7 +140,7 @@ int PrencryptWorker::writeEncryptParams(const QString &device)
     createUsecPathIfNotExist();
 
     QString configPath = QString("%1/encrypt.json").arg(kBootUsecPath);
-    if (!device.isEmpty() && !params.value(encrypt_param_keys::kKeySeparationHeaderPartEncrypt).toBool()) {
+    if (!device.isEmpty() && !params.value(encrypt_param_keys::kKeyIsDetachedHeader).toBool()) {
         configPath = QString("%1/encrypt_%2.json").arg(kBootUsecPath).arg(device.mid(5));
     }
 
@@ -404,7 +404,7 @@ void ReencryptWorkerV2::run()
         return;
     }
 
-    if (config.isSeparationHeaderPartEncrypt) {
+    if (config.isDetachedHeader) {
         if (!setFsPassno(config.clearDevUUID, "0")) {
             qCritical() << "set filesystem passno to 0 failed, uuid is " << config.clearDevUUID;
             Q_EMIT deviceReencryptResult(config.devicePath, -kErrorSetFsPassno, "");
@@ -416,7 +416,7 @@ void ReencryptWorkerV2::run()
     if (ret == kSuccess) {
         // sets the passphrase, token, recovery-key
         setPassphrase();
-        if (config.isSeparationHeaderPartEncrypt) {
+        if (config.isDetachedHeader) {
             if (!setFsPassno(config.clearDevUUID, "2")) {
                 qWarning() << "set filesystem passno to 2 failed, uuid is " << config.clearDevUUID;
             }

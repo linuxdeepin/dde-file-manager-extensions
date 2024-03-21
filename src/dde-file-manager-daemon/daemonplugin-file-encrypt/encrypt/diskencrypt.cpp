@@ -785,7 +785,7 @@ bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config
     config->clearDev = obj.value("volume").toString();
     config->configPath = encryptConfigPath;
     config->clearDevUUID = obj.value("clear-device-uuid").toString();
-    config->isSeparationHeaderPartEncrypt = obj.value("separation-header-part-encrypt").toBool();
+    config->isDetachedHeader = obj.value("is-detached-header").toBool();
 
     return true;
 }
