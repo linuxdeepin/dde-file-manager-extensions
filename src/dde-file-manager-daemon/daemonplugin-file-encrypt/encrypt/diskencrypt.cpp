@@ -716,6 +716,14 @@ int block_device_utils::bcDevEncryptStatus(const QString &device, EncryptStates 
         *status |= kStatusOnline;
     if (flags & CRYPT_REQUIREMENT_UNKNOWN)
         *status = kStatusUnknown;
+
+    if (*status & (kStatusOnline | kStatusEncrypt)) {
+        const QString configFile = disk_encrypt::kEncConfigDevicePath.arg(device.mid(5));
+        QFile f(configFile);
+        if (!f.exists())
+            *status |= kStatusNoEncryptConfig;
+    }
+
     return kSuccess;
 }
 
@@ -776,6 +784,8 @@ bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config
     // config->tpmConfig = obj.value("tpm-config");// no tpmconfig will be set in pre-encrypt phase
     config->clearDev = obj.value("volume").toString();
     config->configPath = encryptConfigPath;
+    config->clearDevUUID = obj.value("clear-device-uuid").toString();
+    config->isDetachedHeader = obj.value("is-detached-header").toBool();
 
     return true;
 }

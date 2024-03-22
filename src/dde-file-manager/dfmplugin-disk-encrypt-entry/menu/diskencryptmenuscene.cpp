@@ -80,13 +80,13 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     if (device.isEmpty())
         return false;
 
+    const QString &idType = selectedItemInfo.value("IdType").toString();
     auto preferDev = selectedItemInfo.value("PreferredDevice", "").toString();
-    if (preferDev.startsWith("/dev/mapper/") || device.startsWith("/dev/dm-")) {
+    if (device.startsWith("/dev/dm-") && idType != "crypto_LUKS") {
         qInfo() << "mapper device is not supported to be encrypted yet." << device << preferDev;
         return false;
     }
 
-    const QString &idType = selectedItemInfo.value("IdType").toString();
     const QStringList &supportedFS { "ext4", "ext3", "ext2" };
     if (idType == "crypto_LUKS") {
         if (selectedItemInfo.value("IdVersion").toString() == "1")
@@ -114,6 +114,7 @@ bool DiskEncryptMenuScene::initialize(const QVariantHash &params)
     param.type = SecKeyType::kPasswordOnly;
     param.backingDevUUID = param.uuid;
     param.clearDevUUID = selectedItemInfo.value("ClearBlockDeviceInfo").toHash().value("IdUUID", "").toString();
+    param.isDetachedHeader = false;
 
     if (hasCryptHeader)
         param.type = static_cast<SecKeyType>(device_utils::encKeyType(device));
@@ -181,7 +182,8 @@ void DiskEncryptMenuScene::updateState(QMenu *parent)
 void DiskEncryptMenuScene::encryptDevice(const DeviceEncryptParam &param)
 {
     QString displayName = QString("%1(%2)").arg(param.deviceDisplayName).arg(param.devDesc.mid(5));
-    int ret = dialog_utils::showConfirmEncryptionDialog(displayName, param.initOnly);
+    bool needreboot = param.isDetachedHeader ? false : param.initOnly;
+    int ret = dialog_utils::showConfirmEncryptionDialog(displayName, needreboot);
     if (ret == QDialog::Accepted) {
         if (param.initOnly)
             doEncryptDevice(param);
@@ -296,11 +298,14 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
             { encrypt_param_keys::kKeyUUID, param.uuid },
             { encrypt_param_keys::kKeyCipher, config_utils::cipherType() },
             { encrypt_param_keys::kKeyPassphrase, param.key },
-            { encrypt_param_keys::kKeyInitParamsOnly, param.initOnly },
+            { encrypt_param_keys::kKeyInitParamsOnly, param.isDetachedHeader ? false : param.initOnly },
             { encrypt_param_keys::kKeyRecoveryExportPath, param.exportPath },
             { encrypt_param_keys::kKeyEncMode, static_cast<int>(param.type) },
             { encrypt_param_keys::kKeyDeviceName, param.deviceDisplayName },
-            { encrypt_param_keys::kKeyMountPoint, param.mountPoint }
+            { encrypt_param_keys::kKeyMountPoint, param.mountPoint },
+            { encrypt_param_keys::kKeyIsDetachedHeader, param.isDetachedHeader },
+            { encrypt_param_keys::kKeyClearBlockDeviceVolume, param.clearBlockDeviceVolume },
+            { encrypt_param_keys::kKeyClearDevUUID, param.clearDevUUID }
         };
         if (!tpmConfig.isEmpty()) params.insert(encrypt_param_keys::kKeyTPMConfig, tpmConfig);
         if (!tpmToken.isEmpty()) params.insert(encrypt_param_keys::kKeyTPMToken, tpmToken);
@@ -589,7 +594,15 @@ void DiskEncryptMenuScene::updateActions()
             if (param.type != disk_encrypt::kTPMOnly)
                 actions[kActIDChangePwd]->setVisible(true);
         } else if (states & (kStatusOnline | kStatusEncrypt)) {   // not fully encrypted
-            actions[kActIDResume]->setVisible(true);
+            if (states & kStatusNoEncryptConfig) {
+                param.isDetachedHeader = true;
+                QVariantMap clearInfo = selectedItemInfo.value("ClearBlockDeviceInfo").toMap();
+                param.clearBlockDeviceVolume = clearInfo.value("PreferredDevice").toString().mid(12);
+                actions[kActIDEncrypt]->setVisible(true);
+            } else {
+                param.isDetachedHeader = false;
+                actions[kActIDResume]->setVisible(true);
+            }
         } else {
             qWarning() << "unmet status!" << param.devDesc << states;
         }
