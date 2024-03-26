@@ -718,9 +718,7 @@ int block_device_utils::bcDevEncryptStatus(const QString &device, EncryptStates 
         *status = kStatusUnknown;
 
     if (*status & (kStatusOnline | kStatusEncrypt)) {
-        const QString configFile = disk_encrypt::kEncConfigDevicePath.arg(device.mid(5));
-        QFile f(configFile);
-        if (!f.exists())
+        if (!disk_encrypt_utils::bcHasEncryptConfig(device))
             *status |= kStatusNoEncryptConfig;
     }
 
@@ -862,4 +860,25 @@ bool disk_encrypt_utils::bcSaveRecoveryKey(const QString &dev, const QString &ke
 
     qInfo() << "recovery key has been wrote to" << recFileName;
     return true;
+}
+
+bool disk_encrypt_utils::bcHasEncryptConfig(const QString &dev)
+{
+    QFile f(disk_encrypt::kEncConfigDevicePath.arg(dev.mid(5)));
+    if (f.exists())
+        return true;
+
+    f.setFileName(disk_encrypt::kEncConfigPath);
+    if (!f.exists())
+        return false;
+
+    if (!f.open(QIODevice::ReadOnly)) {
+        qWarning() << "cannot open config file for read!";
+        return false;
+    }
+    QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
+    f.close();
+    auto obj = doc.object();
+    const QString &devPath = obj.value("device-path").toString();
+    return devPath == dev;
 }
