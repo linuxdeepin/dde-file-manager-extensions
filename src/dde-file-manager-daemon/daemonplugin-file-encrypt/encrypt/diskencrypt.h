@@ -52,6 +52,7 @@ bool bcReadEncryptConfig(disk_encrypt::EncryptConfig *config, const QString &dev
 
 QString bcGenRecKey();
 bool bcSaveRecoveryKey(const QString &dev, const QString &key, const QString &path);
+bool bcHasEncryptConfig(const QString &dev);
 }   // namespace disk_encrypt_utils
 
 typedef QSharedPointer<dfmmount::DBlockDevice> DevPtr;
