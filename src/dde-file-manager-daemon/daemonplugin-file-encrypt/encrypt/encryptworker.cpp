@@ -275,6 +275,9 @@ void DecryptWorker::run()
     bool initOnly = params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool();
     if (initOnly) {
         setExitCode(writeDecryptParams());
+        const QString &clearDevUUID = params.value(encrypt_param_keys::kKeyClearDevUUID, "").toString();
+        if (!clearDevUUID.isEmpty())
+            ReencryptWorkerV2::setFsPassno(clearDevUUID, "0");
         return;
     }
 

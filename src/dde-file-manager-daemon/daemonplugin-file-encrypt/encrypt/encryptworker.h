@@ -71,6 +71,7 @@ public:
     void loadReencryptConfig(const QString &device = QString());
     disk_encrypt::EncryptConfig encryptConfig() const;
     void ignoreParamRequest();
+    static bool setFsPassno(const QString &uuid, const QString &state);
 
 Q_SIGNALS:
     void requestEncryptParams(const QVariantMap &encConf);
@@ -90,7 +91,6 @@ protected:
     bool validateParams();
     void disableABRecovery();
     int waitForInput();
-    bool setFsPassno(const QString &uuid, const QString &state);
 
 private:
     QVariantMap params;
