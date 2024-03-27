@@ -30,7 +30,6 @@ bool EventReceiver::getRandomByTpm(int size, QString *output)
     if (!tpm.getRandom(size, output))
         return false;
 
-
     // Determine whether the password is a hexadecimal character
     QString out = *output;
     int count = out.size();
@@ -38,7 +37,7 @@ bool EventReceiver::getRandomByTpm(int size, QString *output)
         qCritical() << "Vault: random password create error! The error password is %1" << out;
         return false;
     }
-    for (int i =0; i< count; ++i) {
+    for (int i = 0; i < count; ++i) {
         if (!((out[i] >= '0' && out[i] <= '9') || (out[i] >= 'a' && out[i] <= 'f'))) {
             qCritical() << "Vault: random password create error! The error password is %1" << out;
             return false;
@@ -96,19 +95,19 @@ int EventReceiver::encryptByTpmProcess(const QVariantMap &encryptParams)
         return -1;
 
     if (!encryptParams.contains(PropertyKey::kSessionHashAlgo)
-            || !encryptParams.contains(PropertyKey::kSessionKeyAlgo)
-            || !encryptParams.contains(PropertyKey::kPrimaryHashAlgo)
-            || !encryptParams.contains(PropertyKey::kPrimaryKeyAlgo)
-            || !encryptParams.contains(PropertyKey::kMinorHashAlgo)
-            || !encryptParams.contains(PropertyKey::kMinorKeyAlgo)
-            || !encryptParams.contains(PropertyKey::kDirPath)
-            || !encryptParams.contains(PropertyKey::kPlain)) {
+        || !encryptParams.contains(PropertyKey::kSessionKeyAlgo)
+        || !encryptParams.contains(PropertyKey::kPrimaryHashAlgo)
+        || !encryptParams.contains(PropertyKey::kPrimaryKeyAlgo)
+        || !encryptParams.contains(PropertyKey::kMinorHashAlgo)
+        || !encryptParams.contains(PropertyKey::kMinorKeyAlgo)
+        || !encryptParams.contains(PropertyKey::kDirPath)
+        || !encryptParams.contains(PropertyKey::kPlain)) {
         return -1;
     }
 
     if (type == 1) {
         if (!encryptParams.contains(PropertyKey::kPcr)
-                || !encryptParams.contains(PropertyKey::kPcrBank)) {
+            || !encryptParams.contains(PropertyKey::kPcrBank)) {
             return -1;
         }
     } else if (type == 2) {
@@ -117,8 +116,8 @@ int EventReceiver::encryptByTpmProcess(const QVariantMap &encryptParams)
         }
     } else if (type == 3) {
         if (!encryptParams.contains(PropertyKey::kPcr)
-                || !encryptParams.contains(PropertyKey::kPcrBank)
-                || !encryptParams.contains(PropertyKey::kPinCode)) {
+            || !encryptParams.contains(PropertyKey::kPcrBank)
+            || !encryptParams.contains(PropertyKey::kPinCode)) {
             return -1;
         }
     }
@@ -159,16 +158,16 @@ int EventReceiver::decryptByTpmProcess(const QVariantMap &decryptParams, QString
         return -1;
 
     if (!decryptParams.contains(PropertyKey::kSessionHashAlgo)
-            || !decryptParams.contains(PropertyKey::kSessionKeyAlgo)
-            || !decryptParams.contains(PropertyKey::kPrimaryHashAlgo)
-            || !decryptParams.contains(PropertyKey::kPrimaryKeyAlgo)
-            || !decryptParams.contains(PropertyKey::kDirPath)) {
+        || !decryptParams.contains(PropertyKey::kSessionKeyAlgo)
+        || !decryptParams.contains(PropertyKey::kPrimaryHashAlgo)
+        || !decryptParams.contains(PropertyKey::kPrimaryKeyAlgo)
+        || !decryptParams.contains(PropertyKey::kDirPath)) {
         return false;
     }
 
     if (type == 1) {
         if (!decryptParams.contains(PropertyKey::kPcr)
-                || !decryptParams.contains(PropertyKey::kPcrBank)) {
+            || !decryptParams.contains(PropertyKey::kPcrBank)) {
             return false;
         }
     } else if (type == 2) {
@@ -177,8 +176,8 @@ int EventReceiver::decryptByTpmProcess(const QVariantMap &decryptParams, QString
         }
     } else if (type == 3) {
         if (!decryptParams.contains(PropertyKey::kPcr)
-                || !decryptParams.contains(PropertyKey::kPcrBank)
-                || !decryptParams.contains(PropertyKey::kPinCode)) {
+            || !decryptParams.contains(PropertyKey::kPcrBank)
+            || !decryptParams.contains(PropertyKey::kPinCode)) {
             return false;
         }
     }
@@ -207,7 +206,13 @@ int EventReceiver::decryptByTpmProcess(const QVariantMap &decryptParams, QString
     return tpm.decryptByTools(params, pwd);
 }
 
-EventReceiver::EventReceiver(QObject *parent) : QObject(parent)
+int EventReceiver::ownerAuthStatus()
+{
+    return TPMWork().ownerAuthStatus();
+}
+
+EventReceiver::EventReceiver(QObject *parent)
+    : QObject(parent)
 {
     initConnection();
 }
@@ -226,4 +231,5 @@ void EventReceiver::initConnection()
     dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_IsTPMSupportAlgoPro", this, &EventReceiver::isTpmSupportAlgoProcess);
     dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_EncryptByTPMPro", this, &EventReceiver::encryptByTpmProcess);
     dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_DecryptByTPMPro", this, &EventReceiver::decryptByTpmProcess);
+    dpfSlotChannel->connect("dfmplugin_encrypt_manager", "slot_OwnerAuthStatus", this, &EventReceiver::ownerAuthStatus);
 }

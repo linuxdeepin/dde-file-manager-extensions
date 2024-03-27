@@ -28,6 +28,7 @@ class EncryptManager : public dpf::Plugin
     DPF_EVENT_REG_SLOT(slot_IsTPMSupportAlgoPro)
     DPF_EVENT_REG_SLOT(slot_EncryptByTPMPro)
     DPF_EVENT_REG_SLOT(slot_DecryptByTPMPro)
+    DPF_EVENT_REG_SLOT(slot_OwnerAuthStatus)
 
 public:
     void initialize() override;
@@ -36,4 +37,4 @@ public:
 
 }
 
-#endif // ENCRYPTMANAGER_H
+#endif   // ENCRYPTMANAGER_H

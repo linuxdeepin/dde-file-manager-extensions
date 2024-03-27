@@ -31,6 +31,7 @@ public Q_SLOTS:
     int isTpmSupportAlgoProcess(const QString &algoName, bool *support);
     int encryptByTpmProcess(const QVariantMap &encryptParams);
     int decryptByTpmProcess(const QVariantMap &decryptParams, QString *pwd);
+    int ownerAuthStatus();
 
 private:
     explicit EventReceiver(QObject *parent = nullptr);
@@ -38,4 +39,4 @@ private:
 };
 }
 
-#endif // EVENTRECEIVER_H
+#endif   // EVENTRECEIVER_H

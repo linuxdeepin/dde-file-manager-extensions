@@ -47,6 +47,7 @@ protected Q_SLOTS:
 
 private:
     bool encryptByTpm(const QString &deviceName);
+    void confirmEncrypt();
 
 private:
     DTK_WIDGET_NAMESPACE::DComboBox *encType { nullptr };

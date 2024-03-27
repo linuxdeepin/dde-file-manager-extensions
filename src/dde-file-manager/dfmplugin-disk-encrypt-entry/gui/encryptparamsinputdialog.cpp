@@ -283,19 +283,6 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
 {
     qDebug() << "button clicked:" << idx << "page: " << pagesLay->currentIndex();
 
-    auto confirmEnc = [this] {
-        if (encType->currentIndex() == kPasswordOnly) {
-            accept();
-            return;
-        }
-        if (!params.initOnly && !encryptByTpm(params.devDesc)) {
-            qWarning() << "encrypt by TPM failed!";
-            dialog_utils::showDialog(tr("TPM error"), tr("TPM status error!"), dialog_utils::DialogType::kError);
-            return;
-        }
-        accept();
-    };
-
     int currPage = pagesLay->currentIndex();
     if (currPage == kPasswordInputPage) {
         if (!validatePassword() && !params.initOnly)
@@ -305,13 +292,13 @@ void EncryptParamsInputDialog::onButtonClicked(int idx)
             pagesLay->setCurrentIndex(kExportKeyPage);
             onExpPathChanged(keyExportInput->text(), true);
         } else {
-            confirmEnc();
+            confirmEncrypt();
         }
     } else if (currPage == kExportKeyPage) {
         if (idx == 0)
             pagesLay->setCurrentIndex(kPasswordInputPage);
         else if (idx == 1)
-            confirmEnc();
+            confirmEncrypt();
     }
 }
 
@@ -415,9 +402,29 @@ bool EncryptParamsInputDialog::encryptByTpm(const QString &deviceName)
     int exitCode = tpm_passphrase_utils::genPassphraseFromTPM_NonBlock(deviceName, pin, &tpmPassword);
     if (exitCode != 0) {
         qCritical() << "TPM encrypt failed!";
-        dialog_utils::showTPMError(tr("Encrypt failed"),
-                                   static_cast<tpm_passphrase_utils::TPMError>(exitCode));
+        // dialog_utils::showTPMError(tr("Encrypt failed"),
+        //                            static_cast<tpm_passphrase_utils::TPMError>(exitCode));
         return false;
     }
     return true;
+}
+
+void EncryptParamsInputDialog::confirmEncrypt()
+{
+    if (encType->currentIndex() == kPasswordOnly) {
+        accept();
+        return;
+    }
+    if (!params.initOnly && !encryptByTpm(params.devDesc)) {
+        qWarning() << "encrypt by TPM failed!";
+        if (tpm_utils::ownerAuthStatus() == 1) {
+            QString msg = tr("TPM is locked and cannot be used for partition encryption. "
+                             "Please cancel the TPM password or choose another unlocking method.");
+            dialog_utils::showDialog(tr("TPM error"), msg, dialog_utils::DialogType::kError);
+            return;
+        }
+        dialog_utils::showDialog(tr("TPM error"), tr("TPM status error!"), dialog_utils::DialogType::kError);
+        return;
+    }
+    accept();
 }
