@@ -1,3 +1,10 @@
+dde-file-manager-extensions (1.1.12) unstable; urgency=medium
+
+  * decrypt by PARTUUID
+  * 
+
+ -- xushitong <xushitong@uniontech.com>  Wed, 27 Mar 2024 17:09:34 +0800
+
 dde-file-manager-extensions (1.1.11) unstable; urgency=medium
 
   * ux optimize.
