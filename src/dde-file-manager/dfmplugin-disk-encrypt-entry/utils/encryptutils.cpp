@@ -95,6 +95,11 @@ int tpm_utils::decryptByTPM(const QVariantMap &map, QString *psw)
     return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_DecryptByTPMPro", map, psw).toInt();
 }
 
+int tpm_utils::ownerAuthStatus()
+{
+    return dpfSlotChannel->push("dfmplugin_encrypt_manager", "slot_OwnerAuthStatus").toInt();
+}
+
 int device_utils::encKeyType(const QString &dev)
 {
     QDBusInterface iface(kDaemonBusName,

@@ -22,6 +22,7 @@ int getRandomByTPM(int size, QString *output);
 int isSupportAlgoByTPM(const QString &algoName, bool *support);
 int encryptByTPM(const QVariantMap &map);
 int decryptByTPM(const QVariantMap &map, QString *psw);
+int ownerAuthStatus();
 }   // namespace tpm_utils
 
 namespace tpm_passphrase_utils {

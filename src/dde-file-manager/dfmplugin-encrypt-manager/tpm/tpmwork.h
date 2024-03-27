@@ -34,15 +34,15 @@ public:
     int isSupportAlgoByTools(const QString &algoName, bool *support);
     int encryptByTools(const EncryptParams &params);
     int decryptByTools(const DecryptParams &params, QString *pwd);
+    int ownerAuthStatus();
 
 private:
     bool initTpm2(const QString &hashAlgo, const QString &keyAlgo,
                   const QString &keyPin, const QString &dirPath);
 
     QLibrary *tpmLib { nullptr };
-
 };
 
 }
 
-#endif // TPMWORK_H
+#endif   // TPMWORK_H
