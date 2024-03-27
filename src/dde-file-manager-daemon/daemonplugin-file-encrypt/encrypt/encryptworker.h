@@ -113,6 +113,7 @@ public:
 protected:
     void run() override;
     int writeDecryptParams();
+    QString findEncryptSrcDev(const QString &activeName);
 
 private:
     QVariantMap params;

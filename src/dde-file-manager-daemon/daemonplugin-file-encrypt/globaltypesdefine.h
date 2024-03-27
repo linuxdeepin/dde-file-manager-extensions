@@ -32,7 +32,7 @@ inline constexpr char kKeyDeviceName[] { "deviceName" };
 inline constexpr char kKeyBackingDevUUID[] { "backingDevUUID" };
 inline constexpr char kKeyClearDevUUID[] { "clearDevUUID" };
 inline constexpr char kKeyIsDetachedHeader[] { "isDetachedHeader" };
-inline constexpr char kKeyClearBlockDeviceVolume[] { "clearBlockDeviceVolume" };
+inline constexpr char kKeyPrefferDevice[] { "prefferDevice" };
 }   // namespace encrypt_param_keys
 
 inline const QStringList kDisabledEncryptPath {
@@ -106,7 +106,7 @@ struct DeviceEncryptParam
     QString backingDevUUID;
     QString clearDevUUID;
     bool isDetachedHeader;
-    QString clearBlockDeviceVolume;
+    QString prefferDevName;
 };
 
 struct EncryptConfig

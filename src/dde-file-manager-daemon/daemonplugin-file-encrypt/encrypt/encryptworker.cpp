@@ -112,7 +112,7 @@ int PrencryptWorker::writeEncryptParams(const QString &device)
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
     if (params.value(encrypt_param_keys::kKeyIsDetachedHeader).toBool())
-        dmDev = params.value(encrypt_param_keys::kKeyClearBlockDeviceVolume).toString();
+        dmDev = params.value(encrypt_param_keys::kKeyPrefferDevice).toString();
     QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
 
     obj.insert("volume", dmDev);   // used to name a opened luks device.
@@ -291,18 +291,21 @@ void DecryptWorker::run()
 
 int DecryptWorker::writeDecryptParams()
 {
+    createUsecPathIfNotExist();
+
     QJsonObject obj;
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
     obj.insert("device-path", dev);
-    QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
-    obj.insert("device", uuid);
-    QJsonDocument doc(obj);
 
-    createUsecPathIfNotExist();
+    QString srcDev = findEncryptSrcDev(params.value(encrypt_param_keys::kKeyPrefferDevice).toString());
+    obj.insert("device", srcDev);
+    qInfo() << "found source device:" << srcDev;
+
+    QJsonDocument doc(obj);
 
     QFile f(QString("%1/decrypt.json").arg(kBootUsecPath));
     if (f.exists())
-        qInfo() << "the decrypt task will be replaced";
+        qWarning() << "the decrypt task will be replaced";
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         qWarning() << "cannot open decrypt file for writing";
         return -kErrorOpenFileFailed;
@@ -311,6 +314,26 @@ int DecryptWorker::writeDecryptParams()
     f.write(doc.toJson());
     f.close();
     return -kRebootRequired;
+}
+
+QString DecryptWorker::findEncryptSrcDev(const QString &activeName)
+{
+    QFile f("/etc/crypttab");
+    if (!f.open(QIODevice::ReadOnly)) {
+        qWarning() << "cannot open crypttab!";
+        return "";
+    }
+    QByteArray contents = f.readAll();
+    f.close();
+    QByteArrayList lines = contents.split('\n');
+    for (auto line : lines) {
+        auto items = QString(line).split(QRegularExpression(R"( |\t)"), QString::SkipEmptyParts);
+        if (items.count() != 4)
+            continue;
+        if (items.at(0) == activeName)
+            return items.at(1);
+    }
+    return "";
 }
 
 ChgPassWorker::ChgPassWorker(const QString &jobID, const QVariantMap &params, QObject *parent)
@@ -697,17 +720,17 @@ bool ReencryptWorkerV2::setFsPassno(const QString &uuid, const QString &state)
     int size = fstabLines.size();
     for (int i = 0; i < size; ++i) {
         QStringList items;
-         const QString &line = QString::fromUtf8(fstabLines.at(i));
-         if (line.startsWith("#")) {
-             items << line ;
-         } else {
-             items = line.split(QRegularExpression(R"(\t| )"), QString::SkipEmptyParts);
-             if (items.count() == 6 && items[0] == devUUID && !foundItem) {
-                 items[5] = state;
-                 foundItem = true;
-             }
-         }
-         fstabItems.append(items);
+        const QString &line = QString::fromUtf8(fstabLines.at(i));
+        if (line.startsWith("#")) {
+            items << line;
+        } else {
+            items = line.split(QRegularExpression(R"(\t| )"), QString::SkipEmptyParts);
+            if (items.count() == 6 && items[0] == devUUID && !foundItem) {
+                items[5] = state;
+                foundItem = true;
+            }
+        }
+        fstabItems.append(items);
     }
 
     if (foundItem) {
