@@ -1,3 +1,9 @@
+dde-file-manager-extensions (1.1.12) unstable; urgency=medium
+
+  * update file manager extensions to V1.1.12
+
+ -- liuyangming <liuyangming@uniontech.com>  Wed, 27 Mar 2024 17:07:57 +0800
+
 dde-file-manager-extensions (1.1.11) unstable; urgency=medium
 
   * ux optimize.
