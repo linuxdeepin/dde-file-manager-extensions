@@ -371,7 +371,8 @@ void DiskEncryptMenuScene::doDecryptDevice(const DeviceEncryptParam &param)
             { encrypt_param_keys::kKeyInitParamsOnly, param.initOnly },
             { encrypt_param_keys::kKeyUUID, param.uuid },
             { encrypt_param_keys::kKeyDeviceName, param.deviceDisplayName },
-            { encrypt_param_keys::kKeyPrefferDevice, param.prefferDevName }
+            { encrypt_param_keys::kKeyPrefferDevice, param.prefferDevName },
+            { encrypt_param_keys::kKeyClearDevUUID, param.clearDevUUID }
         };
         QDBusReply<QString> reply = iface.call("DecryptDisk", params);
         qDebug() << "preencrypt device jobid:" << reply.value();
