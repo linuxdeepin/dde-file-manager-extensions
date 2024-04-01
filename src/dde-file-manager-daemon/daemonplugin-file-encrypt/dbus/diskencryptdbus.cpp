@@ -306,7 +306,9 @@ void DiskEncryptDBus::diskCheck()
     updateCrypttab();
 }
 
-void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QString, QString> *uuid2dev)
+void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid,
+                                      QMap<QString, QString> *uuid2dev,
+                                      QMap<QString, QString> *puuid2dev)
 {
     Q_ASSERT(dev2uuid && uuid2dev);
     using namespace dfmmount;
@@ -321,10 +323,14 @@ void DiskEncryptDBus::getDeviceMapper(QMap<QString, QString> *dev2uuid, QMap<QSt
         QString uuid = blkPtr->getProperty(dfmmount::Property::kBlockIDUUID).toString();
         if (uuid.isEmpty()) continue;
 
+        QString puuid = blkPtr->getProperty(dfmmount::Property::kPartitionUUID).toString();
+
         QString dev = blkPtr->device();
         uuid = QString("UUID=") + uuid;
         dev2uuid->insert(dev, uuid);
         uuid2dev->insert(uuid, dev);
+        if (!puuid.isEmpty())
+            puuid2dev->insert(QString("PARTUUID=") + puuid, dev);
     }
 }
 
@@ -381,14 +387,20 @@ bool DiskEncryptDBus::updateCrypttab()
 
 int DiskEncryptDBus::isEncrypted(const QString &target, const QString &source)
 {
-    QMap<QString, QString> dev2uuid, uuid2dev;
-    getDeviceMapper(&dev2uuid, &uuid2dev);
+    QMap<QString, QString> dev2uuid, uuid2dev, puuid2dev;
+    getDeviceMapper(&dev2uuid, &uuid2dev, &puuid2dev);
 
     QString dev = source;
     if (dev.startsWith("UUID")) {
         dev = uuid2dev.value(dev);
         if (dev.isEmpty()) {
             qWarning() << "cannot find device by UUID, device might already decrypted." << source;
+            return 0;
+        }
+    } else if (dev.startsWith("PARTUUID")) {
+        dev = puuid2dev.value(dev);
+        if (dev.isEmpty()) {
+            qWarning() << "cannot find device by PARTUUID, device might already decrypted." << source;
             return 0;
         }
     }
