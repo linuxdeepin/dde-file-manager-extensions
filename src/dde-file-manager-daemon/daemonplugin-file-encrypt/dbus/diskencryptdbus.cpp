@@ -220,6 +220,18 @@ bool DiskEncryptDBus::IsWorkerRunning()
     return running;
 }
 
+QString DiskEncryptDBus::UnfinishedDecryptJob()
+{
+    QDir d("/boot/usec-crypt/");
+    auto files = d.entryInfoList(QDir::Filter::NoDotAndDotDot | QDir::Filter::Files);
+    for (const auto &file : files) {
+        auto name = file.fileName();
+        if (name.contains(kDecryptHeaderPrefix))
+            return "/dev/" + name.remove(kDecryptHeaderPrefix);
+    }
+    return "";
+}
+
 void DiskEncryptDBus::onFstabDiskEncProgressUpdated(const QString &dev, qint64 offset, qint64 total)
 {
     Q_EMIT EncryptProgress(currentEncryptingDevice, deviceName, (1.0 * offset) / total);
