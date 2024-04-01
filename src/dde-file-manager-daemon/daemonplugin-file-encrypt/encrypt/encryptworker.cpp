@@ -38,6 +38,8 @@ PrencryptWorker::PrencryptWorker(const QString &jobID,
 
 void PrencryptWorker::run()
 {
+    auto fd = utils::inhibit(tr("Preparing encrypt..."));
+
     auto encParams = disk_encrypt_utils::bcConvertParams(params);
     if (params.value(encrypt_param_keys::kKeyIsDetachedHeader).toBool()) {
         writeEncryptParams(encParams.device);
@@ -256,6 +258,8 @@ DecryptWorker::DecryptWorker(const QString &jobID,
 
 void DecryptWorker::run()
 {
+    auto fd = utils::inhibit(tr("Decrypting..."));
+
     const QString &device = params.value(encrypt_param_keys::kKeyDevice).toString();
     EncryptStates status;
     int ret = block_device_utils::bcDevEncryptStatus(device, &status);
@@ -405,6 +409,8 @@ void ReencryptWorkerV2::ignoreParamRequest()
 
 void ReencryptWorkerV2::run()
 {
+    auto fd = utils::inhibit(tr("Encrypting..."));
+
     if (!hasUnfinishedOnlineEncryption()) {
         qInfo() << "no unfinished encryption job exists. exit thread.";
         return;
@@ -678,7 +684,7 @@ void ReencryptWorkerV2::disableABRecovery()
     cfg.close();
 
     // update grub
-    auto fd = utils::inhibit();
+    auto fd = utils::inhibit(QObject::tr("Updating grub..."));
     qInfo() << "blocking reboot:" << fd.value().fileDescriptor();
     QTime t;
     t.start();
