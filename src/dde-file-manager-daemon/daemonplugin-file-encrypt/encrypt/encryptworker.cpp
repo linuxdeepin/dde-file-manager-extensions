@@ -19,6 +19,19 @@ using namespace disk_encrypt;
 
 static constexpr char kBootUsecPath[] { "/boot/usec-crypt" };
 
+void createRebootFlagFile(const QString &device)
+{
+    QString dev = device;
+    QString fileName = kRebootFlagFilePrefix + dev.replace("/", "_");
+    QFile f(fileName);
+    if (!f.open(QIODevice::Truncate | QIODevice::WriteOnly)) {
+        qWarning() << "cannot create reboot flag file";
+        return;
+    }
+    f.close();
+    qInfo() << "reboot flag created." << fileName;
+}
+
 void createUsecPathIfNotExist()
 {
     QDir d(kBootUsecPath);
@@ -55,8 +68,10 @@ void PrencryptWorker::run()
 
     if (params.value(encrypt_param_keys::kKeyInitParamsOnly, false).toBool()) {
         createReencryptDesktop();
-        setExitCode(writeEncryptParams());
+        writeEncryptParams();
         setFstabTimeout();
+        setExitCode(-kRebootRequired);
+        createRebootFlagFile(params.value(encrypt_param_keys::kKeyDevice).toString());
         return;
     }
 
@@ -278,10 +293,12 @@ void DecryptWorker::run()
 
     bool initOnly = params.value(encrypt_param_keys::kKeyInitParamsOnly).toBool();
     if (initOnly) {
-        setExitCode(writeDecryptParams());
+        writeDecryptParams();
         const QString &clearDevUUID = params.value(encrypt_param_keys::kKeyClearDevUUID, "").toString();
         if (!clearDevUUID.isEmpty())
             ReencryptWorkerV2::setFsPassno(clearDevUUID, "0");
+        setExitCode(-kRebootRequired);
+        createRebootFlagFile(device);
         return;
     }
 
@@ -320,7 +337,7 @@ int DecryptWorker::writeDecryptParams()
 
     f.write(doc.toJson());
     f.close();
-    return -kRebootRequired;
+    return kSuccess;
 }
 
 QString DecryptWorker::findEncryptSrcDev(const QString &activeName)

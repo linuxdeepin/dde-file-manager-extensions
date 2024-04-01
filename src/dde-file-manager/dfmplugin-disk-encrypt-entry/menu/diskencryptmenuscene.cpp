@@ -626,4 +626,12 @@ void DiskEncryptMenuScene::updateActions()
     actions[kActIDChangePwd]->setEnabled(!taskWorking);
     actions[kActIDResume]->setEnabled(!taskWorking && !currDevOperating);
     actions[kActIDUnlock]->setEnabled(!currDevOperating);
+
+    QString dev = param.devDesc;
+    QString fileName = kRebootFlagFilePrefix + dev.replace("/", "_");
+    QFile rebootFlag(fileName);
+    if (rebootFlag.exists()) {
+        actions[kActIDEncrypt]->setText(tr("Reboot to continue encrypt"));
+        actions[kActIDDecrypt]->setText(tr("Reboot to finish decrypt"));
+    }
 }

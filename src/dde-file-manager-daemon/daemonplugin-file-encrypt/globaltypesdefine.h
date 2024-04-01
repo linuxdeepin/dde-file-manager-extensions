@@ -14,6 +14,7 @@ namespace disk_encrypt {
 inline constexpr char kEncConfigPath[] { "/boot/usec-crypt/encrypt.json" };
 inline const QString kEncConfigDevicePath { "/boot/usec-crypt/encrypt_%1.json" };
 inline constexpr char kReencryptDesktopFile[] { "/usr/share/applications/dfm-reencrypt.desktop" };
+inline constexpr char kRebootFlagFilePrefix[] { "/tmp/dfm_encrypt_reboot_flag_" };
 
 namespace encrypt_param_keys {
 inline constexpr char kKeyDevice[] { "device" };
