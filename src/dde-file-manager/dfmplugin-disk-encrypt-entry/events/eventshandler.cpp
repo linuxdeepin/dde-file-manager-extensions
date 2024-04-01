@@ -144,7 +144,7 @@ void EventsHandler::onPreencryptResult(const QString &dev, const QString &devNam
 {
     QApplication::restoreOverrideCursor();
 
-    if (code != kSuccess) {
+    if (code != kSuccess && code != -kRebootRequired) {
         showPreEncryptError(dev, devName, code);
         return;
     }
