@@ -80,6 +80,7 @@ enum EncryptOperationStatus {
     kErrorNotFullyEncrypted,
     KErrorRequestExportRecKey,
     kErrorSetFsPassno,
+    kErrorCheckReencryptStatus,
 
     kErrorUnknown,
 };

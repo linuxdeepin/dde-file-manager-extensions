@@ -360,7 +360,6 @@ int disk_encrypt_funcs::bcDecryptDevice(const QString &device,
     struct crypt_device *cdev = nullptr;
     dfmbase::FinallyUtil finalClear([&] {
         if (cdev) crypt_free(cdev);
-        if (!headerPath.isEmpty()) ::remove(headerPath.toStdString().c_str());
         gCurrDecryptintDevice.clear();
     });
     gCurrDecryptintDevice = device;
@@ -381,9 +380,28 @@ int disk_encrypt_funcs::bcDecryptDevice(const QString &device,
                                      &flags);
     CHECK_INT(ret, "get device flag failed " + device, -kErrorGetReencryptFlag);
     bool underEncrypting = (flags & CRYPT_REQUIREMENT_OFFLINE_REENCRYPT) || (flags & CRYPT_REQUIREMENT_ONLINE_REENCRYPT);
+
+    crypt_params_reencrypt param;
+    ret = crypt_reencrypt_status(cdev, &param);
+    CHECK_INT(ret, "check reencrypt status failed" + device, -kErrorCheckReencryptStatus);
+
+    underEncrypting &= (param.mode == CRYPT_REENCRYPT_ENCRYPT);
     CHECK_BOOL(!underEncrypting,
                "device is under encrypting... " + device + " the flags are: " + QString::number(flags),
                -kErrorWrongFlags);
+
+    if (ret == CRYPT_REENCRYPT_CRASH) {   // repair is needed.
+        QString dmName = "dm-" + device.mid(5);
+        ret = crypt_activate_by_passphrase(cdev, dmName.toStdString().c_str(),
+                                           CRYPT_ANY_SLOT,
+                                           passphrase.toStdString().c_str(),
+                                           passphrase.length(),
+                                           CRYPT_ACTIVATE_RECOVERY);
+        CHECK_INT(ret, "open device failed " + device, -kErrorActive);
+
+        // close device avoid operating.
+        ret = crypt_deactivate(cdev, dmName.toStdString().c_str());
+    }
 
     ret = crypt_reencrypt_init_by_passphrase(cdev,
                                              nullptr,
@@ -401,14 +419,21 @@ int disk_encrypt_funcs::bcDecryptDevice(const QString &device,
 
     bool res = fs_resize::recoverySuperblock_ext(device, headerPath);
     CHECK_BOOL(res, "recovery fs failed " + device, -kErrorResizeFs);
+
+    if (!headerPath.isEmpty()) ::remove(headerPath.toStdString().c_str());
     return 0;
 }
 
 int disk_encrypt_funcs::bcBackupCryptHeader(const QString &device, QString &headerPath)
 {
-    headerPath = "/tmp/dm_header_" + device.mid(5);
+    headerPath = "/boot/usec-crypt/dm_header_decrypt_" + device.mid(5);
     struct crypt_device *cdev = nullptr;
     dfmbase::FinallyUtil finalClear([&] { if (cdev) crypt_free(cdev); });
+
+    if (QFile(headerPath).exists()) {
+        qInfo() << "header exists" << headerPath;
+        return 0;
+    }
 
     int ret = crypt_init(&cdev, device.toStdString().c_str());
     CHECK_INT(ret, "init device failed " + device, -kErrorInitCrypt);
@@ -788,7 +813,7 @@ bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config
     return true;
 }
 
-QDBusReply<QDBusUnixFileDescriptor> utils::inhibit()
+QDBusReply<QDBusUnixFileDescriptor> utils::inhibit(const QString &message)
 {
     QDBusInterface iface("org.freedesktop.login1",
                          "/org/freedesktop/login1",
@@ -797,7 +822,7 @@ QDBusReply<QDBusUnixFileDescriptor> utils::inhibit()
     QVariantList args;
     args << QString("shutdown:sleep:")
          << QString("file-manager-daemon")
-         << QString("Updating initramfs...")
+         << QString(message)
          << QString("block");
     return iface.callWithArgumentList(QDBus::Block, "Inhibit", args);
 }

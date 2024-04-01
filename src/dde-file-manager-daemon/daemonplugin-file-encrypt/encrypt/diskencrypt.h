@@ -64,7 +64,7 @@ bool bcIsMounted(const QString &device);
 }   // namespace block_device_utils
 
 namespace utils {
-QDBusReply<QDBusUnixFileDescriptor> inhibit();
+QDBusReply<QDBusUnixFileDescriptor> inhibit(const QString &message);
 }
 
 FILE_ENCRYPT_END_NS
