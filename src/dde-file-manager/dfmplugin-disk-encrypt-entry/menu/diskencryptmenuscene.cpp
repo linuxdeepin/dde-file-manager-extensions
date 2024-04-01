@@ -377,6 +377,8 @@ void DiskEncryptMenuScene::doDecryptDevice(const DeviceEncryptParam &param)
         QDBusReply<QString> reply = iface.call("DecryptDisk", params);
         qDebug() << "preencrypt device jobid:" << reply.value();
         QApplication::setOverrideCursor(Qt::WaitCursor);
+
+        EventsHandler::instance()->autoStartDFM();
     }
 }
 

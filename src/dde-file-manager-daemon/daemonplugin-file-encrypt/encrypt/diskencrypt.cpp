@@ -426,7 +426,7 @@ int disk_encrypt_funcs::bcDecryptDevice(const QString &device,
 
 int disk_encrypt_funcs::bcBackupCryptHeader(const QString &device, QString &headerPath)
 {
-    headerPath = "/boot/usec-crypt/dm_header_decrypt_" + device.mid(5);
+    headerPath = "/boot/usec-crypt/" + QString(kDecryptHeaderPrefix) + device.mid(5);
     struct crypt_device *cdev = nullptr;
     dfmbase::FinallyUtil finalClear([&] { if (cdev) crypt_free(cdev); });
 

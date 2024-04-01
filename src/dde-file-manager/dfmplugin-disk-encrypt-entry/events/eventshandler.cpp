@@ -97,6 +97,16 @@ bool EventsHandler::hasPendingTask()
     return reply.isValid() && reply.value();
 }
 
+QString EventsHandler::unfinishedDecryptJob()
+{
+    QDBusInterface iface(kDaemonBusName,
+                         kDaemonBusPath,
+                         kDaemonBusIface,
+                         QDBusConnection::systemBus());
+    QDBusReply<QString> reply = iface.call("UnfinishedDecryptJob");
+    return reply.value();
+}
+
 /**
  * @brief EventsHandler::isUnderOperating, If the device is performing a task in the foreground
  * @param device
@@ -206,6 +216,12 @@ void EventsHandler::onDecryptResult(const QString &dev, const QString &devName, 
         requestReboot();
     } else {
         showDecryptError(dev, devName, code);
+
+        // delete auto start file.
+        auto configPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+        auto autoStartFilePath = configPath + "/autostart/dfm-reencrypt.desktop";
+        int ret = ::remove(autoStartFilePath.toStdString().c_str());
+        qInfo() << "autostart file has been removed:" << ret;
     }
 }
 
@@ -512,7 +528,7 @@ void EventsHandler::showChgPwdError(const QString &dev, const QString &devName, 
 
 void EventsHandler::requestReboot()
 {
-    qInfo() << "reboot is confirmed...";
+    qWarning() << "reboot is confirmed...";
     QDBusInterface sessMng("com.deepin.SessionManager",
                            "/com/deepin/SessionManager",
                            "com.deepin.SessionManager");

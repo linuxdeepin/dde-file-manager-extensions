@@ -19,10 +19,12 @@ public:
     void hookEvents();
     bool isTaskWorking();
     bool hasPendingTask();
+    QString unfinishedDecryptJob();
     bool isUnderOperating(const QString &device);
     int deviceEncryptStatus(const QString &device);
     void resumeEncrypt(const QString &device);
     bool onAcquireDevicePwd(const QString &dev, QString *pwd, bool *giveup);
+    void autoStartDFM();
 
 private Q_SLOTS:
     void onPreencryptResult(const QString &, const QString &, const QString &, int);
@@ -45,7 +47,6 @@ private Q_SLOTS:
     void showChgPwdError(const QString &device, const QString &devName, int code);
 
     void requestReboot();
-    void autoStartDFM();
 
 private:
     explicit EventsHandler(QObject *parent = nullptr);

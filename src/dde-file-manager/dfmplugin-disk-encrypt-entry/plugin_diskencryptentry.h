@@ -23,6 +23,7 @@ public:
 
 private:
     void onComputerMenuSceneAdded(const QString &scene);
+    void processUnfinshedDecrypt(const QString &device);
 };
 }
 

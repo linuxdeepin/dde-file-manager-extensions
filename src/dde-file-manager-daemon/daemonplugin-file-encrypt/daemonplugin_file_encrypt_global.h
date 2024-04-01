@@ -40,5 +40,7 @@ struct EncryptParams
     }
 };
 
+inline constexpr char kDecryptHeaderPrefix[] { "dm_header_decrypt_" };
+
 FILE_ENCRYPT_END_NS
 #endif   // DAEMONPLUGIN_FILE_ENCRYPT_GLOBAL_H

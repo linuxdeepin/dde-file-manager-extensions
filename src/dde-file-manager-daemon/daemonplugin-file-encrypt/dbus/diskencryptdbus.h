@@ -32,6 +32,7 @@ public Q_SLOTS:
     int EncryptStatus(const QString &device);
     bool HasPendingTask();
     bool IsWorkerRunning();
+    QString UnfinishedDecryptJob();
 
 Q_SIGNALS:
     void PrepareEncryptDiskResult(const QString &device, const QString &devName, const QString &jobID, int errCode);
