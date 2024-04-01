@@ -364,7 +364,7 @@ bool DiskEncryptDBus::updateCrypttab()
         if (isEncrypted(items.at(0), items.at(1)) == 0) {
             lines.removeAt(i);
             cryptUpdated = true;
-            qInfo() << "==== [remove] this item is not encrypted:" << line;
+            qWarning() << "==== [remove] this item is not encrypted:" << line;
             continue;
         }
 
@@ -387,6 +387,8 @@ bool DiskEncryptDBus::updateCrypttab()
 
 int DiskEncryptDBus::isEncrypted(const QString &target, const QString &source)
 {
+    return QFile("/dev/mapper/" + target).exists() ? 1 : 0;
+
     QMap<QString, QString> dev2uuid, uuid2dev, puuid2dev;
     getDeviceMapper(&dev2uuid, &uuid2dev, &puuid2dev);
 
