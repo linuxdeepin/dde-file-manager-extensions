@@ -35,9 +35,10 @@ using namespace dfmplugin_diskenc;
 using namespace disk_encrypt;
 
 static constexpr char kActIDEncrypt[] { "de_0_encrypt" };
-static constexpr char kActIDResume[] { "de_0_resume" };
+static constexpr char kActIDResumeEncrypt[] { "de_0_resumeEncrypt" };
 static constexpr char kActIDUnlock[] { "de_0_unlock" };
 static constexpr char kActIDDecrypt[] { "de_1_decrypt" };
+static constexpr char kActIDResumeDecrypt[] { "de_1_resumeDecrypt" };
 static constexpr char kActIDChangePwd[] { "de_2_changePwd" };
 
 DiskEncryptMenuScene::DiskEncryptMenuScene(QObject *parent)
@@ -145,8 +146,12 @@ bool DiskEncryptMenuScene::create(QMenu *)
     actions.insert(kActIDChangePwd, act);
 
     act = new QAction(tr("Continue partition encryption"));
-    act->setProperty(ActionPropertyKey::kActionID, kActIDResume);
-    actions.insert(kActIDResume, act);
+    act->setProperty(ActionPropertyKey::kActionID, kActIDResumeEncrypt);
+    actions.insert(kActIDResumeEncrypt, act);
+
+    act = new QAction(tr("Continue partition decryption"));
+    act->setProperty(ActionPropertyKey::kActionID, kActIDResumeDecrypt);
+    actions.insert(kActIDResumeDecrypt, act);
 
     act = new QAction(tr("Enable partition encryption"));
     act->setProperty(ActionPropertyKey::kActionID, kActIDEncrypt);
@@ -161,9 +166,9 @@ bool DiskEncryptMenuScene::triggered(QAction *action)
 
     if (actID == kActIDEncrypt) {
         encryptDevice(param);
-    } else if (actID == kActIDResume) {
+    } else if (actID == kActIDResumeEncrypt) {
         EventsHandler::instance()->resumeEncrypt(param.devDesc);
-    } else if (actID == kActIDDecrypt) {
+    } else if (actID == kActIDDecrypt || actID == kActIDResumeDecrypt) {
         QString displayName = QString("%1(%2)").arg(param.deviceDisplayName).arg(param.devDesc.mid(5));
         if (dialog_utils::showConfirmDecryptionDialog(displayName, param.initOnly) != QDialog::Accepted)
             return true;
@@ -593,30 +598,6 @@ void DiskEncryptMenuScene::updateActions()
         act->setEnabled(false);
     });
 
-    // update visibility
-    if (hasCryptHeader) {
-        bool unlocked = selectedItemInfo.value("CleartextDevice").toString() != "/";
-        int states = EventsHandler::instance()->deviceEncryptStatus(param.devDesc);
-        if (states & kStatusFinished) {   // fully encrypted
-            actions[kActIDDecrypt]->setVisible(true);
-            actions[kActIDUnlock]->setVisible(!unlocked);
-            if (param.type != disk_encrypt::kTPMOnly)
-                actions[kActIDChangePwd]->setVisible(true);
-        } else if (states & (kStatusOnline | kStatusEncrypt)) {   // not fully encrypted
-            if (states & kStatusNoEncryptConfig) {
-                param.isDetachedHeader = true;
-                actions[kActIDEncrypt]->setVisible(true);
-            } else {
-                param.isDetachedHeader = false;
-                actions[kActIDResume]->setVisible(true);
-            }
-        } else {
-            qWarning() << "unmet status!" << param.devDesc << states;
-        }
-    } else {
-        actions[kActIDEncrypt]->setVisible(true);
-    }
-
     // update operatable
     bool taskWorking = EventsHandler::instance()->isTaskWorking();
     bool currDevOperating = EventsHandler::instance()->isUnderOperating(param.devDesc);
@@ -624,8 +605,47 @@ void DiskEncryptMenuScene::updateActions()
     actions[kActIDEncrypt]->setEnabled(!taskWorking && !hasPendingJob);
     actions[kActIDDecrypt]->setEnabled(!taskWorking && !hasPendingJob && !currDevOperating);
     actions[kActIDChangePwd]->setEnabled(!taskWorking);
-    actions[kActIDResume]->setEnabled(!taskWorking && !currDevOperating);
+    actions[kActIDResumeEncrypt]->setEnabled(!taskWorking && !currDevOperating);
     actions[kActIDUnlock]->setEnabled(!currDevOperating);
+
+    // update visibility
+    if (hasCryptHeader) {
+        int states = EventsHandler::instance()->deviceEncryptStatus(param.devDesc);
+        // fully encrypted
+        if (states & kStatusFinished) {
+            bool unlocked = selectedItemInfo.value("CleartextDevice").toString() != "/";
+            actions[kActIDDecrypt]->setVisible(true);
+            actions[kActIDUnlock]->setVisible(!unlocked);
+            if (param.type != disk_encrypt::kTPMOnly)
+                actions[kActIDChangePwd]->setVisible(true);
+        }
+        // not finished
+        else if (states & kStatusOnline) {
+            // encrytp not finish
+            if (states & kStatusEncrypt) {
+                if (states & kStatusNoEncryptConfig) {
+                    param.isDetachedHeader = true;
+                    actions[kActIDEncrypt]->setVisible(true);
+                } else {
+                    param.isDetachedHeader = false;
+                    actions[kActIDResumeEncrypt]->setVisible(true);
+                }
+            }
+            // decrypt not finish
+            else if (states & kStatusDecrypt) {
+                actions[kActIDDecrypt]->setVisible(false);
+                actions[kActIDResumeDecrypt]->setVisible(true);
+
+                actions[kActIDResumeDecrypt]->setEnabled(true);
+                actions[kActIDChangePwd]->setEnabled(false);
+                actions[kActIDUnlock]->setEnabled(false);
+            }
+        } else {
+            qWarning() << "unmet status!" << param.devDesc << states;
+        }
+    } else {
+        actions[kActIDEncrypt]->setVisible(true);
+    }
 
     QString dev = param.devDesc;
     QString fileName = kRebootFlagFilePrefix + dev.replace("/", "_");

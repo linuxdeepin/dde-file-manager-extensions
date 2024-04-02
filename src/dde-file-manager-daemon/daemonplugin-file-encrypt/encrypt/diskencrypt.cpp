@@ -710,8 +710,17 @@ int block_device_utils::bcDevEncryptStatus(const QString &device, EncryptStates 
     struct crypt_device *cdev { nullptr };
     dfmbase::FinallyUtil finalClear([&] {if (cdev) crypt_free(cdev); });
 
-    int ret = crypt_init(&cdev,
+    int ret = 0;
+
+    QString backHeader = "/boot/usec-crypt/" + QString(kDecryptHeaderPrefix) + device.mid(5);
+    if (QFile(backHeader).exists()) {
+        ret = crypt_init_data_device(&cdev,
+                                     backHeader.toStdString().c_str(),
+                                     device.toStdString().c_str());
+    } else {
+        ret = crypt_init(&cdev,
                          device.toStdString().c_str());
+    }
     CHECK_INT(ret, "init device failed " + device, -kErrorInitCrypt);
 
     ret = crypt_load(cdev, CRYPT_LUKS, nullptr);

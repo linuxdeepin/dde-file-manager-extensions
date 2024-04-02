@@ -317,7 +317,7 @@ bool EventsHandler::onAcquireDevicePwd(const QString &dev, QString *pwd, bool *c
     if (!pwd || !cancelled)
         return false;
 
-    if (EventsHandler::instance()->isUnderOperating(dev)) {
+    if (!canUnlock(dev)) {
         *cancelled = true;
         return true;
     }
@@ -533,6 +533,21 @@ void EventsHandler::requestReboot()
                            "/com/deepin/SessionManager",
                            "com.deepin.SessionManager");
     sessMng.asyncCall("RequestReboot");
+}
+
+bool EventsHandler::canUnlock(const QString &device)
+{
+    if (EventsHandler::instance()->isUnderOperating(device)) {
+        return false;
+    }
+
+    if (device == unfinishedDecryptJob()) {
+        dialog_utils::showDialog(tr("Error"),
+                                 tr("Device is not fully decrypted, please finish decryption before access."),
+                                 dialog_utils::DialogType::kInfo);
+        return false;
+    }
+    return true;
 }
 
 void EventsHandler::autoStartDFM()
