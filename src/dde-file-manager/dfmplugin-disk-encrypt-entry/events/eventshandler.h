@@ -47,6 +47,7 @@ private Q_SLOTS:
     void showChgPwdError(const QString &device, const QString &devName, int code);
 
     void requestReboot();
+    bool canUnlock(const QString &device);
 
 private:
     explicit EventsHandler(QObject *parent = nullptr);

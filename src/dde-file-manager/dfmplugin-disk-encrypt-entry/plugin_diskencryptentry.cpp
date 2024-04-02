@@ -64,6 +64,10 @@ void DiskEncryptEntry::onComputerMenuSceneAdded(const QString &scene)
 
 void DiskEncryptEntry::processUnfinshedDecrypt(const QString &device)
 {
+    QString dev(device);
+    QString ignoreFile = "/tmp/dfm_ignore_decrypt_auto_reqeust_" + dev.replace("/", "_");
+    if (QFile(ignoreFile).exists())
+        return;
 
     QMenu *menu = new QMenu();
     DiskEncryptMenuScene *scene = new DiskEncryptMenuScene();
@@ -89,4 +93,8 @@ void DiskEncryptEntry::processUnfinshedDecrypt(const QString &device)
     scene->triggered(*ret);
     delete scene;
     delete menu;
+
+    QFile f(ignoreFile);
+    f.open(QIODevice::Truncate | QIODevice::WriteOnly);
+    f.close();
 }
