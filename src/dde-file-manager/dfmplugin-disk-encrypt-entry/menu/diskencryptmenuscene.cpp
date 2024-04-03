@@ -606,6 +606,7 @@ void DiskEncryptMenuScene::updateActions()
     actions[kActIDDecrypt]->setEnabled(!taskWorking && !hasPendingJob && !currDevOperating);
     actions[kActIDChangePwd]->setEnabled(!taskWorking);
     actions[kActIDResumeEncrypt]->setEnabled(!taskWorking && !currDevOperating);
+    actions[kActIDResumeDecrypt]->setEnabled(!taskWorking && !currDevOperating);
     actions[kActIDUnlock]->setEnabled(!currDevOperating);
 
     // update visibility
@@ -635,14 +636,12 @@ void DiskEncryptMenuScene::updateActions()
             else if (states & kStatusDecrypt) {
                 actions[kActIDDecrypt]->setVisible(false);
                 actions[kActIDResumeDecrypt]->setVisible(true);
-
-                actions[kActIDResumeDecrypt]->setEnabled(true);
-                actions[kActIDChangePwd]->setEnabled(false);
-                actions[kActIDUnlock]->setEnabled(false);
             }
         } else {
             qWarning() << "unmet status!" << param.devDesc << states;
         }
+    } else if (EventsHandler::instance()->unfinishedDecryptJob() == param.devDesc) {
+        actions[kActIDResumeDecrypt]->setVisible(true);
     } else {
         actions[kActIDEncrypt]->setVisible(true);
     }
