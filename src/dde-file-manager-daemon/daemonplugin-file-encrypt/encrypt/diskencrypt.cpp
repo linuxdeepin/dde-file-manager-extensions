@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <functional>
+#include <stdio.h>
 
 FILE_ENCRYPT_USE_NS
 using namespace disk_encrypt;
@@ -355,72 +356,27 @@ int disk_encrypt_funcs::bcDecryptDevice(const QString &device,
                                         const QString &passphrase)
 {
     // backup header first
-    QString headerPath;
-    uint32_t flags;
-    struct crypt_device *cdev = nullptr;
     dfmbase::FinallyUtil finalClear([&] {
-        if (cdev) crypt_free(cdev);
         gCurrDecryptintDevice.clear();
     });
     gCurrDecryptintDevice = device;
 
+    QString headerPath;
     int ret = bcBackupCryptHeader(device, headerPath);
     CHECK_INT(ret, "backup header failed " + device, -kErrorBackupHeader);
 
-    ret = crypt_init_data_device(&cdev,
-                                 headerPath.toStdString().c_str(),
-                                 device.toStdString().c_str());
-    CHECK_INT(ret, "init device failed " + device, -kErrorInitCrypt);
-
-    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
-    CHECK_INT(ret, "load device failed " + device, -kErrorLoadCrypt);
-
-    ret = crypt_persistent_flags_get(cdev,
-                                     CRYPT_FLAGS_REQUIREMENTS,
-                                     &flags);
-    CHECK_INT(ret, "get device flag failed " + device, -kErrorGetReencryptFlag);
-    bool underEncrypting = (flags & CRYPT_REQUIREMENT_OFFLINE_REENCRYPT) || (flags & CRYPT_REQUIREMENT_ONLINE_REENCRYPT);
-
-    crypt_params_reencrypt param;
-    ret = crypt_reencrypt_status(cdev, &param);
-    CHECK_INT(ret, "check reencrypt status failed" + device, -kErrorCheckReencryptStatus);
-
-    underEncrypting &= (param.mode == CRYPT_REENCRYPT_ENCRYPT);
-    CHECK_BOOL(!underEncrypting,
-               "device is under encrypting... " + device + " the flags are: " + QString::number(flags),
-               -kErrorWrongFlags);
-
-    if (ret == CRYPT_REENCRYPT_CRASH) {   // repair is needed.
-        QString dmName = "dm-" + device.mid(5);
-        ret = crypt_activate_by_passphrase(cdev, dmName.toStdString().c_str(),
-                                           CRYPT_ANY_SLOT,
-                                           passphrase.toStdString().c_str(),
-                                           passphrase.length(),
-                                           CRYPT_ACTIVATE_RECOVERY);
-        CHECK_INT(ret, "open device failed " + device, -kErrorActive);
-
-        // close device avoid operating.
-        ret = crypt_deactivate(cdev, dmName.toStdString().c_str());
+    int status = bcReadHeader(headerPath);
+    if (status != kDecryptFully) {
+        ret = bcDoDecryptDevice(device, passphrase, headerPath);
+        CHECK_INT(ret, "decrypt failed " + device, -kErrorDecryptFailed);
     }
 
-    ret = crypt_reencrypt_init_by_passphrase(cdev,
-                                             nullptr,
-                                             passphrase.toStdString().c_str(),
-                                             passphrase.length(),
-                                             CRYPT_ANY_SLOT,
-                                             CRYPT_ANY_SLOT,
-                                             nullptr,
-                                             nullptr,
-                                             decryptParams());
-    CHECK_INT(ret, "init reencrypt failed " + device, -kErrorWrongPassphrase);
-
-    ret = crypt_reencrypt(cdev, bcDecryptProgress);
-    CHECK_INT(ret, "decrypt failed" + device, -kErrorReencryptFailed);
-
-    bool res = fs_resize::recoverySuperblock_ext(device, headerPath);
+    bool res = block_device_utils::bcMoveFsForward(device);
     CHECK_BOOL(res, "recovery fs failed " + device, -kErrorResizeFs);
 
-    if (!headerPath.isEmpty()) ::remove(headerPath.toStdString().c_str());
+    if (!headerPath.isEmpty())
+        ::remove(headerPath.toStdString().c_str());
+
     return 0;
 }
 
@@ -915,4 +871,248 @@ bool disk_encrypt_utils::bcHasEncryptConfig(const QString &dev)
     auto obj = doc.object();
     const QString &devPath = obj.value("device-path").toString();
     return devPath == dev;
+}
+
+quint64 block_device_utils::bcGetBlockSize(const QString &device)
+{
+    auto dev = bcCreateBlkDev(device);
+    if (!dev)
+        return 0;
+    return dev->getProperty(dfmmount::Property::kPartitionSize).toULongLong();
+}
+
+bool block_device_utils::bcMoveFsForward(const QString &device)
+{
+    static const quint64 kStepSize = 16 * 1024 * 1024;   // luks header size.
+
+    QString dev(device);
+    QString logFilePath("/boot/usec-crypt/dfm_mv_fs_" + dev.replace("/", "_"));
+
+    QFile logFile(logFilePath);
+    QFile blockFile(device);
+    char *buf = new char[kStepSize];
+
+    auto clearMem = [&] {
+        if (logFile.isOpen())
+            logFile.close();
+        if (blockFile.isOpen())
+            blockFile.close();
+        delete[] buf;
+    };
+
+    if (!logFile.exists()) {
+        if (!logFile.open(QIODevice::Truncate | QIODevice::ReadWrite)) {
+            qWarning() << "cannot create log file!" << logFilePath;
+            clearMem();
+            return false;
+        }
+        logFile.close();
+    }
+    if (!logFile.open(QIODevice::ReadWrite | QIODevice::Unbuffered)) {
+        qWarning() << "cannot open log file!" << logFilePath;
+        clearMem();
+        return false;
+    }
+
+    if (!blockFile.open(QIODevice::ReadWrite | QIODevice::Unbuffered)) {
+        qWarning() << "cannot open device!" << device;
+        clearMem();
+        return false;
+    }
+
+    // calc total move counts.
+    quint64 partSize = block_device_utils::bcGetBlockSize(device);
+    if (partSize == 0) {
+        qWarning() << "get block size failed!";
+        clearMem();
+        return false;
+    }
+    quint64 mvCount = partSize / kStepSize;
+    if (partSize % kStepSize) mvCount += 1;
+
+    // read break point.
+    auto records = logFile.readAll().split(',');
+    quint64 lastMovedIndex = (records.count() > 0) ? records.last().toULongLong() : 0;
+
+    // start move segments
+    disk_encrypt_funcs::bcDecryptProgress(100, 99, nullptr);
+    qApp->processEvents();
+
+    quint64 currMovedIndex = lastMovedIndex + 1;
+    for (; currMovedIndex <= mvCount; ++currMovedIndex, ++lastMovedIndex) {
+        // qInfo() << "moving..." << currMovedIndex << device;
+        // seek current move position
+        if (!blockFile.seek(currMovedIndex * kStepSize)) {
+            qWarning() << "seek pos failed!" << currMovedIndex * kStepSize;
+            clearMem();
+            return false;
+        }
+
+        // read next step
+        memset(buf, 0, kStepSize);
+        quint64 readed = blockFile.read(buf, kStepSize);
+
+        // write to previous step position.
+        if (!blockFile.seek((lastMovedIndex)*kStepSize)) {
+            qWarning() << "seek target failed!" << lastMovedIndex * kStepSize;
+            clearMem();
+            return false;
+        }
+        quint64 wrote = blockFile.write(buf, readed);
+        if (wrote != readed) {
+            qWarning() << "read write size not match!";
+            clearMem();
+            return false;
+        }
+        if (!blockFile.flush() || fsync(blockFile.handle()) != 0) {
+            qWarning() << "cannot flush device file!" << device;
+            clearMem();
+            return false;
+        }
+
+        // recore current index.
+        QString pos = "," + QString::number(currMovedIndex);
+        logFile.write(pos.toLocal8Bit());
+        if (!logFile.flush() || fsync(logFile.handle()) != 0) {
+            qWarning() << "cannot flush log file!" << logFilePath;
+            clearMem();
+            return false;
+        }
+        // qInfo() << "moved..." << currMovedIndex << device;
+    }
+
+    clearMem();
+
+    // remove log file on success.
+    ::remove(logFilePath.toStdString().c_str());
+
+    // update udev on move finished.
+    ::system("udevadm trigger");
+
+    return true;
+}
+
+int disk_encrypt_funcs::bcDoDecryptDevice(const QString &device, const QString &passphrase, const QString &headerPath)
+{
+    struct crypt_device *cdev = nullptr;
+    dfmbase::FinallyUtil finalClear([&] {
+        if (cdev) crypt_free(cdev);
+    });
+
+    int ret = crypt_init_data_device(&cdev,
+                                     headerPath.toStdString().c_str(),
+                                     device.toStdString().c_str());
+    CHECK_INT(ret, "init device failed " + device, -kErrorInitCrypt);
+
+    ret = crypt_load(cdev, CRYPT_LUKS, nullptr);
+    CHECK_INT(ret, "load device failed " + device, -kErrorLoadCrypt);
+
+    uint32_t flags;
+    ret = crypt_persistent_flags_get(cdev,
+                                     CRYPT_FLAGS_REQUIREMENTS,
+                                     &flags);
+    CHECK_INT(ret, "get device flag failed " + device, -kErrorGetReencryptFlag);
+    bool underEncrypting = (flags & CRYPT_REQUIREMENT_OFFLINE_REENCRYPT) || (flags & CRYPT_REQUIREMENT_ONLINE_REENCRYPT);
+
+    crypt_params_reencrypt param;
+    ret = crypt_reencrypt_status(cdev, &param);
+    CHECK_INT(ret, "check reencrypt status failed" + device, -kErrorCheckReencryptStatus);
+
+    underEncrypting &= (param.mode == CRYPT_REENCRYPT_ENCRYPT);
+    CHECK_BOOL(!underEncrypting,
+               "device is under encrypting... " + device + " the flags are: " + QString::number(flags),
+               -kErrorWrongFlags);
+
+    if (ret == CRYPT_REENCRYPT_CRASH) {   // repair is needed.
+        QString dmName = "dm-" + device.mid(5);
+        ret = crypt_activate_by_passphrase(cdev, dmName.toStdString().c_str(),
+                                           CRYPT_ANY_SLOT,
+                                           passphrase.toStdString().c_str(),
+                                           passphrase.length(),
+                                           CRYPT_ACTIVATE_RECOVERY);
+        CHECK_INT(ret, "open device failed " + device, -kErrorActive);
+
+        // close device avoid operating.
+        ret = crypt_deactivate(cdev, dmName.toStdString().c_str());
+    }
+
+    // if fully decrypted
+
+    ret = crypt_reencrypt_init_by_passphrase(cdev,
+                                             nullptr,
+                                             passphrase.toStdString().c_str(),
+                                             passphrase.length(),
+                                             CRYPT_ANY_SLOT,
+                                             CRYPT_ANY_SLOT,
+                                             nullptr,
+                                             nullptr,
+                                             decryptParams());
+    CHECK_INT(ret, "init reencrypt failed " + device, -kErrorWrongPassphrase);
+
+    ret = crypt_reencrypt(cdev, bcDecryptProgress);
+    CHECK_INT(ret, "decrypt failed" + device, -kErrorReencryptFailed);
+
+    return kSuccess;
+}
+
+int disk_encrypt_funcs::bcReadHeader(const QString &header)
+{
+    QFile headerFile(header);
+    if (!headerFile.open(QIODevice::ReadOnly)) {
+        qWarning() << "open header failed!";
+        return kInvalidHeader;
+    }
+
+    headerFile.seek(4096);   // header json starts at 4096
+    QString jsonStr = headerFile.readLine();
+    headerFile.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(jsonStr.toLocal8Bit());
+    auto obj = doc.object();
+
+    // read segments
+    auto segments = obj.value("segments").toObject();
+    if (segments.isEmpty()) {
+        qWarning() << "segments not found";
+        return kInvalidHeader;
+    }
+    bool hasLinear = false, hasCrypt = false;
+    for (auto iter = segments.begin(); iter != segments.end(); ++iter) {
+        auto segment = iter.value().toObject();
+        auto type = segment.value("type").toString();
+        if (type == "linear")
+            hasLinear = true;
+        if (type == "crypt")
+            hasCrypt = true;
+    }
+
+    // read mode
+    QString mode;
+    auto keyslots = obj.value("keyslots").toObject();
+    for (auto iter = keyslots.begin(); iter != keyslots.end(); ++iter) {
+        auto keyslot = iter.value().toObject();
+        if (keyslot.value("type").toString() == "reencrypt") {
+            mode = keyslot.value("mode").toString();
+            break;
+        }
+    }
+
+    if (mode == "encrypt") {
+        if (hasLinear && hasCrypt)
+            return kEncryptInProgress;
+        if (hasLinear)
+            return kEncryptInit;
+    } else if (mode == "decrypt") {
+        if (hasLinear && hasCrypt)
+            return kDecryptInProgress;
+        if (hasCrypt)
+            return kDecryptInit;
+    } else {
+        if (hasLinear && !hasCrypt)
+            return kDecryptFully;
+        if (!hasLinear && hasCrypt)
+            return kEncryptFully;
+    }
+
+    return kInvalidHeader;
 }
