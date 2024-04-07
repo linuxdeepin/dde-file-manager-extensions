@@ -2,692 +2,765 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="384"/>
-        <source>Cannot generate random number by TPM</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="387"/>
-        <source>No available encrypt algorithm.</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="390"/>
-        <source>TPM encrypt failed.</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="393"/>
+        <source>Cannot generate random number by TPM</source>
+        <translation>TPM ئىختىيارىي سانىغا ئېرىشەلمىدى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="396"/>
+        <source>No available encrypt algorithm.</source>
+        <translation>ئىشلەتكىلى بولىدىغان پاروللاش ھېسابلاش ئۇسۇلى يوق.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="399"/>
+        <source>TPM encrypt failed.</source>
+        <translation>TPM پاروللاش مەغلۇب بولدى.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="402"/>
         <source>TPM is locked.</source>
-        <translation type="unfinished"/>
+        <translation>TPM قۇلۇپلاندى.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="430"/>
+        <source>Confirm encrypt %1?</source>
+        <translation>%1 نى پاروللامسىز؟</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="433"/>
+        <source>The current partition is about to be encrypted and cannot be canceled during the encryption process, please confirm the encryption.</source>
+        <translation>بۇ رايون پاروللىنىش ئالدىدا تۇرماقتا، بۇ جەرياندا ئەمەلدىن قالدۇرغىلى بولمايدۇ، پاروللاشنى جەزملەشتۈرۈڭ.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="440"/>
+        <source>* After encrypting the partition, the system cannot be rolled back to a lower version, please confirm the encryption</source>
+        <translation>* رايون پاروللاغاندىن كېيىن، سىستېمىنى تۆۋەن نەشرىگە قايتۇرغىلى بولمايدۇ، پاروللاشنى جەزملەشتۈرۈڭ</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="451"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="466"/>
+        <source>Cancel</source>
+        <translation>بىكار قىلىش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="452"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="467"/>
+        <source>Confirm and Reboot</source>
+        <translation>جەزملەش ۋە قايتا قوزغىتىش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="453"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="467"/>
+        <source>Confirm</source>
+        <translation>جەزملەشتۈرۈش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="463"/>
+        <source>Decrypt %1?</source>
+        <translation>%1 نى پاروللاشنى بىكار قىلامسىز؟</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="464"/>
+        <source>Decryption can take a long time, so make sure power is connected until the decryption is complete.</source>
+        <translation>پاروللاشنى بىكار قىلىشقا بىر ئاز ئۇزۇن ۋاقىت كېتىدۇ، بىكار قىلىنىپ بولغۇچە توكقا چېتىلىشىغا كاپالەتلىك قىلىڭ.</translation>
     </message>
 </context>
 <context>
     <name>dfmplugin_diskenc::ChgPassphraseDialog</name>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="18"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="50"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="89"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="52"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="93"/>
         <source>passphrase</source>
-        <translation type="unfinished"/>
+        <translation>پارول</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="20"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="52"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="91"/>
-        <source>PIN</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="105"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="164"/>
-        <source>Recovery key</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="167"/>
-        <source>Validate with %1</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="168"/>
-        <source>Please input recovery key</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="170"/>
-        <source>Old %1</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="68"/>
-        <source>New %1</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="54"/>
-        <source>Modify %1</source>
-        <translation type="unfinished"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="95"/>
+        <source>PIN</source>
+        <translation>PIN نومۇرى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="65"/>
-        <source>Please enter %1 again</source>
-        <translation type="unfinished"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="109"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="168"/>
+        <source>Recovery key</source>
+        <translation>ئاچقۇچنى ئەسلىگە قايتۇرۇش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="69"/>
-        <source>Repeat %1</source>
-        <translation type="unfinished"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="171"/>
+        <source>Validate with %1</source>
+        <translation>%1 ئارقىلىق دەلىللەش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="75"/>
-        <source>Cancel</source>
-        <translation type="unfinished"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="172"/>
+        <source>Please input recovery key</source>
+        <translation>ئەسلىگە قايتۇرۇش ئاچقۇچىنى كىرگۈزۈڭ</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="76"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="321"/>
-        <source>Confirm</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="97"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="103"/>
-        <source>%1 cannot be empty</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="111"/>
-        <source>Recovery key is not valid!</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="136"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="174"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="176"/>
+        <source>Old %1</source>
+        <translation>كونا %1</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="70"/>
+        <source>New %1</source>
+        <translation>يېڭى %1</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="56"/>
+        <source>Modify %1</source>
+        <translation>%1 نى ئۆزگەرتىش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="67"/>
+        <source>Please enter %1 again</source>
+        <translation>%1 نى قايتا كىرگۈزۈڭ</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="71"/>
+        <source>Repeat %1</source>
+        <translation>%1 نىڭ تەڭشىكىنى قايتا بېكىتىش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="77"/>
+        <source>Cancel</source>
+        <translation>بىكار قىلىش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="78"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="330"/>
+        <source>Confirm</source>
+        <translation>جەزملەش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="101"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="107"/>
+        <source>%1 cannot be empty</source>
+        <translation>%1 قۇرۇق قالمىسۇن</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="115"/>
+        <source>Recovery key is not valid!</source>
+        <translation>ئاچقۇچىنى ئەسلىگە قايتۇرۇش قائىدىگە ئۇيغۇن ئەمەس!</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="140"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="178"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="180"/>
         <source>At least 8 bits, contains 3 types of A-Z, a-z, 0-9 and symbols</source>
-        <translation type="unfinished"/>
+        <translation>كەم دېگەندە 8 خانە بولۇشى، A-Z, a-z, 0-9 لار ۋە ھەرپ ئىچىدىكى 3 تۈرنى ئۆز ئىچىگە ئېلىشى كېرەك</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="141"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="145"/>
         <source>%1 inconsistency</source>
-        <translation type="unfinished"/>
+        <translation>%1 بىردەك ئەمەس</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="173"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/chgpassphrasedialog.cpp" line="177"/>
         <source>Validate with recovery key</source>
-        <translation type="unfinished"/>
+        <translation>ئەسلىگە قايتۇرۇش ئاچقۇچى ئارقىلىق دەلىللەش</translation>
     </message>
 </context>
 <context>
     <name>dfmplugin_diskenc::DecryptParamsInputDialog</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="50"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="52"/>
         <source>Validate with %1</source>
-        <translation type="unfinished"/>
+        <translation>%1 ئارقىلىق دەلىللەش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="50"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="54"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="76"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="52"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="56"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="79"/>
         <source>PIN</source>
-        <translation type="unfinished"/>
+        <translation>PIN نومۇرى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="50"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="54"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="52"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="56"/>
         <source>passphrase</source>
-        <translation type="unfinished"/>
+        <translation>پارول</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="54"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="56"/>
         <source>Please input %1 to decrypt device</source>
-        <translation type="unfinished"/>
+        <translation>%1 نى كىرگۈزۈپ ئۈسكۈنىنىڭ پارولىنى بىكار قىلىڭ</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="100"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="103"/>
         <source>Decrypt device</source>
-        <translation type="unfinished"/>
+        <translation>پارولنى بىكار قىلىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="49"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="51"/>
         <source>Please input recovery key to decrypt device</source>
-        <translation type="unfinished"/>
+        <translation>ئاچقۇچنى كىرگۈزۈپ ئۈسكۈنىنىڭ پارولىنى بىكار قىلىڭ</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="55"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="57"/>
         <source>Validate with recovery key</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="76"/>
-        <source>Passphrase</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="78"/>
-        <source>Recovery key</source>
-        <translation type="unfinished"/>
+        <translation>ئەسلىگە قايتۇرۇش ئاچقۇچى ئارقىلىق دەلىللەش</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="79"/>
+        <source>Passphrase</source>
+        <translation>پارول</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="81"/>
+        <source>Recovery key</source>
+        <translation>ئاچقۇچنى ئەسلىگە قايتۇرۇش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="82"/>
         <source>%1 cannot be empty!</source>
-        <translation type="unfinished"/>
+        <translation>%1 قۇرۇق قالمىسۇن</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="84"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="87"/>
         <source>Recovery key is not valid!</source>
-        <translation type="unfinished"/>
+        <translation>ئاچقۇچىنى ئەسلىگە قايتۇرۇش قائىدىگە ئۇيغۇن ئەمەس!</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="108"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/decryptparamsinputdialog.cpp" line="111"/>
         <source>Confirm</source>
-        <translation type="unfinished"/>
+        <translation>جەزملەش</translation>
     </message>
 </context>
 <context>
     <name>dfmplugin_diskenc::DiskEncryptMenuScene</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="121"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="134"/>
         <source>Unlock encrypted partition</source>
-        <translation type="unfinished"/>
+        <translation>پارولنى يېشىش-پاروللاش رايونى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="125"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="138"/>
         <source>Cancel partition encryption</source>
-        <translation type="unfinished"/>
+        <translation>رايون پارولىنى بىكار قىلىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="133"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="142"/>
         <source>passphrase</source>
-        <translation type="unfinished"/>
+        <translation>پارول</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="137"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="143"/>
         <source>Changing the encryption %1</source>
-        <translation type="unfinished"/>
+        <translation>%1 نىڭ پارولىنى ئۆزگەرتىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="141"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="147"/>
+        <source>Continue partition encryption</source>
+        <translation>داۋاملىق رايون پاروللاش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="151"/>
         <source>Enable partition encryption</source>
-        <translation type="unfinished"/>
+        <translation>رايون پاروللاشنى ئېچىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="212"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="235"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="256"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="207"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="230"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="251"/>
         <source>Error</source>
-        <translation type="unfinished"/>
+        <translation>خاتالىق كۆرۈلدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="213"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="208"/>
         <source>Cannot resolve passphrase from TPM</source>
-        <translation type="unfinished"/>
+        <translation>TPM  تىن پارولنى ئالغىلى بولمىدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="235"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="256"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="230"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="251"/>
         <source>PIN error</source>
-        <translation type="unfinished"/>
+        <translation>PIN خاتا</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="263"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="258"/>
         <source>Change passphrase failed</source>
-        <translation type="unfinished"/>
+        <translation>پارول ئۆزگەرمىدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="462"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="500"/>
         <source>Unlock device failed</source>
-        <translation type="unfinished"/>
+        <translation>ئۈسكۈنە قۇلۇپىنى يېشەلمىدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="463"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="501"/>
         <source>Wrong passphrase</source>
-        <translation type="unfinished"/>
+        <translation>پارول خاتا</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="481"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="519"/>
         <source>Mount device failed</source>
-        <translation type="unfinished"/>
+        <translation>ئۈسكۈنىگە يۈكلەش مەغلۇب بولدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="524"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="562"/>
         <source>unmount</source>
-        <translation type="unfinished"/>
+        <translation>ئۆچۈرۈش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="524"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="562"/>
         <source>lock</source>
-        <translation type="unfinished"/>
+        <translation>قۇلۇپلاش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="525"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="563"/>
         <source>Encrypt failed</source>
-        <translation type="unfinished"/>
+        <translation>پاروللانمىدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="526"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="564"/>
         <source>Cannot %1 device %2</source>
-        <translation type="unfinished"/>
+        <translation>ئۈسكۈنە %1 نى %2 قىلغىلى بولمىدى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="634"/>
+        <source>Reboot to continue encrypt</source>
+        <translation>قايتا قوزغىتىپ داۋاملىق پاروللاڭ</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="635"/>
+        <source>Reboot to finish decrypt</source>
+        <translation>قايتا قوزغىتىپ پاروللاشنى تاماملاڭ</translation>
     </message>
 </context>
 <context>
     <name>dfmplugin_diskenc::EncryptParamsInputDialog</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="128"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="130"/>
         <source>Unlocked by passphrase</source>
-        <translation type="unfinished"/>
+        <translation>پارول ئارقىلىق قۇلۇپنى يېشىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="153"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="157"/>
         <source>In special cases such as forgetting the password or the encryption hardware is damaged, you can decrypt the encrypted partition with the recovery key, please export it to a non-encrypted partition and keep it in a safe place!</source>
-        <translation type="unfinished"/>
+        <translation>بەزى ئالاھىدە ئەھۋاللاردا، مەسىلەن، پارولنى ئۇنتۇپ قېلىش ياكى پاروللانغان قاتتىق دېتال بۇزۇلۇپ كېتىش قاتارلىق ئەھۋاللاردا، سىز ئاچقۇچنى ئەسلىگە كەلتۈرۈش ئارقىلىق پاروللانغان رايوننى ئاچالايسىز، ئەسلىگە كەلتۈرۈش ئاچقۇچىنى پاروللانمىغان رايونغا ئەكىرىپ بىخەتەر ساقلاڭ!</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="166"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="172"/>
         <source>Please select a non-encrypted partition as the key file export path.</source>
-        <translation type="unfinished"/>
+        <translation>بىر پاروللانمىغان رايوننى تاللاپ، ئاچقۇچنى چىقىرىش مۇندەرىجىسى قىلىڭ.</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="179"/>
-        <source>After clicking &quot;Confirm encryption&quot;, enter the user password to finish encrypting the &quot;%1&quot; partition.</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="190"/>
-        <source>* After encrypting the partition, the system cannot be rolled back to a lower version, please confirm the encryption</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="219"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="371"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="192"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="339"/>
         <source>Passphrase</source>
-        <translation type="unfinished"/>
+        <translation>پارول</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="221"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="194"/>
         <source>%1 cannot be empty</source>
-        <translation type="unfinished"/>
+        <translation>%1 قۇرۇق قالمىسۇن</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="252"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="225"/>
         <source>%1 inconsistency</source>
-        <translation type="unfinished"/>
+        <translation>%1 بىردەك ئەمەس</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="263"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="236"/>
         <source>Recovery key export path cannot be empty!</source>
-        <translation type="unfinished"/>
+        <translation>ئاچقۇچنى چىقىرىش مۇندەرىجىسى قۇرۇق قالمىسۇن!</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="268"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="241"/>
         <source>Recovery key export path is not exists!</source>
-        <translation type="unfinished"/>
+        <translation>ئاچقۇچنى چىقىرىش مۇندەرىجىسى مەۋجۇت ئەمەس!</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="274"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="248"/>
         <source>Please export to an external device such as a non-encrypted partition or USB flash drive.</source>
-        <translation type="unfinished"/>
+        <translation>پاروللانمىغان رايون ياكى بارماق دىسكا قاتارلىق سىرتقى ئۈسكۈنىگە چىقىرىڭ.</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="286"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="253"/>
+        <source>This partition is read-only, please export to a writable partition</source>
+        <translation>بۇ رايوننى ئوقۇشقىلا بولىدۇ، يازغىلى بولىدىغان رايونغا چىقىرىڭ.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="265"/>
         <source>The partition is encrypted, please export to a non-encrypted partition or external device such as a USB flash drive.</source>
-        <translation type="unfinished"/>
+        <translation>بۇ رايون پاروللانغان، پاروللانمىغان رايون ياكى بارماق دىسكا قاتارلىق سىرتقى ئۈسكۈنىگە چىقىرىڭ.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="421"/>
+        <source>TPM is locked and cannot be used for partition encryption. Please cancel the TPM password or choose another unlocking method.</source>
+        <translation>TPM قۇلۇپلانغان، رايون پاروللاشقا ئىشلەتكىلى بولمايدۇ. TPM مەخپىي نومۇرىنى بىكار قىلىڭ ياكى باشقا ئېچىش ئۇسۇلىنى تاللاڭ.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="423"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="426"/>
+        <source>TPM error</source>
+        <translation>TPM خاتا</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="426"/>
+        <source>TPM status error!</source>
+        <translation>TPM ھالىتى بىنورمال!</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="317"/>
+        <source>Next</source>
+        <translation>كىيىنكى قەدەم</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="316"/>
+        <source>Please continue to encrypt partition %1</source>
+        <translation>پاروللاشنى جەزملەپ %1 رايوننى داۋاملىق پاروللاڭ</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="321"/>
+        <source>Previous</source>
+        <translation>ئالدىنقى قەدەم</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="320"/>
+        <source>Export Recovery Key</source>
+        <translation>ئەسلىگە قايتۇرۇش ئاچقۇچىنى چىقىرىش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="329"/>
+        <source>Set %1</source>
+        <translation>%1 تەڭشىكى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="330"/>
+        <source>Repeat %1</source>
+        <translation>%1 نىڭ تەڭشىكىنى قايتا بېكىتىش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="336"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="337"/>
+        <source>passphrase</source>
+        <translation>پارول</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="340"/>
+        <source>Access to the partition will be unlocked using a passphrase.</source>
+        <translation>رايونغا كىرگەندە پارول ئارقىلىق قۇلۇپنى يېشىش كېرەك</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="347"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="351"/>
-        <source>Next</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="348"/>
-        <source>Setting the unlocking method</source>
-        <translation type="unfinished"/>
+        <source>Access to the partition will be unlocked using the TPM security chip and PIN.</source>
+        <translation>رايونغا كىرگەندە TPM بىخەتەرلىك ئۆزىكى ۋە PIN نومۇرى ئارقىلىق قۇلۇپنى يېشىدۇ.</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="350"/>
-        <source>Previous</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="352"/>
-        <source>Export Recovery Key</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="354"/>
-        <source>Confrim encrypt</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="355"/>
-        <source>Partitioning Encryption</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="361"/>
-        <source>Set %1</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="362"/>
-        <source>Repeat %1</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="368"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="369"/>
-        <source>passphrase</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="372"/>
-        <source>Access to the partition will be unlocked using a passphrase.</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="379"/>
-        <source>Access to the partition will be unlocked using the TPM security chip and PIN.</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="382"/>
         <source>Access to the partition will be automatically unlocked using the TPM security chip, no passphrase checking is required.</source>
-        <translation type="unfinished"/>
+        <translation>رايونغا كىرگەندە TPM بىخەتەرلىك ئۆزىكى ئارقىلىق قۇلۇپنى ئاپتوماتىك يېشىدۇ، دەلىللەش كەتمەيدۇ.</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="445"/>
-        <source>Encrypt failed</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="364"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="332"/>
         <source>Please enter the %1 again</source>
-        <translation type="unfinished"/>
+        <translation>%1 نى قايتا كىرگۈزۈڭ</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="109"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="110"/>
         <source>Unlock type</source>
-        <translation type="unfinished"/>
+        <translation>يېشىش ئۇسۇلى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="129"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="131"/>
         <source>Use TPM+PIN to unlock on this computer (recommended)</source>
-        <translation type="unfinished"/>
+        <translation>بۇ كومپيۇتېردا قۇلۇپنى TPM+PINئارقىلىق يەشسۇن (تەۋسىيە)</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="130"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="132"/>
         <source>Automatic unlocking on this computer by TPM</source>
-        <translation type="unfinished"/>
+        <translation>بۇ كومپيۇتېردا قۇلۇپنى TPMئارقىلىق ئاپتوماتىك يەشسۇن</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="247"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="363"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="220"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="331"/>
         <source>At least 8 bits, contains 3 types of A-Z, a-z, 0-9 and symbols</source>
-        <translation type="unfinished"/>
+        <translation>كەم دېگەندە 8 خانە بولۇشى، A-Z, a-z, 0-9 لار ۋە ھەرپ ئىچىدىكى 3 تۈرنى ئۆز ئىچىگە ئېلىشى كېرەك</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="375"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="376"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="378"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="317"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="322"/>
+        <source>Confirm encrypt</source>
+        <translation>پاروللايمەن</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="343"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="344"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptparamsinputdialog.cpp" line="346"/>
         <source>PIN</source>
-        <translation type="unfinished"/>
+        <translation>PIN نومۇرى</translation>
+    </message>
+</context>
+<context>
+    <name>dfmplugin_diskenc::EncryptProgressDialog</name>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="54"/>
+        <source>Confirm</source>
+        <translation>جەزملەش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="63"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="77"/>
+        <source>Re-export the recovery key</source>
+        <translation>ئەسلىگە قايتۇرۇش ئاچقۇچىنى قايتا چىقىرىش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="67"/>
+        <source>*Recovery key saving failed, please re-save the recovery key to a non-encrypted partition and keep it in a safe place!</source>
+        <translation>ئەسلىگە قايتۇرۇش ھۆججىتىنى ساقلىغىلى بولمىدى، ئەسلىگە قايتۇرۇش ئاچقۇچىنى پاروللانمىغان رايونغا قايتا ساقلاڭ! </translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="82"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="183"/>
+        <source>Error</source>
+        <translation>خاتالىق كۆرۈلدى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="143"/>
+        <source>Recovery key export path cannot be empty!</source>
+        <translation>ئەسلىگە قايتۇرۇش ئاچقۇچنى چىقىرىش مۇندەرىجىسى قۇرۇق قالمىسۇن!</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="148"/>
+        <source>Recovery key export path is not exists!</source>
+        <translation>ئەسلىگە قايتۇرۇش ئاچقۇچنى چىقىرىش مۇندەرىجىسى مەۋجۇت ئەمەس!</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="154"/>
+        <source>This partition is read-only, please export to a writable partition</source>
+        <translation>بۇ رايوننى ئوقۇشقىلا بولىدۇ، يازغىلى بولىدىغان رايونغا چىقىرىڭ.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="167"/>
+        <source>The partition is encrypted, please export to a non-encrypted partition or external device such as a USB flash drive.</source>
+        <translation>بۇ رايون پاروللانغان، پاروللانمىغان رايون ياكى بارماق دىسكا قاتارلىق سىرتقى ئۈسكۈنىگە چىقىرىڭ.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/encryptprogressdialog.cpp" line="183"/>
+        <source>Cannot create recovery key file!</source>
+        <translation>ئەسلىگە قايتۇرۇش ئاچقۇچ ھۆججىتىنى قۇرالمىدى!</translation>
     </message>
 </context>
 <context>
     <name>dfmplugin_diskenc::EventsHandler</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="263"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="370"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="423"/>
         <source>Preencrypt done</source>
-        <translation type="unfinished"/>
+        <translation>ئالدىن پاروللاش مەغلۇب بولدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="264"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="371"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="424"/>
         <source>Device %1 has been preencrypt, please reboot to finish encryption.</source>
-        <translation type="unfinished"/>
+        <translation>ئۈسكۈنە %1 ئالدىن پاروللانغان، قايتا قوزغىتىپ پاروللاش مەشغۇلىتىنى تاماملاڭ.</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="268"/>
-        <source>Encrypt disk</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="269"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="299"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="343"/>
-        <source>User cancelled operation</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="272"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="430"/>
         <source>Preencrypt failed</source>
-        <translation type="unfinished"/>
+        <translation>ئالدىن پاروللاش مەغلۇب بولدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="273"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="431"/>
         <source>Device %1 preencrypt failed, please see log for more information.(%2)</source>
-        <translation type="unfinished"/>
+        <translation>ئۈسكۈنە %1 نى ئالدىن پاروللاش مەغلۇب بولدى، خاتىرىنى كۆرۈپ تېخىمۇ كۆپ ئۇچۇرغا ئېرىشىڭ. (%2)</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="304"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="459"/>
         <source>Wrong passpharse or PIN</source>
-        <translation type="unfinished"/>
+        <translation>پارول ياكى PIN نومۇرى خاتا</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="328"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="495"/>
         <source>passphrase</source>
-        <translation type="unfinished"/>
+        <translation>پارول</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="498"/>
+        <source>PIN</source>
+        <translation>PIN نومۇرى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="505"/>
+        <source>Change %1 done</source>
+        <translation>%1 ئۆزگەرتىلدى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="506"/>
+        <source>%1&apos;s %2 has been changed</source>
+        <translation>%1 نىڭ %2 سى ئۆزگەرتىلدى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="511"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="516"/>
+        <source>Change %1 failed</source>
+        <translation>%1 نى ئۆزگەرتىش مەغلۇب بولدى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="512"/>
+        <source>Wrong %1</source>
+        <translation>%1 تە خاتالىق كۆرۈلدى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="517"/>
+        <source>Device %1 change %2 failed, please see log for more information.(%3)</source>
+        <translation>ئۈسكۈنە %1 نىڭ %2 سىنى ئۆزگەرتىش مەغلۇب بولدى، خاتىرىنى كۆرۈپ تېخىمۇ كۆپ ئۇچۇرغا ئېرىشىڭ. (%3)</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="180"/>
+        <source>Encrypt done</source>
+        <translation>پاروللاندى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="181"/>
+        <source>Device %1 has been encrypted</source>
+        <translation>ئۈسكۈنە %1 پاروللاندى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="185"/>
+        <source>Encrypt failed</source>
+        <translation>پاروللانمىدى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="186"/>
+        <source>Device %1 encrypt failed, please see log for more information.(%2)</source>
+        <translation>ئۈسكۈنە %1 پاروللانمىدى، خاتىرىنى كۆرۈپ تېخىمۇ كۆپ ئۇچۇرغا ئېرىشىڭ. (%2)</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="285"/>
+        <source>%1 is under encrypting...</source>
+        <translation>%1 پاروللىنىۋاتىدۇ...</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="286"/>
+        <source>The encrypting process may have system lag, please minimize the system operation</source>
+        <translation>پاروللاش جەريانىدا سىستېما قېتىۋېلىشى مۇمكىن، سىستېما مەشغۇلاتىنى ئىمكانقەدەر ئازايتىڭ</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="305"/>
+        <source>%1 is under decrypting...</source>
+        <translation>%1 نىڭ پارولى بىكار قىلىنىۋاتىدۇ...</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="306"/>
+        <source>The decrypting process may have system lag, please minimize the system operation</source>
+        <translation>بىكار قىلىش جەريانىدا سىستېما قېتىۋېلىشى مۇمكىن، سىستېما مەشغۇلاتىنى ئىمكانقەدەر ئازايتىڭ</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="331"/>
-        <source>PIN</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="338"/>
-        <source>Change %1 done</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="339"/>
-        <source>%1&apos;s %2 has been changed</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="342"/>
-        <source>Change %1</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="346"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="351"/>
-        <source>Change %1 failed</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="347"/>
-        <source>Wrong %1</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="352"/>
-        <source>Device %1 change %2 failed, please see log for more information.(%3)</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="373"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="387"/>
-        <source>Reboot later</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="373"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="387"/>
-        <source>Reboot now</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="95"/>
-        <source>Encrypt done</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="96"/>
-        <source>Device %1 has been encrypted</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="98"/>
-        <source>Encrypt failed</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="99"/>
-        <source>Device %1 encrypt failed, please see log for more information.(%2)</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="134"/>
-        <source>%1 is under encrypting...</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="135"/>
-        <source>The encrypting process may have system lag, please minimize the system operation</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="150"/>
-        <source>%1 is under decrypting...</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="151"/>
-        <source>The decrypting process may have system lag, please minimize the system operation</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="171"/>
         <source>Error</source>
-        <translation type="unfinished"/>
+        <translation>خاتالىق كۆرۈلدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="293"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="451"/>
         <source>Decrypt done</source>
-        <translation type="unfinished"/>
+        <translation>پارول بىكار قىلىندى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="294"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="452"/>
         <source>Device %1 has been decrypted</source>
-        <translation type="unfinished"/>
+        <translation>ئۈسكۈنە %1 نىڭ پارولى بىكار قىلىندى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="298"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="303"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="458"/>
         <source>Decrypt disk</source>
-        <translation type="unfinished"/>
+        <translation>دىسكا پارولىنى بىكار قىلىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="307"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="462"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="467"/>
         <source>Decrypt failed</source>
-        <translation type="unfinished"/>
+        <translation>پارولنى بىكار قىلىش مەغلۇب بولدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="308"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="463"/>
+        <source>Device %1 is under encrypting, please decrypt after encryption finished.</source>
+        <translation>ئۈسكۈنە %1 پاروللىنىۋاتىدۇ، پاروللىنىپ بولغاندىن كېيىن يېشىڭ.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="468"/>
         <source>Device %1 Decrypt failed, please see log for more information.(%2)</source>
-        <translation type="unfinished"/>
+        <translation>ئۈسكۈنە %1 پاروللانمىدى، خاتىرىنى كۆرۈپ تېخىمۇ كۆپ ئۇچۇرغا ئېرىشىڭ. (%2)</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="384"/>
-        <source>Decrypt device</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="385"/>
-        <source>Please reboot to decrypt device %1.</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="171"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="331"/>
         <source>TPM status is abnormal, please use the recovery key to unlock it</source>
-        <translation type="unfinished"/>
+        <translation>TPM نىڭ ھالىتى نورمال ئەمەس، ئاچقۇچنى ئەسلىگە كەلتۈرۈش ئارقىلىق قۇلۇپنى يېشىڭ</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="197"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="357"/>
         <source>Wrong PIN</source>
-        <translation type="unfinished"/>
+        <translation>PIN نومۇرى خاتا</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="199"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="359"/>
         <source>Wrong passphrase</source>
-        <translation type="unfinished"/>
+        <translation>پارول خاتا</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="201"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="361"/>
         <source>TPM error</source>
-        <translation type="unfinished"/>
+        <translation>TPM خاتا</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="203"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="363"/>
         <source>Please use recovery key to unlock device.</source>
-        <translation type="unfinished"/>
+        <translation>ئاچقۇچنى كىرگۈزۈپ ئۈسكۈنىنىڭ قۇلۇپىنى يېشىڭ.</translation>
     </message>
 </context>
 <context>
     <name>dfmplugin_diskenc::UnlockPartitionDialog</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="49"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="51"/>
         <source>Cancel</source>
-        <translation type="unfinished"/>
+        <translation>بىكار قىلىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="50"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="52"/>
         <source>Unlock</source>
-        <translation type="unfinished"/>
+        <translation>قۇلۇپ ئېچىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="79"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="81"/>
         <source>Unlock encryption partition</source>
-        <translation type="unfinished"/>
+        <translation>پاروللانغان رايوننىڭ قۇلۇپىنى يېشىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="83"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="86"/>
-        <source>Unlock by recovery key</source>
-        <translation type="unfinished"/>
-    </message>
-    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="85"/>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="88"/>
-        <source>Unlock by passphrase</source>
-        <translation type="unfinished"/>
+        <source>Unlock by recovery key</source>
+        <translation>ئاچقۇچ ئارقىلىق قۇلۇپنى يېشىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="89"/>
-        <source>Unlock by PIN</source>
-        <translation type="unfinished"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="90"/>
+        <source>Unlock by passphrase</source>
+        <translation>پارول ئارقىلىق قۇلۇپنى يېشىش</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="91"/>
+        <source>Unlock by PIN</source>
+        <translation>PIN ئارقىلىق قۇلۇپنى يېشىش</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="93"/>
         <source>Please input recovery key to unlock device</source>
-        <translation type="unfinished"/>
+        <translation>ئاچقۇچنى كىرگۈزۈپ ئۈسكۈنىنىڭ قۇلۇپىنى يېشىڭ</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="97"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="99"/>
         <source>Please input passphrase to unlock device</source>
-        <translation type="unfinished"/>
+        <translation>پارولنى كىرگۈزۈپ ئۈسكۈنىنىڭ قۇلۇپىنى يېشىڭ</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="100"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="102"/>
         <source>Please input PIN to unlock device</source>
-        <translation type="unfinished"/>
+        <translation>PIN نى كىرگۈزۈپ ئۈسكۈنىنىڭ قۇلۇپىنى يېشىڭ</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="113"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/gui/unlockpartitiondialog.cpp" line="115"/>
         <source>Recovery key is not valid!</source>
-        <translation type="unfinished"/>
+        <translation>ئاچقۇچىنى ئەسلىگە قايتۇرۇش قائىدىگە ئۇيغۇن ئەمەس!</translation>
     </message>
 </context>
 </TS>
