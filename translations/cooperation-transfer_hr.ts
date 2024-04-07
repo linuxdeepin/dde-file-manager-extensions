@@ -2,12 +2,12 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="57"/>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="60"/>
         <source>File transfer settings</source>
         <translation>Postavke prijenosa podataka</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="59"/>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="62"/>
         <source>Settings</source>
         <comment>button</comment>
         <translation>Postavke</translation>
@@ -24,7 +24,7 @@
 <context>
     <name>dfmplugin_cooperation::CooperationPlugin</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="52"/>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="55"/>
         <source>File transfer</source>
         <translation>Prijenos podataka</translation>
     </message>
