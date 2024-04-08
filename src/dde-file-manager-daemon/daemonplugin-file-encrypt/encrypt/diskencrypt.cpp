@@ -981,6 +981,8 @@ bool block_device_utils::bcMoveFsForward(const QString &device)
         // qInfo() << "moved..." << currMovedIndex << device;
     }
 
+    disk_encrypt_funcs::bcDecryptProgress(100, 100, nullptr);
+
     clearMem();
 
     // remove log file on success.
