@@ -84,7 +84,7 @@ void CooperationMenuScene::updateState(QMenu *parent)
 {
     if (!d->isEmptyArea) {
         auto actions = parent->actions();
-        actions.removeOne(d->predicateAction[kFileTransfer]);
+        parent->removeAction(d->predicateAction[kFileTransfer]);
 
         for (auto act : actions) {
             if (act->isSeparator())
