@@ -1,3 +1,9 @@
+dde-file-manager-extensions (1.1.14) unstable; urgency=medium
+
+  * fix some issue on cooperation.
+
+ -- liujinchang <liujinchang@uniontech.com>  Apr, 10 Wed 17:36:22 2024 +0800
+
 dde-file-manager-extensions (1.1.13) unstable; urgency=medium
 
   * fix fatal issue on decrypt.
