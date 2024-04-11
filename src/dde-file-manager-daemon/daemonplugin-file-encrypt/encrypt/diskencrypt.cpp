@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <functional>
 #include <stdio.h>
+#include <fstab.h>
 
 FILE_ENCRYPT_USE_NS
 using namespace disk_encrypt;
@@ -1117,4 +1118,62 @@ int disk_encrypt_funcs::bcReadHeader(const QString &header)
     }
 
     return kInvalidHeader;
+}
+
+void block_device_utils::bcSetBootLabel()
+{
+    using namespace dfmmount;
+    auto mng = DDeviceManager::instance();
+    if (!mng) {
+        qWarning() << "device monitor not valid!";
+        return;
+    }
+    auto blkMng = mng->getRegisteredMonitor(DeviceType::kBlockDevice).objectCast<DBlockMonitor>();
+    if (!blkMng) {
+        qWarning() << "block monitor not valid!";
+        return;
+    }
+    auto bootDev = blkMng->resolveDevice(QVariantMap { { "label", "Boot" } }, {});
+    if (!bootDev.isEmpty()) {
+        qInfo() << "has boot partition:" << bootDev;
+        return;
+    }
+
+    // find boot partition.
+    QString fsType;
+    QString bootDevSpec = bcFindBootDevice(&fsType);
+    if (bootDevSpec.isEmpty()) {
+        qWarning() << "No separate boot partition";
+        return;
+    }
+
+    // see if device is ext*
+    if (!fsType.startsWith("ext")) {
+        qWarning() << "boot device is not ext*" << bootDevSpec << fsType;
+        return;
+    }
+
+    // set Boot label
+    QString cmd = QString("e2label %1 Boot").arg(bootDevSpec);
+    system(cmd.toStdString().c_str());
+}
+
+QString block_device_utils::bcFindBootDevice(QString *fstype)
+{
+    QString bootDev;
+
+    struct fstab *fs;
+    setfsent();
+    while ((fs = getfsent()) != nullptr) {
+        QString path = fs->fs_file;
+        if ("/boot" == path) {
+            bootDev = fs->fs_spec;
+            if (fstype)
+                *fstype = fs->fs_type;
+            break;
+        }
+    }
+    endfsent();
+
+    return bootDev;
 }

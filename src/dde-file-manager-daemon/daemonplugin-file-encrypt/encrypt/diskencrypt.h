@@ -75,6 +75,9 @@ bool bcIsMounted(const QString &device);
 quint64 bcGetBlockSize(const QString &device);
 
 bool bcMoveFsForward(const QString &device);
+
+void bcSetBootLabel();
+QString bcFindBootDevice(QString *fstype);
 }   // namespace block_device_utils
 
 namespace utils {

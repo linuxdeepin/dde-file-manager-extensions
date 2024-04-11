@@ -70,8 +70,9 @@ void PrencryptWorker::run()
         createReencryptDesktop();
         writeEncryptParams();
         setFstabTimeout();
-        setExitCode(-kRebootRequired);
+        setBootLabel();
         createRebootFlagFile(params.value(encrypt_param_keys::kKeyDevice).toString());
+        setExitCode(-kRebootRequired);
         return;
     }
 
@@ -261,6 +262,11 @@ void PrencryptWorker::createReencryptDesktop()
     f.close();
 
     qInfo() << "desktop file created.";
+}
+
+void PrencryptWorker::setBootLabel()
+{
+    block_device_utils::bcSetBootLabel();
 }
 
 DecryptWorker::DecryptWorker(const QString &jobID,
