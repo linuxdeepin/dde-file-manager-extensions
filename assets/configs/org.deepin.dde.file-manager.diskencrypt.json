@@ -25,7 +25,7 @@
             "visibility":"public"
         },
         "enableEncrypt": {
-            "value": true,
+            "value": false,
             "serial":0,
             "flags":["global"],
             "name":"Enable partition encrypt",
