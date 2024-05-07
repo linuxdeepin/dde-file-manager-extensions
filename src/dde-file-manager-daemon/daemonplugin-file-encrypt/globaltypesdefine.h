@@ -10,6 +10,7 @@
 #include <QVariantMap>
 
 namespace disk_encrypt {
+Q_NAMESPACE
 
 inline constexpr char kEncConfigPath[] { "/boot/usec-crypt/encrypt.json" };
 inline const QString kEncConfigDevicePath { "/boot/usec-crypt/encrypt_%1.json" };
