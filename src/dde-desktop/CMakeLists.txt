@@ -1,1 +1,1 @@
-# add_subdirectory(ddplugin-videowallpaper)
+add_subdirectory(ddplugin-videowallpaper)
