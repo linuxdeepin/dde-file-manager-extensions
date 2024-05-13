@@ -1,4 +1,4 @@
-dde-file-manager-extensions (1.1.15) UNRELEASED; urgency=medium
+dde-file-manager-extensions (1.1.15) unstable; urgency=medium
 
   * disable encrypt feature by default.
   * 
