@@ -77,22 +77,20 @@ target_link_libraries(${PROJECT_NAME}
     ${Media_LIBRARIES}
 )
 
-if(COMPLIE_ON_V23)
-    #install library file
-    install(TARGETS
-        ${PROJECT_NAME}
-        LIBRARY
-        DESTINATION
-        ${DFM_PLUGIN_DESKTOP_EDGE_DIR}
-    )
+#install library file
+install(TARGETS
+    ${PROJECT_NAME}
+    LIBRARY
+    DESTINATION
+    ${DFM_PLUGIN_DESKTOP_EDGE_DIR}
+)
 
-    dconfig_meta_files(APPID "org.deepin.dde.file-manager"
-        BASE "${CMAKE_SOURCE_DIR}/assets/configs"
-        FILES "${CMAKE_SOURCE_DIR}/assets/configs/org.deepin.dde.file-manager.desktop.videowallpaper.json"
-    )
+dconfig_meta_files(APPID "org.deepin.dde.file-manager"
+    BASE "${CMAKE_SOURCE_DIR}/assets/configs"
+    FILES "${CMAKE_SOURCE_DIR}/assets/configs/org.deepin.dde.file-manager.desktop.videowallpaper.json"
+)
 
-    # copy install file for packgage
-    SET(DEBIAN_PATH ${CMAKE_SOURCE_DIR}/debian)
-    FILE(COPY debian/dde-desktop-videowallpaper-plugin.install DESTINATION ${DEBIAN_PATH})
-    message("copy video wallpaper install file to ${DEBIAN_PATH}")
-endif()
+# copy install file for packgage
+SET(DEBIAN_PATH ${CMAKE_SOURCE_DIR}/debian)
+FILE(COPY debian/dde-desktop-videowallpaper-plugin.install DESTINATION ${DEBIAN_PATH})
+message("copy video wallpaper install file to ${DEBIAN_PATH}")
