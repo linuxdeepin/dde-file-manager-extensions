@@ -15,6 +15,7 @@
 #include <dfm-base/interfaces/fileinfo.h>
 
 #include <dfm-mount/dmount.h>
+#include <dfm-framework/dpf.h>
 
 #include <QDebug>
 #include <QMenu>
@@ -33,6 +34,7 @@
 DFMBASE_USE_NAMESPACE
 using namespace dfmplugin_diskenc;
 using namespace disk_encrypt;
+Q_DECLARE_METATYPE(QString *)
 
 static constexpr char kActIDEncrypt[] { "de_0_encrypt" };
 static constexpr char kActIDResumeEncrypt[] { "de_0_resumeEncrypt" };
@@ -307,7 +309,7 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
             { encrypt_param_keys::kKeyDevice, param.devDesc },
             { encrypt_param_keys::kKeyUUID, param.uuid },
             { encrypt_param_keys::kKeyCipher, config_utils::cipherType() },
-            { encrypt_param_keys::kKeyPassphrase, param.key },
+            { encrypt_param_keys::kKeyPassphrase, encryptPasswd(param.key) },
             { encrypt_param_keys::kKeyInitParamsOnly, param.isDetachedHeader ? false : param.initOnly },
             { encrypt_param_keys::kKeyRecoveryExportPath, param.exportPath },
             { encrypt_param_keys::kKeyEncMode, static_cast<int>(param.type) },
@@ -344,7 +346,7 @@ void DiskEncryptMenuScene::doReencryptDevice(const DeviceEncryptParam &param)
             { encrypt_param_keys::kKeyDevice, param.devDesc },
             { encrypt_param_keys::kKeyUUID, param.uuid },
             { encrypt_param_keys::kKeyCipher, config_utils::cipherType() },
-            { encrypt_param_keys::kKeyPassphrase, param.key },
+            { encrypt_param_keys::kKeyPassphrase, encryptPasswd(param.key) },
             { encrypt_param_keys::kKeyInitParamsOnly, param.initOnly },
             { encrypt_param_keys::kKeyRecoveryExportPath, param.exportPath },
             { encrypt_param_keys::kKeyEncMode, static_cast<int>(param.type) },
@@ -372,7 +374,7 @@ void DiskEncryptMenuScene::doDecryptDevice(const DeviceEncryptParam &param)
     if (iface.isValid()) {
         QVariantMap params {
             { encrypt_param_keys::kKeyDevice, param.devDesc },
-            { encrypt_param_keys::kKeyPassphrase, param.key },
+            { encrypt_param_keys::kKeyPassphrase, encryptPasswd(param.key) },
             { encrypt_param_keys::kKeyInitParamsOnly, param.initOnly },
             { encrypt_param_keys::kKeyUUID, param.uuid },
             { encrypt_param_keys::kKeyDeviceName, param.deviceDisplayName },
@@ -420,8 +422,8 @@ void DiskEncryptMenuScene::doChangePassphrase(const DeviceEncryptParam &param)
     if (iface.isValid()) {
         QVariantMap params {
             { encrypt_param_keys::kKeyDevice, param.devDesc },
-            { encrypt_param_keys::kKeyPassphrase, param.newKey },
-            { encrypt_param_keys::kKeyOldPassphrase, param.key },
+            { encrypt_param_keys::kKeyPassphrase, encryptPasswd(param.newKey) },
+            { encrypt_param_keys::kKeyOldPassphrase, encryptPasswd(param.key) },
             { encrypt_param_keys::kKeyValidateWithRecKey, param.validateByRecKey },
             { encrypt_param_keys::kKeyTPMToken, token },
             { encrypt_param_keys::kKeyDeviceName, param.deviceDisplayName }
@@ -653,4 +655,15 @@ void DiskEncryptMenuScene::updateActions()
         actions[kActIDEncrypt]->setText(tr("Reboot to continue encrypt"));
         actions[kActIDDecrypt]->setText(tr("Reboot to finish decrypt"));
     }
+}
+
+QString DiskEncryptMenuScene::encryptPasswd(const QString &passwd)
+{
+    QString encPass;
+    auto ret = dpfSlotChannel->push("dfmplugin_stringencrypt", "slot_OpenSSL_EncryptString",
+                                    passwd, &encPass);
+    if (ret != 0)
+        qWarning() << "cannot encrypt password!!!";
+
+    return encPass;
 }

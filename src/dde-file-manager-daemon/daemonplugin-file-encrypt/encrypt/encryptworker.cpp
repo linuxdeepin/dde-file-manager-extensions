@@ -4,6 +4,8 @@
 #include "encryptworker.h"
 #include "diskencrypt.h"
 
+#include <dfm-framework/dpf.h>
+
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -16,6 +18,8 @@
 
 FILE_ENCRYPT_USE_NS
 using namespace disk_encrypt;
+
+Q_DECLARE_METATYPE(QString *)
 
 static constexpr char kBootUsecPath[] { "/boot/usec-crypt" };
 
@@ -302,7 +306,7 @@ void DecryptWorker::run()
         return;
     }
 
-    const QString &passphrase = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+    const QString &passphrase = decryptPasswd(params.value(encrypt_param_keys::kKeyPassphrase).toString());
     ret = disk_encrypt_funcs::bcDecryptDevice(device, passphrase);
     if (ret < 0) {
         setExitCode(ret);
@@ -369,8 +373,8 @@ ChgPassWorker::ChgPassWorker(const QString &jobID, const QVariantMap &params, QO
 void ChgPassWorker::run()
 {
     QString dev = params.value(encrypt_param_keys::kKeyDevice).toString();
-    QString oldPass = params.value(encrypt_param_keys::kKeyOldPassphrase).toString();
-    QString newPass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+    QString oldPass = decryptPasswd(params.value(encrypt_param_keys::kKeyOldPassphrase).toString());
+    QString newPass = decryptPasswd(params.value(encrypt_param_keys::kKeyPassphrase).toString());
 
     int newSlot = 0;
     int ret = 0;
@@ -515,7 +519,7 @@ bool ReencryptWorkerV2::hasUnfinishedOnlineEncryption()
 
 void ReencryptWorkerV2::setPassphrase()
 {
-    const QString &pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+    const QString &pass = decryptPasswd(params.value(encrypt_param_keys::kKeyPassphrase).toString());
     const QString &token = params.value(encrypt_param_keys::kKeyTPMToken).toString();
     int passKeyslot = -1;
     int ret = disk_encrypt_funcs::bcChangePassphrase(config.devicePath, "", pass, &passKeyslot);
@@ -554,7 +558,7 @@ void ReencryptWorkerV2::setRecoveryKey(QString *key, bool *expKey)
     }
 
     int recKeySlot = -1;
-    const QString &pass = params.value(encrypt_param_keys::kKeyPassphrase).toString();
+    const QString &pass = decryptPasswd(params.value(encrypt_param_keys::kKeyPassphrase).toString());
     int ret = disk_encrypt_funcs::bcChangePassphraseByRecKey(config.devicePath, pass, *key, &recKeySlot);
     if (ret != kSuccess) {
         qCritical() << "cannot set recovery key for device!" << config.devicePath << ret;
@@ -783,4 +787,16 @@ bool ReencryptWorkerV2::setFsPassno(const QString &uuid, const QString &state)
     } else {
         return false;
     }
+}
+
+QString Worker::decryptPasswd(const QString &passwd)
+{
+    QString decryptPwd;
+    int ret = dpfSlotChannel->push("daemonplugin_stringdecrypt", "slot_OpenSSL_DecryptString",
+                                   passwd, &decryptPwd)
+                      .toInt();
+    if (ret != 0)
+        qWarning() << "cannot decrypt password!!!";
+
+    return decryptPwd;
 }

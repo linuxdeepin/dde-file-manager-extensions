@@ -33,6 +33,8 @@ protected:
         exitCode = code;
     }
 
+    static QString decryptPasswd(const QString &passwd);
+
 protected:
     int exitCode { disk_encrypt::kSuccess };
     QString jobID;
