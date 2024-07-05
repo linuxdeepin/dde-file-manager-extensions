@@ -13,9 +13,7 @@
 #include <dfm-base/dfm_menu_defines.h>
 #include <dfm-base/base/schemefactory.h>
 #include <dfm-base/interfaces/fileinfo.h>
-
 #include <dfm-mount/dmount.h>
-#include <dfm-framework/dpf.h>
 
 #include <QDebug>
 #include <QMenu>
@@ -34,7 +32,6 @@
 DFMBASE_USE_NAMESPACE
 using namespace dfmplugin_diskenc;
 using namespace disk_encrypt;
-Q_DECLARE_METATYPE(QString *)
 
 static constexpr char kActIDEncrypt[] { "de_0_encrypt" };
 static constexpr char kActIDResumeEncrypt[] { "de_0_resumeEncrypt" };
@@ -659,11 +656,7 @@ void DiskEncryptMenuScene::updateActions()
 
 QString DiskEncryptMenuScene::encryptPasswd(const QString &passwd)
 {
-    QString encPass;
-    auto ret = dpfSlotChannel->push("dfmplugin_stringencrypt", "slot_OpenSSL_EncryptString",
-                                    passwd, &encPass);
-    if (ret != 0)
-        qWarning() << "cannot encrypt password!!!";
-
-    return encPass;
+    QByteArray byteArray = passwd.toUtf8();
+    QByteArray encodedByteArray = byteArray.toBase64();
+    return QString::fromUtf8(encodedByteArray);
 }
