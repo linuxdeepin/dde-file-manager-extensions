@@ -4,8 +4,6 @@
 #include "encryptworker.h"
 #include "diskencrypt.h"
 
-#include <dfm-framework/dpf.h>
-
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -18,8 +16,6 @@
 
 FILE_ENCRYPT_USE_NS
 using namespace disk_encrypt;
-
-Q_DECLARE_METATYPE(QString *)
 
 static constexpr char kBootUsecPath[] { "/boot/usec-crypt" };
 
@@ -791,12 +787,7 @@ bool ReencryptWorkerV2::setFsPassno(const QString &uuid, const QString &state)
 
 QString Worker::decryptPasswd(const QString &passwd)
 {
-    QString decryptPwd;
-    int ret = dpfSlotChannel->push("daemonplugin_stringdecrypt", "slot_OpenSSL_DecryptString",
-                                   passwd, &decryptPwd)
-                      .toInt();
-    if (ret != 0)
-        qWarning() << "cannot decrypt password!!!";
-
-    return decryptPwd;
+    QByteArray encodedByteArray = passwd.toUtf8();
+    QByteArray decodedByteArray = QByteArray::fromBase64(encodedByteArray);
+    return QString::fromUtf8(decodedByteArray);
 }
