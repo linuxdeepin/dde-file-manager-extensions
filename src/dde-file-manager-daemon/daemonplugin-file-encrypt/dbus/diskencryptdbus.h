@@ -51,6 +51,7 @@ private:
     bool checkAuth(const QString &actID);
     void diskCheck();
     bool triggerReencrypt(const QString &device = QString());
+    void createReencryptDesktop();
     static void getDeviceMapper(QMap<QString, QString> *, QMap<QString, QString> *, QMap<QString, QString> *);
     static bool updateCrypttab();
     static int isEncrypted(const QString &target, const QString &source);

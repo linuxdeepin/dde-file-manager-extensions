@@ -50,6 +50,7 @@ DiskEncryptDBus::DiskEncryptDBus(QObject *parent)
             Qt::QueuedConnection);
 
     QtConcurrent::run([this] { diskCheck(); });
+    createReencryptDesktop();
     triggerReencrypt();
 }
 
@@ -297,6 +298,40 @@ bool DiskEncryptDBus::triggerReencrypt(const QString &device)
     gFstabEncWorker->start();
     running = true;
     return true;
+}
+
+// this is used to create a desktop file into
+// /usr/share/applications/dfm-reencrypt.desktop
+void DiskEncryptDBus::createReencryptDesktop()
+{
+    QFile f(kReencryptDesktopFile);
+    if (f.exists())
+        return;
+
+    QByteArray desktop {
+        "[Desktop Entry]\n"
+        "Categories=System;\n"
+        "Comment=To auto launch reencryption\n"
+        "Exec=/usr/bin/dde-file-manager -d\n"
+        "GenericName=Disk Reencrypt\n"
+        "Icon=dde-file-manager\n"
+        "Name=Disk Reencrypt\n"
+        "Terminal=false\n"
+        "Type=Application\n"
+        "NoDisplay=true\n"
+        "X-AppStream-Ignore=true\n"
+        "X-Deepin-AppID=dde-file-manager\n"
+        "X-Deepin-Vendor=deepin\n"
+    };
+
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qWarning() << "cannot open desktop file to write!";
+        return;
+    }
+    f.write(desktop);
+    f.close();
+
+    qInfo() << "desktop file created.";
 }
 
 // this function should be running in thread.
