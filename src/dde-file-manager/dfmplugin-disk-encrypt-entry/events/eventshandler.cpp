@@ -362,7 +362,8 @@ bool EventsHandler::onAcquireDevicePwd(const QString &dev, QString *pwd, bool *c
 
         dialog_utils::showDialog(title, tr("Please use recovery key to unlock device."),
                                  dialog_utils::kInfo);
-        *cancelled = true;
+
+        *pwd = acquirePassphraseByRec(dev, *cancelled);
     }
 
     return true;
