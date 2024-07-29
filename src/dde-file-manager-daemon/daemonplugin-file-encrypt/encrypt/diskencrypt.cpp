@@ -774,6 +774,7 @@ bool disk_encrypt_utils::bcReadEncryptConfig(disk_encrypt::EncryptConfig *config
     config->configPath = encryptConfigPath;
     config->clearDevUUID = obj.value("clear-device-uuid").toString();
     config->isDetachedHeader = obj.value("is-detached-header").toBool();
+    config->fsUuid = obj.value("file-system-uuid").toString();
 
     return true;
 }

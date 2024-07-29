@@ -129,10 +129,11 @@ int PrencryptWorker::writeEncryptParams(const QString &device)
     QString dmDev = QString("dm-%1").arg(dev.mid(5));
     if (params.value(encrypt_param_keys::kKeyIsDetachedHeader).toBool())
         dmDev = params.value(encrypt_param_keys::kKeyPrefferDevice).toString();
-    QString uuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
+    QString fsUuid = QString("UUID=%1").arg(params.value(encrypt_param_keys::kKeyUUID).toString());
+    QString partUuid = QString("PARTUUID=%1").arg(params.value(encrypt_param_keys::kKeyPartUUID).toString());
 
     obj.insert("volume", dmDev);   // used to name a opened luks device.
-    obj.insert("device", uuid);   // used to locate the backing device.
+    obj.insert("device", partUuid);   // used to locate the backing device.
     obj.insert("device-path", dev);   // used to locate the backing device by device path.
     obj.insert("device-name", params.value(encrypt_param_keys::kKeyDeviceName).toString());   // the device name display in dde-file-manager
     obj.insert("device-mountpoint", params.value(encrypt_param_keys::kKeyMountPoint).toString());   // the mountpoint of the device
@@ -141,6 +142,7 @@ int PrencryptWorker::writeEncryptParams(const QString &device)
     obj.insert("mode", encMode.value(params.value(encrypt_param_keys::kKeyEncMode).toInt()));
     obj.insert("clear-device-uuid", params.value(encrypt_param_keys::kKeyClearDevUUID).toString());
     obj.insert("is-detached-header", params.value(encrypt_param_keys::kKeyIsDetachedHeader).toBool());
+    obj.insert("file-system-uuid", fsUuid);
 
     QString expPath = params.value(encrypt_param_keys::kKeyRecoveryExportPath).toString();
     if (!expPath.isEmpty()) {

@@ -35,6 +35,7 @@ inline constexpr char kKeyBackingDevUUID[] { "backingDevUUID" };
 inline constexpr char kKeyClearDevUUID[] { "clearDevUUID" };
 inline constexpr char kKeyIsDetachedHeader[] { "isDetachedHeader" };
 inline constexpr char kKeyPrefferDevice[] { "prefferDevice" };
+inline constexpr char kKeyPartUUID[] { "partUuid" };
 }   // namespace encrypt_param_keys
 
 inline const QStringList kDisabledEncryptPath {
@@ -127,6 +128,7 @@ struct EncryptConfig
     QString configPath;
     QString clearDevUUID;
     bool isDetachedHeader;
+    QString fsUuid;
 
     QVariantMap keyConfig()
     {
@@ -135,8 +137,9 @@ struct EncryptConfig
             { "device-path", devicePath },
             { "device-name", deviceName },
             { "volume", clearDev },
+            { "file-system-uuid", fsUuid }
         };
-    };
+    }
 };
 
 enum EncryptState {
