@@ -302,6 +302,12 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
                          kDaemonBusIface,
                          QDBusConnection::systemBus());
     if (iface.isValid()) {
+        auto blkDev = device_utils::createBlockDevice(param.devID);
+        if (!blkDev) {
+            qCritical() << "Create block device failed, the object is: " << param.devID;
+            return;
+        }
+        QString partUuid { blkDev->getProperty(dfmmount::Property::kPartitionUUID).toString() };
         QVariantMap params {
             { encrypt_param_keys::kKeyDevice, param.devDesc },
             { encrypt_param_keys::kKeyUUID, param.uuid },
@@ -314,7 +320,8 @@ void DiskEncryptMenuScene::doEncryptDevice(const DeviceEncryptParam &param)
             { encrypt_param_keys::kKeyMountPoint, param.mountPoint },
             { encrypt_param_keys::kKeyIsDetachedHeader, param.isDetachedHeader },
             { encrypt_param_keys::kKeyPrefferDevice, param.prefferDevName },
-            { encrypt_param_keys::kKeyClearDevUUID, param.clearDevUUID }
+            { encrypt_param_keys::kKeyClearDevUUID, param.clearDevUUID },
+            { encrypt_param_keys::kKeyPartUUID, partUuid }
         };
         if (!tpmConfig.isEmpty()) params.insert(encrypt_param_keys::kKeyTPMConfig, tpmConfig);
         if (!tpmToken.isEmpty()) params.insert(encrypt_param_keys::kKeyTPMToken, tpmToken);

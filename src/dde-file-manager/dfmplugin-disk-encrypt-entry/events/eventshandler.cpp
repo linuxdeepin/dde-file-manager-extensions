@@ -248,7 +248,7 @@ void EventsHandler::onRequestEncryptParams(const QVariantMap &encConfig)
     disk_encrypt::DeviceEncryptParam param;
     param.devDesc = devPath;
     param.initOnly = false;
-    param.clearDevUUID = encConfig.value("device").toString().remove("UUID=");
+    param.clearDevUUID = encConfig.value("file-system-uuid").toString().remove("UUID=");
     param.backingDevUUID = blkDev ? blkDev->getProperty(dfmmount::Property::kBlockIDUUID).toString() : "";
     param.deviceDisplayName = encConfig.value("device-name").toString();
     auto dlg = new EncryptParamsInputDialog(param, qApp->activeWindow());
