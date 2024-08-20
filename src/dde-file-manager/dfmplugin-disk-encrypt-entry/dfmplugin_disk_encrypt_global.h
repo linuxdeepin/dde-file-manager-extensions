@@ -24,9 +24,9 @@ enum TPMModuleEncType {
     kUseTpmAndPrcAndPin
 };
 
-inline constexpr char kDaemonBusName[] { "com.deepin.filemanager.daemon" };
-inline constexpr char kDaemonBusPath[] { "/com/deepin/filemanager/daemon/DiskEncrypt" };
-inline constexpr char kDaemonBusIface[] { "com.deepin.filemanager.daemon.DiskEncrypt" };
+inline constexpr char kDaemonBusName[] { "org.deepin.Filemanager" };
+inline constexpr char kDaemonBusPath[] { "/org/deepin/Filemanager/DiskEncrypt" };
+inline constexpr char kDaemonBusIface[] { "org.deepin.Filemanager.DiskEncrypt" };
 
 inline constexpr char kMenuPluginName[] { "dfmplugin_menu" };
 inline constexpr char kComputerMenuSceneName[] { "ComputerMenu" };

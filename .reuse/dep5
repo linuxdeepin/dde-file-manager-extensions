@@ -34,7 +34,7 @@ Copyright: UnionTech Software Technology Co., Ltd.
 License: GPL-3.0-or-later
 
 # ignore files
-Files: src/*.json src/*.xml src/*.policy src/*/pinyin.dict src/*.js src/*.ini src/*.qss src/*.theme src/*/templates/* src/*.psd src/*/com.deepin.filemanager.daemon.conf src/dfm-base/qrc/configure/*.cpp
+Files: src/*.json src/*.xml src/*.policy src/*/pinyin.dict src/*.js src/*.ini src/*.qss src/*.theme src/*/templates/* src/*.psd src/*/com.deepin.filemanager.daemon.conf src/dfm-base/qrc/configure/*.cpp src/*/*.service src/*/*.conf
 Copyright: None
 License: CC0-1.0
 
