@@ -106,10 +106,10 @@ endif(NOT CMAKE_BUILD_TYPE)
 message("Build type:"${CMAKE_BUILD_TYPE})
 
 #Indentify the version
-if (${DEEPIN_OS_VERSION} MATCHES "23")
+if (${DEEPIN_OS_VERSION} MATCHES "^(23|25)$")
     add_definitions(-DCOMPILE_ON_V23)
     set(COMPLIE_ON_V23 TRUE)
-    message("COMPILE ON v23")
+    message("COMPILE ON v2X")
 else()
     add_definitions(-DCOMPILE_ON_V20)
     set(COMPLIE_ON_V20 TRUE)
