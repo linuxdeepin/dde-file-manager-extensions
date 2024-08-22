@@ -929,7 +929,7 @@ bool block_device_utils::bcMoveFsForward(const QString &device)
         return false;
     }
     quint64 mvCount = partSize / kStepSize;
-    if (partSize % kStepSize) mvCount += 1;
+    if (partSize % kStepSize == 0) mvCount -= 1;
 
     // read break point.
     auto records = logFile.readAll().split(',');
@@ -942,6 +942,11 @@ bool block_device_utils::bcMoveFsForward(const QString &device)
     quint64 currMovedIndex = lastMovedIndex + 1;
     for (; currMovedIndex <= mvCount; ++currMovedIndex, ++lastMovedIndex) {
         // qInfo() << "moving..." << currMovedIndex << device;
+        if (currMovedIndex * kStepSize >= partSize) {
+            qWarning() << "The seek pos is greater than part size!";
+            clearMem();
+            break;
+        }
         // seek current move position
         if (!blockFile.seek(currMovedIndex * kStepSize)) {
             qWarning() << "seek pos failed!" << currMovedIndex * kStepSize;
