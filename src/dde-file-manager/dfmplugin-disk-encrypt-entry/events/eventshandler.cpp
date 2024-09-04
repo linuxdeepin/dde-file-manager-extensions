@@ -548,6 +548,15 @@ bool EventsHandler::canUnlock(const QString &device)
                                  dialog_utils::DialogType::kInfo);
         return false;
     }
+
+    int states = EventsHandler::instance()->deviceEncryptStatus(device);
+    if ((states & kStatusOnline) && (states & kStatusEncrypt) && !(states & kStatusNoEncryptConfig)) {
+        dialog_utils::showDialog(tr("Unlocking device failed"),
+                                 tr("Please click the right disk menu \"Continue partition encryption\" to complete partition encryption."),
+                                 dialog_utils::DialogType::kError);
+        return false;
+    }
+
     return true;
 }
 
