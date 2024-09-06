@@ -27,7 +27,7 @@ Depends:
  tpm2-abrmd,
  libtss2-tcti-pcap0,
  libtss2-tcti-tabrmd0,
- libdeepin-service-framework
+ libdeepin-service-framework-dev
 Description: Device encrypt plugin for dde-file-manager
  A plugin for dde-file-manager to encrypt disks.
 
