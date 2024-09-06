@@ -116,5 +116,7 @@ else()
     message("COMPILE ON v20")
 endif()
 
+option(OPT_ENABLE_OLDENCRYPTPLUGIN OFF)
+
 add_subdirectory(src)
 
