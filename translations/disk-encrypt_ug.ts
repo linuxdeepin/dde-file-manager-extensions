@@ -1,4 +1,70 @@
-<?xml version="1.0" ?><!DOCTYPE TS><TS version="2.1" language="ug">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="ug">
+<context>
+    <name>DecryptWorker</name>
+    <message>
+        <location filename="../src/dde-file-manager-daemon/daemonplugin-file-encrypt/encrypt/encryptworker.cpp" line="243"/>
+        <source>Decrypting...</source>
+        <translation>شىفىرلاش ...</translation>
+    </message>
+</context>
+<context>
+    <name>MainWindow</name>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="44"/>
+        <source>Check TPM</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="45"/>
+        <source>Get Random</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="46"/>
+        <source>Check Algo</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="47"/>
+        <source>Encrypt</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="48"/>
+        <source>Decrypt</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="49"/>
+        <source>EncryptInProcess</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="50"/>
+        <source>DecryptInProcess</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="51"/>
+        <source>EncryptByCommand</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="52"/>
+        <source>DecryptByCommand</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
+    <name>PrencryptWorker</name>
+    <message>
+        <location filename="../src/dde-file-manager-daemon/daemonplugin-file-encrypt/encrypt/encryptworker.cpp" line="54"/>
+        <source>Preparing encrypt...</source>
+        <translation>شىفىر تەييارلاش ...</translation>
+    </message>
+</context>
 <context>
     <name>QObject</name>
     <message>
@@ -63,6 +129,95 @@
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="464"/>
         <source>Decryption can take a long time, so make sure power is connected until the decryption is complete.</source>
         <translation>پاروللاشنى بىكار قىلىشقا بىر ئاز ئۇزۇن ۋاقىت كېتىدۇ، بىكار قىلىنىپ بولغۇچە توكقا چېتىلىشىغا كاپالەتلىك قىلىڭ.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="60"/>
+        <source>File transfer settings</source>
+        <translation>ھۆججەت يوللاش تەڭشەكلىرى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="62"/>
+        <source>Settings</source>
+        <comment>button</comment>
+        <translation>تەڭشەك</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager-daemon/daemonplugin-file-encrypt/encrypt/encryptworker.cpp" line="671"/>
+        <source>Updating grub...</source>
+        <translation>Grub نى يېڭىلاش ...</translation>
+    </message>
+</context>
+<context>
+    <name>ReencryptWorkerV2</name>
+    <message>
+        <location filename="../src/dde-file-manager-daemon/daemonplugin-file-encrypt/encrypt/encryptworker.cpp" line="396"/>
+        <source>Encrypting...</source>
+        <translation>شىفىرلاش ...</translation>
+    </message>
+</context>
+<context>
+    <name>ddplugin_videowallpaper::VideoWallpaperMenuScene</name>
+    <message>
+        <location filename="../src/dde-desktop/ddplugin-videowallpaper/videowallpapermenuscene.cpp" line="26"/>
+        <source>Video wallpaper</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
+    <name>ddplugin_videowallpaper::WallpaperEngine</name>
+    <message>
+        <location filename="../src/dde-desktop/ddplugin-videowallpaper/wallpaperengine.cpp" line="375"/>
+        <source>Please add the video file to %0</source>
+        <translation>سىن ھۆججىتىنى% 0 گە قوشۇڭ</translation>
+    </message>
+</context>
+<context>
+    <name>dfmplugin_cooperation::CooperationMenuScene</name>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/menu/cooperationmenuscene.cpp" line="32"/>
+        <source>File transfer</source>
+        <translation>ھۆججەت يوللاش</translation>
+    </message>
+</context>
+<context>
+    <name>dfmplugin_cooperation::CooperationPlugin</name>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="55"/>
+        <source>File transfer</source>
+        <translation>ھۆججەت يوللاش</translation>
+    </message>
+</context>
+<context>
+    <name>dfmplugin_cooperation::FileTransferSettingsDialog</name>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="150"/>
+        <source>File transfer settings</source>
+        <translation>ھۆججەت يوللاش تەڭشەكلىرى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="164"/>
+        <source>Everyone in the same LAN</source>
+        <translation>ئوخشاش بىر LAN دىكى ھەممە ئادەم</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="165"/>
+        <source>Only those who are collaborating are allowed</source>
+        <translation>پەقەت ھەمكارلىشىۋاتقانلارلا رۇخسەت قىلىنىدۇ</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="166"/>
+        <source>Not allow</source>
+        <translation>رۇخسەت قىلىنمايدۇ</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="170"/>
+        <source>Allows the following users to send files to me</source>
+        <translation>تۆۋەندىكى ئىشلەتكۈچىلەرنىڭ ماڭا ھۆججەت ئەۋەتىشىگە يول قويىدۇ</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="171"/>
+        <source>File save location</source>
+        <translation>ھۆججەت ساقلاش ئورنى</translation>
     </message>
 </context>
 <context>
@@ -257,74 +412,89 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="151"/>
+        <source>Continue partition decryption</source>
+        <translation>بۆلەك مەخپىيلەشتۈرۈشنى داۋاملاشتۇرۇڭ</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="155"/>
         <source>Enable partition encryption</source>
         <translation>رايون پاروللاشنى ئېچىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="207"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="230"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="251"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="168"/>
+        <source>Encrypt error</source>
+        <translation>شىفىرلاش خاتالىقى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="169"/>
+        <source>Partition encryption cannot be enabled, and the partition capacity needs to be larger than 512M.</source>
+        <translation>بۆلەك مەخپىيلەشتۈرۈشنى قوزغىتىشقا بولمايدۇ ، رايون سىغىمى 512M دىن چوڭ بولۇشى كېرەك.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="218"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="241"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="262"/>
         <source>Error</source>
         <translation>خاتالىق كۆرۈلدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="208"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="219"/>
         <source>Cannot resolve passphrase from TPM</source>
-        <translation>TPM  تىن پارولنى ئالغىلى بولمىدى</translation>
+        <translation>TPM&#xa0; تىن پارولنى ئالغىلى بولمىدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="230"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="251"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="241"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="262"/>
         <source>PIN error</source>
         <translation>PIN خاتا</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="258"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="269"/>
         <source>Change passphrase failed</source>
         <translation>پارول ئۆزگەرمىدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="500"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="518"/>
         <source>Unlock device failed</source>
         <translation>ئۈسكۈنە قۇلۇپىنى يېشەلمىدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="501"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="519"/>
         <source>Wrong passphrase</source>
         <translation>پارول خاتا</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="519"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="537"/>
         <source>Mount device failed</source>
         <translation>ئۈسكۈنىگە يۈكلەش مەغلۇب بولدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="562"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="580"/>
         <source>unmount</source>
         <translation>ئۆچۈرۈش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="562"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="580"/>
         <source>lock</source>
         <translation>قۇلۇپلاش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="563"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="581"/>
         <source>Encrypt failed</source>
         <translation>پاروللانمىدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="564"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="582"/>
         <source>Cannot %1 device %2</source>
         <translation>ئۈسكۈنە %1 نى %2 قىلغىلى بولمىدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="634"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="666"/>
         <source>Reboot to continue encrypt</source>
         <translation>قايتا قوزغىتىپ داۋاملىق پاروللاڭ</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="635"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="667"/>
         <source>Reboot to finish decrypt</source>
         <translation>قايتا قوزغىتىپ پاروللاشنى تاماملاڭ</translation>
     </message>
@@ -547,63 +717,63 @@
 <context>
     <name>dfmplugin_diskenc::EventsHandler</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="423"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="424"/>
         <source>Preencrypt done</source>
         <translation>ئالدىن پاروللاش مەغلۇب بولدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="424"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="425"/>
         <source>Device %1 has been preencrypt, please reboot to finish encryption.</source>
         <translation>ئۈسكۈنە %1 ئالدىن پاروللانغان، قايتا قوزغىتىپ پاروللاش مەشغۇلىتىنى تاماملاڭ.</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="430"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="431"/>
         <source>Preencrypt failed</source>
         <translation>ئالدىن پاروللاش مەغلۇب بولدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="431"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="432"/>
         <source>Device %1 preencrypt failed, please see log for more information.(%2)</source>
         <translation>ئۈسكۈنە %1 نى ئالدىن پاروللاش مەغلۇب بولدى، خاتىرىنى كۆرۈپ تېخىمۇ كۆپ ئۇچۇرغا ئېرىشىڭ. (%2)</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="459"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="460"/>
         <source>Wrong passpharse or PIN</source>
         <translation>پارول ياكى PIN نومۇرى خاتا</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="495"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="496"/>
         <source>passphrase</source>
         <translation>پارول</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="498"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="499"/>
         <source>PIN</source>
         <translation>PIN نومۇرى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="505"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="506"/>
         <source>Change %1 done</source>
         <translation>%1 ئۆزگەرتىلدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="506"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="507"/>
         <source>%1&apos;s %2 has been changed</source>
         <translation>%1 نىڭ %2 سى ئۆزگەرتىلدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="511"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="516"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="512"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="517"/>
         <source>Change %1 failed</source>
         <translation>%1 نى ئۆزگەرتىش مەغلۇب بولدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="512"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="513"/>
         <source>Wrong %1</source>
         <translation>%1 تە خاتالىق كۆرۈلدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="517"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="518"/>
         <source>Device %1 change %2 failed, please see log for more information.(%3)</source>
         <translation>ئۈسكۈنە %1 نىڭ %2 سىنى ئۆزگەرتىش مەغلۇب بولدى، خاتىرىنى كۆرۈپ تېخىمۇ كۆپ ئۇچۇرغا ئېرىشىڭ. (%3)</translation>
     </message>
@@ -649,39 +819,55 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="331"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="546"/>
         <source>Error</source>
         <translation>خاتالىق كۆرۈلدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="451"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="452"/>
         <source>Decrypt done</source>
         <translation>پارول بىكار قىلىندى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="452"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="453"/>
         <source>Device %1 has been decrypted</source>
         <translation>ئۈسكۈنە %1 نىڭ پارولى بىكار قىلىندى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="458"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="459"/>
         <source>Decrypt disk</source>
         <translation>دىسكا پارولىنى بىكار قىلىش</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="462"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="467"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="463"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="468"/>
         <source>Decrypt failed</source>
         <translation>پارولنى بىكار قىلىش مەغلۇب بولدى</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="463"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="464"/>
         <source>Device %1 is under encrypting, please decrypt after encryption finished.</source>
         <translation>ئۈسكۈنە %1 پاروللىنىۋاتىدۇ، پاروللىنىپ بولغاندىن كېيىن يېشىڭ.</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="468"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="469"/>
         <source>Device %1 Decrypt failed, please see log for more information.(%2)</source>
         <translation>ئۈسكۈنە %1 پاروللانمىدى، خاتىرىنى كۆرۈپ تېخىمۇ كۆپ ئۇچۇرغا ئېرىشىڭ. (%2)</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="547"/>
+        <source>Device is not fully decrypted, please finish decryption before access.</source>
+        <translation>ئۈسكۈنە تولۇق شىفىرلانمىغان ، زىيارەت قىلىشتىن بۇرۇن شىفىرلاشنى تاماملاڭ.</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="554"/>
+        <source>Unlocking device failed</source>
+        <translation>قۇلۇپ ئېچىش ئۈسكۈنىسى مەغلۇپ بولدى</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="555"/>
+        <source>Please click the right disk menu &quot;Continue partition encryption&quot; to complete partition encryption.</source>
+        <translation>رايون مەخپىيلەشتۈرۈشنى تاماملاش ئۈچۈن ئوڭ دىسكا تىزىملىكى «رايون مەخپىيلەشتۈرۈشنى داۋاملاشتۇرۇش» نى چېكىڭ.</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="331"/>
