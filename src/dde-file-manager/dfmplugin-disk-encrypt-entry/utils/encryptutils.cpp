@@ -321,7 +321,7 @@ int dialog_utils::showDialog(const QString &title, const QString &msg, DialogTyp
         icon = "dialog-error";
         break;
     }
-    Dtk::Widget::DDialog d;
+    Dtk::Widget::DDialog d(qApp->activeWindow());
     if (isWayland())
         d.setWindowFlag(Qt::WindowStaysOnTopHint);
     d.setTitle(title);

@@ -164,6 +164,13 @@ bool DiskEncryptMenuScene::triggered(QAction *action)
     QString actID = action->property(ActionPropertyKey::kActionID).toString();
 
     if (actID == kActIDEncrypt) {
+        if (selectedItemInfo.value("SizeTotal").toLongLong() < 512 * 1024 * 1024) {
+            dialog_utils::showDialog(tr("Encrypt error"),
+                                     tr("Partition encryption cannot be enabled, "
+                                        "and the partition capacity needs to be larger than 512M."),
+                                     dialog_utils::DialogType::kInfo);
+            return true;
+        }
         encryptDevice(param);
     } else if (actID == kActIDResumeEncrypt) {
         EventsHandler::instance()->resumeEncrypt(param.devDesc);

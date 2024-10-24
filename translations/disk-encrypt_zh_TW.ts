@@ -2,6 +2,70 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_TW">
 <context>
+    <name>DecryptWorker</name>
+    <message>
+        <location filename="../src/dde-file-manager-daemon/daemonplugin-file-encrypt/encrypt/encryptworker.cpp" line="243"/>
+        <source>Decrypting...</source>
+        <translation>解密...</translation>
+    </message>
+</context>
+<context>
+    <name>MainWindow</name>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="44"/>
+        <source>Check TPM</source>
+        <translation>檢查 TPM</translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="45"/>
+        <source>Get Random</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="46"/>
+        <source>Check Algo</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="47"/>
+        <source>Encrypt</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="48"/>
+        <source>Decrypt</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="49"/>
+        <source>EncryptInProcess</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="50"/>
+        <source>DecryptInProcess</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="51"/>
+        <source>EncryptByCommand</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/demo/dfmplugin-encrypt-manager-demo/mainwindow.cpp" line="52"/>
+        <source>DecryptByCommand</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
+    <name>PrencryptWorker</name>
+    <message>
+        <location filename="../src/dde-file-manager-daemon/daemonplugin-file-encrypt/encrypt/encryptworker.cpp" line="54"/>
+        <source>Preparing encrypt...</source>
+        <translation>準備加密...</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="393"/>
@@ -65,6 +129,95 @@
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/utils/encryptutils.cpp" line="464"/>
         <source>Decryption can take a long time, so make sure power is connected until the decryption is complete.</source>
         <translation>取消加密時間較長，請確保電源接入直到取消完成。</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="60"/>
+        <source>File transfer settings</source>
+        <translation>文件傳輸設置</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="62"/>
+        <source>Settings</source>
+        <comment>button</comment>
+        <translation>設置</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager-daemon/daemonplugin-file-encrypt/encrypt/encryptworker.cpp" line="671"/>
+        <source>Updating grub...</source>
+        <translation>更新Grub...</translation>
+    </message>
+</context>
+<context>
+    <name>ReencryptWorkerV2</name>
+    <message>
+        <location filename="../src/dde-file-manager-daemon/daemonplugin-file-encrypt/encrypt/encryptworker.cpp" line="396"/>
+        <source>Encrypting...</source>
+        <translation>加密...</translation>
+    </message>
+</context>
+<context>
+    <name>ddplugin_videowallpaper::VideoWallpaperMenuScene</name>
+    <message>
+        <location filename="../src/dde-desktop/ddplugin-videowallpaper/videowallpapermenuscene.cpp" line="26"/>
+        <source>Video wallpaper</source>
+        <translation>影片壁紙</translation>
+    </message>
+</context>
+<context>
+    <name>ddplugin_videowallpaper::WallpaperEngine</name>
+    <message>
+        <location filename="../src/dde-desktop/ddplugin-videowallpaper/wallpaperengine.cpp" line="375"/>
+        <source>Please add the video file to %0</source>
+        <translation>請添加影片文件到%0</translation>
+    </message>
+</context>
+<context>
+    <name>dfmplugin_cooperation::CooperationMenuScene</name>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/menu/cooperationmenuscene.cpp" line="32"/>
+        <source>File transfer</source>
+        <translation>檔案傳輸</translation>
+    </message>
+</context>
+<context>
+    <name>dfmplugin_cooperation::CooperationPlugin</name>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/cooperationplugin.cpp" line="55"/>
+        <source>File transfer</source>
+        <translation>檔案傳輸</translation>
+    </message>
+</context>
+<context>
+    <name>dfmplugin_cooperation::FileTransferSettingsDialog</name>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="150"/>
+        <source>File transfer settings</source>
+        <translation>檔案傳輸設置</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="164"/>
+        <source>Everyone in the same LAN</source>
+        <translation>同一局域網的所有人</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="165"/>
+        <source>Only those who are collaborating are allowed</source>
+        <translation>僅允許合作者</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="166"/>
+        <source>Not allow</source>
+        <translation>不允許</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="170"/>
+        <source>Allows the following users to send files to me</source>
+        <translation>允許以下使用者向我發送文件</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-cooperation/dialogs/filetransfersettingsdialog.cpp" line="171"/>
+        <source>File save location</source>
+        <translation>檔案存儲位置</translation>
     </message>
 </context>
 <context>
@@ -259,74 +412,89 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="151"/>
+        <source>Continue partition decryption</source>
+        <translation>繼續分區解密</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="155"/>
         <source>Enable partition encryption</source>
         <translation>開啟分區加密</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="207"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="230"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="251"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="168"/>
+        <source>Encrypt error</source>
+        <translation>加密錯誤</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="169"/>
+        <source>Partition encryption cannot be enabled, and the partition capacity needs to be larger than 512M.</source>
+        <translation>無法啟用磁碟分区加密，且磁碟分区容量需大於 512M。</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="218"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="241"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="262"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="208"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="219"/>
         <source>Cannot resolve passphrase from TPM</source>
         <translation>無法從 TPM 中獲取口令</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="230"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="251"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="241"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="262"/>
         <source>PIN error</source>
         <translation>PIN碼錯誤</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="258"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="269"/>
         <source>Change passphrase failed</source>
         <translation>修改口令失敗</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="500"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="518"/>
         <source>Unlock device failed</source>
         <translation>解鎖裝置失敗</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="501"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="519"/>
         <source>Wrong passphrase</source>
         <translation>口令錯誤</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="519"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="537"/>
         <source>Mount device failed</source>
         <translation>掛載裝置失敗</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="562"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="580"/>
         <source>unmount</source>
         <translation>移除</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="562"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="580"/>
         <source>lock</source>
         <translation>鎖定</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="563"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="581"/>
         <source>Encrypt failed</source>
         <translation>加密失敗</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="564"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="582"/>
         <source>Cannot %1 device %2</source>
         <translation>無法%1裝置%2</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="634"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="666"/>
         <source>Reboot to continue encrypt</source>
         <translation>重新啟動以繼續加密</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="635"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/menu/diskencryptmenuscene.cpp" line="667"/>
         <source>Reboot to finish decrypt</source>
         <translation>重新啟動以完成加密</translation>
     </message>
@@ -549,63 +717,63 @@
 <context>
     <name>dfmplugin_diskenc::EventsHandler</name>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="423"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="424"/>
         <source>Preencrypt done</source>
         <translation>預加密完成</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="424"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="425"/>
         <source>Device %1 has been preencrypt, please reboot to finish encryption.</source>
         <translation>裝置%1已進行預加密，請重啟完成加密操作。</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="430"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="431"/>
         <source>Preencrypt failed</source>
         <translation>預加密失敗</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="431"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="432"/>
         <source>Device %1 preencrypt failed, please see log for more information.(%2)</source>
         <translation>裝置%1預加密失敗，請查看日誌以獲取更多資訊。（%2）</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="459"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="460"/>
         <source>Wrong passpharse or PIN</source>
         <translation>口令或PIN碼錯誤</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="495"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="496"/>
         <source>passphrase</source>
         <translation>口令</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="498"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="499"/>
         <source>PIN</source>
         <translation>PIN碼</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="505"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="506"/>
         <source>Change %1 done</source>
         <translation>修改%1完成</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="506"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="507"/>
         <source>%1&apos;s %2 has been changed</source>
         <translation>%1的%2已修改</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="511"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="516"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="512"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="517"/>
         <source>Change %1 failed</source>
         <translation>修改%1失敗</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="512"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="513"/>
         <source>Wrong %1</source>
         <translation>%1錯誤</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="517"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="518"/>
         <source>Device %1 change %2 failed, please see log for more information.(%3)</source>
         <translation>裝置%1修改%2失敗，請查看日誌以獲取更多資訊。（%3）</translation>
     </message>
@@ -651,39 +819,55 @@
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="331"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="546"/>
         <source>Error</source>
         <translation>錯誤</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="451"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="452"/>
         <source>Decrypt done</source>
         <translation>取消加密完成</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="452"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="453"/>
         <source>Device %1 has been decrypted</source>
         <translation>裝置%1已取消加密</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="458"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="459"/>
         <source>Decrypt disk</source>
         <translation>取消磁碟加密</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="462"/>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="467"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="463"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="468"/>
         <source>Decrypt failed</source>
         <translation>取消加密失敗</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="463"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="464"/>
         <source>Device %1 is under encrypting, please decrypt after encryption finished.</source>
         <translation>裝置 %1 正在加密，請在加密完成後解密。</translation>
     </message>
     <message>
-        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="468"/>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="469"/>
         <source>Device %1 Decrypt failed, please see log for more information.(%2)</source>
         <translation>裝置%1取消加密失敗，請查看日誌以獲取更多資訊。（%2）</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="547"/>
+        <source>Device is not fully decrypted, please finish decryption before access.</source>
+        <translation>裝置尚未完全解密，請在存取前完成解密。</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="554"/>
+        <source>Unlocking device failed</source>
+        <translation>解鎖裝置失敗</translation>
+    </message>
+    <message>
+        <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="555"/>
+        <source>Please click the right disk menu &quot;Continue partition encryption&quot; to complete partition encryption.</source>
+        <translation>請按一下右側磁碟功能表「繼續磁碟分区加密」以完成磁碟分区加密。</translation>
     </message>
     <message>
         <location filename="../src/dde-file-manager/dfmplugin-disk-encrypt-entry/events/eventshandler.cpp" line="331"/>
