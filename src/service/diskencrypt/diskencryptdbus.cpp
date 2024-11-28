@@ -18,6 +18,7 @@
 #include <QDBusConnection>
 
 #include <libcryptsetup.h>
+#include <polkit-qt5-1/PolkitQt1/Authority>
 
 FILE_ENCRYPT_USE_NS
 using namespace disk_encrypt;
@@ -248,9 +249,17 @@ void DiskEncryptDBus::onFstabDiskEncFinished(const QString &dev, int result, con
 
 bool DiskEncryptDBus::checkAuth(const QString &actID)
 {
-    return dpfSlotChannel->push("daemonplugin_core", "slot_Polkit_CheckAuth",
-                                actID, message().service())
-            .toBool();
+    using namespace PolkitQt1;
+
+    QString appBusName = message().service();
+    if (appBusName.isEmpty())
+        return false;
+
+    // PolkitUnixProcess表示 UNIX 进程的对象。注意：这个设计的对象现在已知已损坏；确定了一种利用 Linux 内核中启动时间延迟的机制。避免调用 `polkit_subject_equal()` 来比较两个进程。
+    Authority::Result result = Authority::instance()->checkAuthorizationSync(actID,
+                                                                             SystemBusNameSubject(appBusName),
+                                                                             Authority::AllowUserInteraction);
+    return result == Authority::Yes;
 }
 
 bool DiskEncryptDBus::triggerReencrypt(const QString &device)

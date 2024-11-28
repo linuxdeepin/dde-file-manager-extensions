@@ -17,6 +17,7 @@ find_package(dfm-mount REQUIRED)
 find_package(dfm-base REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(CryptSetup REQUIRED libcryptsetup)
+pkg_check_modules(Polkit REQUIRED polkit-agent-1 polkit-qt5-1)
 
 add_definitions(-DSERVICE_CONFIG_DIR="${CMAKE_INSTALL_PREFIX}/share/deepin-service-manager/")
 
@@ -51,6 +52,7 @@ target_link_libraries(${BIN_NAME} PRIVATE
     ${dfm-mount_LIBRARIES}
     ${dfm-base_LIBRARIES}
     ${deepin-qdbus-service_LIBRARIES}
+    ${Polkit_LIBRARIES}
 )
 
 target_include_directories(${BIN_NAME}
