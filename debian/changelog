@@ -1,3 +1,9 @@
+dde-file-manager-extensions (1.5.2) unstable; urgency=medium
+
+  * add dependency package for recovery key generation.
+
+ -- XuShitong <xushitong@uniontech.com>  Thu, 28 Nov 2024 19:56:57 +0800
+
 dde-file-manager-extensions (1.5.1) unstable; urgency=medium
 
   * fix encrypt issues on V23/25
