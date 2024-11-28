@@ -14,6 +14,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDBusInterface>
+#include <QString>
+#include <QRandomGenerator>
+
 
 #include <dfm-base/utils/finallyutil.h>
 #include <dfm-mount/dmount.h>
@@ -84,12 +87,13 @@ struct crypt_params_reencrypt *resumeParams()
     static struct crypt_params_reencrypt params
     {
         .mode = CRYPT_REENCRYPT_REENCRYPT,
-        .direction = CRYPT_REENCRYPT_FORWARD,
-        .resilience = "checksum",
+        .direction = CRYPT_REENCRYPT_BACKWARD,
+        .resilience = "datashift",
         .hash = "sha256",
+        .data_shift = 32 * 1024,
         .max_hotzone_size = 0,
         .device_size = 0,
-        .flags = CRYPT_REENCRYPT_RESUME_ONLY
+        .flags = CRYPT_REENCRYPT_RESUME_ONLY | CRYPT_REENCRYPT_MOVE_FIRST_SEGMENT
     };
     return &params;
 }
@@ -148,6 +152,29 @@ bool disk_encrypt_utils::bcValidateParams(const EncryptParams &params)
     return true;
 }
 
+
+QString disk_encrypt_utils::generateRandomString(int length)
+{
+    // 定义字符集
+    const QString charset = QString("0123456789"
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                "abcdefghijklmnopqrstuvwxyz");
+
+    QString result;
+    result.reserve(length);
+
+    // 获取全局随机生成器实例
+    QRandomGenerator *generator = QRandomGenerator::global();
+
+    // 生成随机字符串
+    for (int i = 0; i < length; ++i) {
+        int index = generator->bounded(charset.length());
+        result.append(charset.at(index));
+    }
+
+    return result;
+}
+
 QString disk_encrypt_utils::bcGenRecKey()
 {
     QString recKey;
@@ -155,7 +182,8 @@ QString disk_encrypt_utils::bcGenRecKey()
     dfmbase::FinallyUtil finalClear([&] { if (lib.isLoaded()) lib.unload(); });
 
     if (!lib.load()) {
-        qWarning() << "libusec-recoverykey load failed. use uuid as recovery key";
+        qWarning() << "libusec-recoverykey load failed. use default generator";
+        recKey = generateRandomString();
         return recKey;
     }
 

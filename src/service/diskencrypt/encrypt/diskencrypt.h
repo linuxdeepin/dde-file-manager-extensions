@@ -61,6 +61,7 @@ EncryptParams bcConvertParams(const QVariantMap &params);
 bool bcValidateParams(const EncryptParams &params);
 bool bcReadEncryptConfig(disk_encrypt::EncryptConfig *config, const QString &device = QString());
 
+QString generateRandomString(int length = 24);
 QString bcGenRecKey();
 bool bcSaveRecoveryKey(const QString &dev, const QString &key, const QString &path);
 bool bcHasEncryptConfig(const QString &dev);
