@@ -12,6 +12,8 @@ Build-Depends:
  libdtkcore5-bin,
  libdfm-mount-dev,
  libdfm-io-dev,
+ libpolkit-agent-1-dev,
+ libpolkit-qt5-1-dev,
  dde-file-manager-dev,
  libcryptsetup-dev (>= 2:2.3.7),
  libdeepin-service-framework-dev
