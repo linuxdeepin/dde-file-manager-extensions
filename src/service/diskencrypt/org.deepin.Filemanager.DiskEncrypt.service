@@ -1,4 +1,0 @@
-[D-BUS Service]
-Name=org.deepin.Filemanager.DiskEncrypt
-Exec=/usr/bin/deepin-diskencrypt-service
-User=root

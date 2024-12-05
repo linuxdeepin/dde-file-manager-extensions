@@ -20,20 +20,6 @@ Build-Depends:
 Standards-Version: 4.1.3
 Section: libs
 Homepage: http://www.deepin.org
-
-Package: dfmplugin-disk-encrypt
-Architecture: any
-Multi-Arch: same
-Depends:
- ${shlibs:Depends},
- ${misc:Depends},
- tpm2-abrmd,
- libtss2-tcti-pcap0,
- libtss2-tcti-tabrmd0,
- libusec-recoverykey
-Description: Device encrypt plugin for dde-file-manager
- A plugin for dde-file-manager to encrypt disks.
-
  
 Package: dde-desktop-videowallpaper-plugin
 Architecture: any
