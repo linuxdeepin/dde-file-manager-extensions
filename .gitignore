@@ -89,3 +89,6 @@ src/dde-file-manager-daemon/daemonplugin-file-encrypt/dbus/diskencryptdbus.xml
 src/dde-file-manager-daemon/daemonplugin-file-encrypt/dbus/diskencryptdbus_adaptor.*
 
 debian/dde-desktop-videowallpaper-plugin.install
+
+.cursor/*
+.cache/*

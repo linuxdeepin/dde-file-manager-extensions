@@ -25,7 +25,7 @@ using namespace dfmplugin_cooperation;
 void CooperationPlugin::initialize()
 {
     deepin_cross::ReportLogManager::instance()->init();
-    auto translator = new QTranslator(this);
+    auto translator = new QTranslator(qApp);
     translator->load(QLocale(), "cooperation-transfer", "_", "/usr/share/dde-file-manager/translations");
     QCoreApplication::installTranslator(translator);
 
