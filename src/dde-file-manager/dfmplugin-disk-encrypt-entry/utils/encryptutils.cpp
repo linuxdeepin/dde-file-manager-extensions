@@ -44,10 +44,10 @@ QString config_utils::cipherType()
     auto cfg = Dtk::Core::DConfig::create("org.deepin.dde.file-manager",
                                           "org.deepin.dde.file-manager.diskencrypt");
     cfg->deleteLater();
-    auto cipher = cfg->value("encryptAlgorithm", "sm4").toString();
+    auto cipher = cfg->value("encryptAlgorithm", "aes").toString();
     QStringList supportedCipher { "sm4", "aes" };
     if (!supportedCipher.contains(cipher))
-        return "sm4";
+        return "aes";
     return cipher;
 }
 
