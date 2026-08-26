@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2023 UnionTech Software Technology Co., Ltd.
+// SPDX-FileCopyrightText: 2023-2026 UnionTech Software Technology Co., Ltd.
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "encryptworker.h"
@@ -10,14 +10,58 @@
 #include <QFile>
 #include <QDir>
 #include <QRegularExpression>
+#include <QTemporaryFile>
 #include <QSettings>
 #include <QReadWriteLock>
 #include <QTime>
+
+#include <cerrno>
+#include <cstdio>
+#include <sys/stat.h>
 
 FILE_ENCRYPT_USE_NS
 using namespace disk_encrypt;
 
 static constexpr char kBootUsecPath[] { "/boot/usec-crypt" };
+
+static bool writeTpmTokenFile(const QString &tokenPath, const QByteArray &token)
+{
+    // Never write through an existing /tmp entry: it may be attacker-controlled
+    // or already opened. Atomically replace it with a new 0600 inode instead.
+    QTemporaryFile tempFile(tokenPath + ".XXXXXX");
+    if (!tempFile.open()) {
+        qWarning() << "cannot create temporary token cache file:"
+                   << tempFile.errorString();
+        return false;
+    }
+
+    if (::fchmod(tempFile.handle(), S_IRUSR | S_IWUSR) != 0) {
+        const int errorCode = errno;
+        qWarning() << "cannot restrict token cache file permissions:"
+                   << qt_error_string(errorCode);
+        return false;
+    }
+
+    if (tempFile.write(token) != token.size() || !tempFile.flush()) {
+        qWarning() << "cannot write token cache file:"
+                   << tempFile.errorString();
+        return false;
+    }
+
+    const QByteArray temporaryPath = QFile::encodeName(tempFile.fileName());
+    const QByteArray destinationPath = QFile::encodeName(tokenPath);
+    tempFile.close();
+
+    if (::rename(temporaryPath.constData(), destinationPath.constData()) != 0) {
+        const int errorCode = errno;
+        qWarning() << "cannot replace token cache file:"
+                   << qt_error_string(errorCode);
+        return false;
+    }
+
+    tempFile.setAutoRemove(false);
+    return true;
+}
 
 void createRebootFlagFile(const QString &device)
 {
@@ -105,14 +149,11 @@ void PrencryptWorker::run()
     writeEncryptParams(encParams.device);
 
     if (!encParams.tpmToken.isEmpty()) {
-        QFile f(QString(TOKEN_FILE_PATH).arg(encParams.device.mid(5)));
-        if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            qWarning() << "cannot open file to cache token";
+        const QString tokenPath = QString(TOKEN_FILE_PATH).arg(encParams.device.mid(5));
+        if (!writeTpmTokenFile(tokenPath, encParams.tpmToken.toLocal8Bit())) {
+            setExitCode(-kErrorOpenFileFailed);
             return;
         }
-        f.write(encParams.tpmToken.toLocal8Bit());
-        f.flush();
-        f.close();
     }
 }
 
